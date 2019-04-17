@@ -1,0 +1,16 @@
+eclipse.preferences.version=1
+encoding//MultiMode_FlashOnly/Application/subdir_rules.mk=UTF-8
+encoding//MultiMode_FlashOnly/Application/subdir_vars.mk=UTF-8
+encoding//MultiMode_FlashOnly/HAL/Common/subdir_rules.mk=UTF-8
+encoding//MultiMode_FlashOnly/HAL/Common/subdir_vars.mk=UTF-8
+encoding//MultiMode_FlashOnly/Stack/subdir_rules.mk=UTF-8
+encoding//MultiMode_FlashOnly/Stack/subdir_vars.mk=UTF-8
+encoding//MultiMode_FlashOnly/Startup/subdir_rules.mk=UTF-8
+encoding//MultiMode_FlashOnly/Startup/subdir_vars.mk=UTF-8
+encoding//MultiMode_FlashOnly/TOOLS/subdir_rules.mk=UTF-8
+encoding//MultiMode_FlashOnly/TOOLS/subdir_vars.mk=UTF-8
+encoding//MultiMode_FlashOnly/makefile=UTF-8
+encoding//MultiMode_FlashOnly/objects.mk=UTF-8
+encoding//MultiMode_FlashOnly/queercon/subdir_rules.mk=UTF-8
+encoding//MultiMode_FlashOnly/queercon/subdir_vars.mk=UTF-8
+encoding//MultiMode_FlashOnly/sources.mk=UTF-8

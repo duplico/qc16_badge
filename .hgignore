@@ -1,11 +1,11 @@
 syntax: glob
-workspace/.jxbrowser-data/
-workspace/.metadata/
-workspace/qc16_uble/.launches
-workspace/qc16_uble/.xdchelp
+ccs_workspace/.jxbrowser-data/
+ccs_workspace/.metadata/
+ccs_workspace/qc16/.launches
+ccs_workspace/qc16/.xdchelp
+ccs_workspace/qc16/MultiMode_FlashOnly
 *.gbr
 *.drl
 boards/epaper_breakout/epaper_breakout_r1.zip
 boards/epaper_breakout/epaper_breakout_r0.zip
 boards/epaper_breakout/out_20190403/out_20190403.zip
-workspace/qc16_uble/MultiMode_FlashOnly

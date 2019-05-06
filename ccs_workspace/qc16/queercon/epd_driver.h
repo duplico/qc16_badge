@@ -18,14 +18,11 @@
 // Number of bits required to draw one pixel on the LCD screen
 #define BPP 1
 
-#define EPD_WIDTH       128
-#define EPD_HEIGHT      296
-
 // Define LCD Screen Orientation Here
-//#define LANDSCAPE
-//#define LANDSCAPE_FLIP
-#define PORTRAIT
+//#define PORTRAIT
 //#define PORTRAIT_FLIP
+#define LANDSCAPE
+//#define LANDSCAPE_FLIP
 
 
 //*****************************************************************************
@@ -34,7 +31,7 @@
 //
 //*****************************************************************************
 
-// TODO: Mode:
+// TODO: Move to qc16.h once created:
 
 #define BIT0 0b00000001
 #define BIT1 0b00000010
@@ -68,16 +65,16 @@
 // This driver operates in four different screen orientations.  They are:
 //
 // * Portrait - The screen is taller than it is wide. This is selected by defining
-//              PORTRAIT.
+//              LANDSCAPE.
 //
 // * Landscape - The screen is wider than it is tall. This is selected by defining
-//               LANDSCAPE.
+//               PORTRAIT.
 //
 // * Portrait flip - The screen is taller than it is wide. This is
-//                   selected by defining PORTRAIT_FLIP.
+//                   selected by defining LANDSCAPE_FLIP.
 //
 // * Landscape flip - The screen is wider than it is tall. This is
-//                    selected by defining LANDSCAPE_FLIP.
+//                    selected by defining PORTRAIT_FLIP.
 //
 // These can also be imagined in terms of screen rotation; if landscape mode is
 // 0 degrees of screen rotation, portrait flip is 90 degrees of clockwise
@@ -87,8 +84,8 @@
 // If no screen orientation is selected, "landscape" mode will be used.
 //
 //*****************************************************************************
-#if ! defined(PORTRAIT) && ! defined(PORTRAIT_FLIP) && \
-    ! defined(LANDSCAPE) && ! defined(LANDSCAPE_FLIP)
+#if ! defined(LANDSCAPE) && ! defined(LANDSCAPE_FLIP) && \
+    ! defined(PORTRAIT) && ! defined(PORTRAIT_FLIP)
 #define LANDSCAPE
 #endif
 
@@ -98,19 +95,19 @@
 // direction in the four supported orientations.
 //
 //*****************************************************************************
-#ifdef PORTRAIT
+#ifdef LANDSCAPE
 #define MAPPED_X(x, y) (LCD_X_SIZE - (y) - 1)
 #define MAPPED_Y(x, y) (x)
 #endif
-#ifdef LANDSCAPE
+#ifdef PORTRAIT
 #define MAPPED_X(x, y) (x)
 #define MAPPED_Y(x, y) (y)
 #endif
-#ifdef PORTRAIT_FLIP
+#ifdef LANDSCAPE_FLIP
 #define MAPPED_X(x, y)  (y)
 #define MAPPED_Y(x, y)  (x)
 #endif
-#ifdef LANDSCAPE_FLIP
+#ifdef PORTRAIT_FLIP
 #define MAPPED_X(x, y)  (LCD_X_SIZE - (x) - 1)
 #define MAPPED_Y(x, y)  (LCD_Y_SIZE - (y) - 1)
 #endif
@@ -162,13 +159,7 @@ and could also include Set_Address(), Write_Data(), etc. */
 // channel, the next byte is the green channel, and the third byte is the red
 // channel.
 //
-// This macro translates a 24-bit RGB color into a value that can be written
-// into the display's frame buffer in order to reproduce that color, or the
-// closest possible approximation of that color. This particular example
-// requires the 8-8-8 24 bit RGB color to convert into 5-6-5 16 bit RGB Color
-// Your conversion should be made to fit your LCD settings.
-//
-// \return Returns the display-driver specific color
+// \return Returns BLACK if the input is black; WHITE otherwise.
 
 #define DPYCOLORTRANSLATE(c) (c ? 1 : 0)
 

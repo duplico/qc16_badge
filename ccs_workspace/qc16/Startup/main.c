@@ -4,7 +4,7 @@
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/Task.h>
-#include <ti/display/Display.h>
+#include <ti/grlib/grlib.h>
 
 #include <board.h>
 
@@ -17,9 +17,34 @@
 #include <inc/hw_memmap.h>
 #include <driverlib/vims.h>
 
-#include "queercon/epd.h"
+#include "queercon/epd_driver.h"
+//#include "queercon/epd.h"
 
-extern Display_Handle dispHandle;
+// TODO:
+//
+Task_Struct epaperTask;
+Char epaperTaskStack[660];
+
+void epaper_spi_task_fn(UArg a0, UArg a1)
+{
+    qc12_oledInit(0);
+
+    Graphics_Context gr_context;
+    Graphics_initContext(&gr_context, &g_sqc12_oled, &gf_epd);
+    Graphics_setBackgroundColor(&gr_context, GRAPHICS_COLOR_BLACK);
+    Graphics_setForegroundColorTranslated(&gr_context, GRAPHICS_COLOR_WHITE);
+    Graphics_clearDisplay(&gr_context);
+    Graphics_fillCircle(&gr_context, 64, 64, 32);
+    Graphics_drawLine(&gr_context, 0, 16, 295, 16);
+    Graphics_flushBuffer(&gr_context);
+
+    for (;;)
+    {
+        // Get the ticks since startup
+        uint32_t tickStart = Clock_getTicks();
+        Task_yield();
+    }
+}
 
 int main()
 {

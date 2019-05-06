@@ -26,6 +26,8 @@
 
 #include "uble_bcast_scan.h"
 
+#include <ti/grlib/grlib.h>
+
 // Eddystone Base 128-bit UUID: EE0CXXXX-8786-40BA-AB96-99B91AC981D8
 #define EDDYSTONE_BASE_UUID_128( uuid )  0xD8, 0x81, 0xC9, 0x1A, 0xB9, 0x99, \
                                          0x96, 0xAB, 0xBA, 0x40, 0x86, 0x87, \

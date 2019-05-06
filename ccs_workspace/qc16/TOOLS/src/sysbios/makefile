@@ -17,11 +17,11 @@ CCOPTS = --endian=little -mv7M3 --abi=eabi -q -ms --opt_for_speed=0  --program_l
 
 BIOS_INC = -I"C:/ti/simplelink_cc2640r2_sdk_2_40_00_32/kernel/tirtos/packages/"
 ANNEX_INCS = 
-INCS = $(BIOS_INC) $(ANNEX_INCS) -I"C:/ti/simplelink_cc2640r2_sdk_2_40_00_32/source/ti/blestack/" -I"C:/ti/simplelink_cc2640r2_sdk_2_40_00_32/source/" -I"C:/ti/simplelink_cc2640r2_sdk_2_40_00_32/kernel/tirtos/packages/" -I"C:/ti/xdctools_3_50_04_43_core/packages/" -I"../" -I"/packages//"  -IC:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/include 
+INCS = $(BIOS_INC) $(ANNEX_INCS) -I"C:/ti/simplelink_cc2640r2_sdk_2_40_00_32/source/ti/blestack/" -I"C:/ti/simplelink_cc2640r2_sdk_2_40_00_32/source/" -I"C:/ti/simplelink_cc2640r2_sdk_2_40_00_32/kernel/tirtos/packages/" -I"C:/ti/xdctools_3_50_04_43_core/packages/" -I"../" -I"/packages//"  -IC:/ti/ccs901/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/include 
 
-CC = C:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/bin/armcl -c $(CCOPTS)
-ASM = C:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/bin/armcl -c $(CCOPTS)
-AR = C:/ti/ccs900/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/bin/armar rq
+CC = C:/ti/ccs901/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/bin/armcl -c $(CCOPTS)
+ASM = C:/ti/ccs901/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/bin/armcl -c $(CCOPTS)
+AR = C:/ti/ccs901/ccs/tools/compiler/ti-cgt-arm_18.12.1.LTS/bin/armar rq
 
 DEL = C:/ti/xdctools_3_50_04_43_core/packages/../bin/rm -f
 CP = C:/ti/xdctools_3_50_04_43_core/packages/../bin/cp -f

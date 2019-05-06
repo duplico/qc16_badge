@@ -106,6 +106,22 @@
 /* Global buffer for the display. */
 uint8_t oled_memory[(LCD_X_SIZE * LCD_Y_SIZE * BPP + 7) / 8];
 
+uint8_t oled_upside_down = 0;
+
+const unsigned char lut_full_update[] = {
+     0x02, 0x02, 0x01, 0x11, 0x12, 0x12, 0x22, 0x22,
+     0x66, 0x69, 0x69, 0x59, 0x58, 0x99, 0x99, 0x88,
+     0x00, 0x00, 0x00, 0x00, 0xF8, 0xB4, 0x13, 0x51,
+     0x35, 0x51, 0x51, 0x19, 0x01, 0x00
+};
+
+const unsigned char lut_partial_update[] = {
+    0x10, 0x18, 0x18, 0x08, 0x18, 0x18, 0x08, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x13, 0x14, 0x44, 0x12,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
 //*****************************************************************************
 //
 // Suggested functions to help facilitate writing the required functions below
@@ -114,60 +130,46 @@ uint8_t oled_memory[(LCD_X_SIZE * LCD_Y_SIZE * BPP + 7) / 8];
 
 #define GRAM_BUFFER(mapped_x, mapped_y) oled_memory[((LCD_X_SIZE/8) * mapped_y) + (mapped_x / 8)]
 
- unsigned char masterRxBuffer[5];
- unsigned char masterTxBuffer[5];
+unsigned char masterRxBuffer[5];
+unsigned char masterTxBuffer[5];
 
- SPI_Handle epaper_spi;
- PIN_Handle epaper_pin;
+SPI_Handle epaper_spi;
+PIN_Handle epaper_pin;
 
- void spi_cmd(uint8_t cmd) {
-     uint8_t tx_buf[1];
-     tx_buf[0] = cmd;
-     SPI_Transaction transaction;
-     transaction.count = 1;
-     transaction.txBuf = (void *) tx_buf;
-     transaction.rxBuf = (void *) masterRxBuffer;
-     // Set DC low for CMD
-     PIN_setOutputValue(epaper_pin, EPAPER_DCN, 0);
-     // Set CS low
-     PIN_setOutputValue(epaper_pin, EPAPER_CSN, 0);
-     // Transmit
-     SPI_transfer(epaper_spi, &transaction);
-     // Set CS high
-     PIN_setOutputValue(epaper_pin, EPAPER_CSN, 1);
- }
+// TODO: Use a longer transaction for the full update?
+void spi_cmd(uint8_t cmd) {
+    uint8_t tx_buf[1];
+    tx_buf[0] = cmd;
+    SPI_Transaction transaction;
+    transaction.count = 1;
+    transaction.txBuf = (void *) tx_buf;
+    transaction.rxBuf = (void *) masterRxBuffer;
+    // Set DC low for CMD
+    PIN_setOutputValue(epaper_pin, EPAPER_DCN, 0);
+    // Set CS low
+    PIN_setOutputValue(epaper_pin, EPAPER_CSN, 0);
+    // Transmit
+    SPI_transfer(epaper_spi, &transaction);
+    // Set CS high
+    PIN_setOutputValue(epaper_pin, EPAPER_CSN, 1);
+}
 
- void spi_data(uint8_t dat) {
-     uint8_t tx_buf[1];
-     tx_buf[0] = dat;
-     SPI_Transaction transaction;
-     transaction.count = 1;
-     transaction.txBuf = (void *) tx_buf;
-     transaction.rxBuf = (void *) masterRxBuffer;
-     // Set DC high for DATA
-     PIN_setOutputValue(epaper_pin, EPAPER_DCN, 1);
-     // Set CS low
-     PIN_setOutputValue(epaper_pin, EPAPER_CSN, 0);
-     // Transmit
-     SPI_transfer(epaper_spi, &transaction);
-     // Set CS high
-     PIN_setOutputValue(epaper_pin, EPAPER_CSN, 1);
- }
-
-
- const unsigned char lut_full_update[] = {
-     0x02, 0x02, 0x01, 0x11, 0x12, 0x12, 0x22, 0x22,
-     0x66, 0x69, 0x69, 0x59, 0x58, 0x99, 0x99, 0x88,
-     0x00, 0x00, 0x00, 0x00, 0xF8, 0xB4, 0x13, 0x51,
-     0x35, 0x51, 0x51, 0x19, 0x01, 0x00
- };
-
- const unsigned char lut_partial_update[] = {
-     0x10, 0x18, 0x18, 0x08, 0x18, 0x18, 0x08, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     0x00, 0x00, 0x00, 0x00, 0x13, 0x14, 0x44, 0x12,
-     0x00, 0x00, 0x00, 0x00, 0x00, 0x00
- };
+void spi_data(uint8_t dat) {
+    uint8_t tx_buf[1];
+    tx_buf[0] = dat;
+    SPI_Transaction transaction;
+    transaction.count = 1;
+    transaction.txBuf = (void *) tx_buf;
+    transaction.rxBuf = (void *) masterRxBuffer;
+    // Set DC high for DATA
+    PIN_setOutputValue(epaper_pin, EPAPER_DCN, 1);
+    // Set CS low
+    PIN_setOutputValue(epaper_pin, EPAPER_CSN, 0);
+    // Transmit
+    SPI_transfer(epaper_spi, &transaction);
+    // Set CS high
+    PIN_setOutputValue(epaper_pin, EPAPER_CSN, 1);
+}
 
 /******************************************************************************
 function :  Software reset
@@ -594,30 +596,6 @@ static uint32_t qc12_oledColorTranslate(const Graphics_Display * pvDisplayData,
     return(DPYCOLORTRANSLATE(ulValue));
 }
 
-/******************************************************************************
-function :  Sends the image buffer in RAM to e-Paper and displays
-parameter:
-******************************************************************************/
-void EPD_Display(uint8_t *Image)
-{
-    uint16_t Width, Height;
-    Width = (LCD_X_SIZE % 8 == 0)? (LCD_X_SIZE / 8 ): (LCD_X_SIZE / 8 + 1);
-    Height = LCD_Y_SIZE;
-
-    uint32_t Addr = 0;
-    // UDOUBLE Offset = ImageName;
-    EPD_SetWindows(0, 0, LCD_X_SIZE, LCD_Y_SIZE);
-    for (uint16_t j = 0; j < Height; j++) {
-        EPD_SetCursor(0, j);
-        spi_cmd(WRITE_RAM);
-        for (uint16_t i = 0; i < Width; i++) {
-            Addr = i + j * Width;
-            spi_data(Image[Addr]);
-        }
-    }
-    EPD_TurnOnDisplay();
-}
-
 //*****************************************************************************
 //
 //! Flushes any cached drawing operations.
@@ -636,8 +614,24 @@ static void
 qc12_oledFlush(const Graphics_Display *pvDisplayData)
 {
     // TODO: Determine whether to clear and replace, or do a selective update.
-    EPD_Display(oled_memory);
-//    EPD_Sleep();
+
+    uint16_t Width, Height;
+    Width = (LCD_X_SIZE % 8 == 0)? (LCD_X_SIZE / 8 ): (LCD_X_SIZE / 8 + 1);
+    Height = LCD_Y_SIZE;
+
+    uint32_t Addr = 0;
+    // UDOUBLE Offset = ImageName;
+    EPD_SetWindows(0, 0, LCD_X_SIZE, LCD_Y_SIZE);
+    for (uint16_t j = 0; j < Height; j++) {
+        EPD_SetCursor(0, j);
+        spi_cmd(WRITE_RAM);
+        // TODO: Just do a full spi write here, and yield.
+        for (uint16_t i = 0; i < Width; i++) {
+            Addr = i + j * Width;
+            spi_data(oled_memory[Addr]);
+        }
+    }
+    EPD_TurnOnDisplay();
 }
 
 //*****************************************************************************
@@ -658,7 +652,6 @@ qc12_oledClearScreen (const Graphics_Display *pvDisplayData, uint16_t ulValue)
 {
     // This fills the entire display to clear it
     // Some LCD drivers support a simple command to clear the display
-    // TODO: implement differently.
 
     uint8_t init_byte = ulValue ? 0xff : 0x00;
     memset(oled_memory, init_byte, sizeof(oled_memory));

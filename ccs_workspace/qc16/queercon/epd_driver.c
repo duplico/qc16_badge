@@ -325,8 +325,8 @@ uint8_t EPD_Init(const unsigned char* lut)
     EPD_Reset();
 
     spi_cmd(DRIVER_OUTPUT_CONTROL);
-    spi_data((EPD_HEIGHT - 1) & 0xFF);
-    spi_data(((EPD_HEIGHT - 1) >> 8) & 0xFF);
+    spi_data((LCD_Y_SIZE - 1) & 0xFF);
+    spi_data(((LCD_Y_SIZE - 1) >> 8) & 0xFF);
     spi_data(0x00);                     // GD = 0; SM = 0; TB = 0;
     spi_cmd(BOOSTER_SOFT_START_CONTROL);
     spi_data(0xD7);
@@ -360,7 +360,7 @@ qc12_oledInit(uint8_t invert)
     InitGPIOLCDInterface();
     InitLCDDisplayBuffer(0);
     EPD_Init(lut_full_update);
-    EPD_Clear();
+//    EPD_Clear();
 //    EPD_Sleep();
 }
 
@@ -690,12 +690,12 @@ const Graphics_Display_Functions gf_epd =
 Graphics_Display g_sqc12_oled = {
     .size = sizeof(Graphics_Display),
     .displayData = oled_memory,
-#if defined(PORTRAIT) || defined(PORTRAIT_FLIP)
+#if defined(LANDSCAPE) || defined(LANDSCAPE_FLIP)
     .width = LCD_Y_SIZE,
     .heigth = LCD_X_SIZE,
 #else
     .width = LCD_X_SIZE,
-    .heigth = LCD_Y_SIZE, // heighth??? lol.
+    .heigth = LCD_Y_SIZE, // heigth??? lol.
 #endif
     .pFxns = &gf_epd
 };

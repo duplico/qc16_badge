@@ -18,7 +18,6 @@
 #include <driverlib/vims.h>
 
 #include "queercon/epd_driver.h"
-//#include "queercon/epd.h"
 
 // TODO:
 //

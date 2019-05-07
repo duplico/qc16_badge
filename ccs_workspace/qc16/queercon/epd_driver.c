@@ -1,89 +1,11 @@
 /*
- * epd_driver.c
+ * TI Graphics Library (grlib) layer library for the GDEH029A1 e-paper display.
  *
- *  Created on: May 6, 2019
- *      Author: george
- */
-
-
-/* --COPYRIGHT--,BSD
+ * Copyright (c) 2019, George Louthan <george@queercon.org>
  * Copyright (c) 2013, Texas Instruments Incorporated
- * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * *  Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * *  Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * *  Neither the name of Texas Instruments Incorporated nor the names of
- *    its contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
- * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
- * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
- * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * --/COPYRIGHT--*/
-//*****************************************************************************
-//
-//! \addtogroup display_api
-//! @{
-//
-//*****************************************************************************
-
-//*****************************************************************************
-//
-// READ ME
-//
-// This template driver is intended to be modified for creating new LCD drivers
-// It is setup so that only qc12_oledPixelDraw() and DPYCOLORTRANSLATE()
-// and some LCD size configuration settings in the header file qc12_oled.h
-// are REQUIRED to be written. These functions are marked with the string
-// "TemplateDisplayFix" in the comments so that a search through qc12_oled.c and
-// qc12_oled.h can quickly identify the necessary areas of change.
-//
-// qc12_oledPixelDraw() is the base function to write to the LCD
-// display. Functions like WriteData(), WriteCommand(), and SetAddress()
-// are suggested to be used to help implement the qc12_oledPixelDraw()
-// function, but are not required. SetAddress() should be used by other pixel
-// level functions to help optimize them.
-//
-// This is not an optimized driver however and will significantly impact
-// performance. It is highly recommended to first get the prototypes working
-// with the single pixel writes, and then go back and optimize the driver.
-// Please see application note www.ti.com/lit/pdf/slaa548 for more information
-// on how to fully optimize LCD driver files. In int16_t, driver optimizations
-// should take advantage of the auto-incrementing of the LCD controller.
-// This should be utilized so that a loop of WriteData() can be used instead
-// of a loop of qc12_oledPixelDraw(). The pixel draw loop contains both a
-// SetAddress() + WriteData() compared to WriteData() alone. This is a big time
-// saver especially for the line draws and qc12_oledPixelDrawMultiple.
-// More optimization can be done by reducing function calls by writing macros,
-// eliminating unnecessary instructions, and of course taking advantage of other
-// features offered by the LCD controller. With so many pixels on an LCD screen
-// each instruction can have a large impact on total drawing time.
-//
-//*****************************************************************************
-
-
-//*****************************************************************************
-//
-// Include Files
-//
-//*****************************************************************************
+ * BSD 3-clause.
+ */
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -95,6 +17,7 @@
 
 #include <board.h>
 #include "epd_driver.h"
+#include "epd_phy.h"
 
 //*****************************************************************************
 //
@@ -102,249 +25,14 @@
 //
 //*****************************************************************************
 
-uint8_t epd_display_buffer[(LCD_X_SIZE * LCD_Y_SIZE * BPP + 7) / 8];
-
 uint8_t epd_upside_down = 0;
 
-const unsigned char epd_lut_full_update[] = {
-     0x02, 0x02, 0x01, 0x11, 0x12, 0x12, 0x22, 0x22,
-     0x66, 0x69, 0x69, 0x59, 0x58, 0x99, 0x99, 0x88,
-     0x00, 0x00, 0x00, 0x00, 0xF8, 0xB4, 0x13, 0x51,
-     0x35, 0x51, 0x51, 0x19, 0x01, 0x00
-};
-
-const unsigned char lut_partial_update[] = {
-    0x10, 0x18, 0x18, 0x08, 0x18, 0x18, 0x08, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x13, 0x14, 0x44, 0x12,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
 
 //*****************************************************************************
 //
 // Suggested functions to help facilitate writing the required functions below
 //
 //*****************************************************************************
-
-//#define GRAM_BUFFER(mapped_x, mapped_y) oled_memory[((LCD_X_SIZE/8) * mapped_y) + (mapped_x / 8)]
-
-SPI_Handle epd_spi_h;
-PIN_Handle epd_pin_h;
-
-// TODO: Use a longer transaction for the full update?
-void epd_phy_spi_cmd(uint8_t cmd) {
-    uint8_t tx_buf[1];
-    tx_buf[0] = cmd;
-    SPI_Transaction transaction;
-    transaction.count = 1;
-    transaction.txBuf = (void *) tx_buf;
-    transaction.rxBuf = NULL;
-    // Set DC low for CMD
-    PIN_setOutputValue(epd_pin_h, EPAPER_DCN, 0);
-    // Set CS low
-    PIN_setOutputValue(epd_pin_h, EPAPER_CSN, 0);
-    // Transmit
-    SPI_transfer(epd_spi_h, &transaction);
-    // Set CS high
-    PIN_setOutputValue(epd_pin_h, EPAPER_CSN, 1);
-}
-
-void epd_phy_spi_data(uint8_t dat) {
-    uint8_t tx_buf[1];
-    tx_buf[0] = dat;
-    SPI_Transaction transaction;
-    transaction.count = 1;
-    transaction.txBuf = (void *) tx_buf;
-    transaction.rxBuf = NULL;
-    // Set DC high for DATA
-    PIN_setOutputValue(epd_pin_h, EPAPER_DCN, 1);
-    // Set CS low
-    PIN_setOutputValue(epd_pin_h, EPAPER_CSN, 0);
-    // Transmit
-    SPI_transfer(epd_spi_h, &transaction);
-    // Set CS high
-    PIN_setOutputValue(epd_pin_h, EPAPER_CSN, 1);
-}
-
-/**
- * Hardware reset of the display, using the RESN line.
- */
-static void epd_phy_reset(void)
-{
-    // TODO: timing
-    // Reset display driver IC (Pulse EPAPER_RESN low for ?????)
-    PIN_setOutputValue(epd_pin_h, EPAPER_RESN, 1);
-    Task_sleep(100000); // Sleep system ticks (not sure how long these are)
-    PIN_setOutputValue(epd_pin_h, EPAPER_RESN, 0);
-    Task_sleep(100000); // Sleep system ticks (not sure how long these are)
-    PIN_setOutputValue(epd_pin_h, EPAPER_RESN, 1);
-    Task_sleep(100000); // Sleep system ticks (not sure how long these are)
-}
-
-/******************************************************************************
-function :  Wait until the busy_pin goes LOW
-parameter:
-******************************************************************************/
-void epd_phy_wait_until_idle(void)
-{
-    // Wait for busy=high
-    while (PIN_getInputValue(EPAPER_BUSY)); //LOW: idle, HIGH: busy
-    // TODO: yield
-}
-
-/******************************************************************************
-function :  Setting the display window
-parameter:
-******************************************************************************/
-static void epd_phy_set_window(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend)
-{
-    epd_phy_spi_cmd(SET_RAM_X_ADDRESS_START_END_POSITION);
-    epd_phy_spi_data((Xstart >> 3) & 0xFF);
-    epd_phy_spi_data((Xend >> 3) & 0xFF);
-
-    epd_phy_spi_cmd(SET_RAM_Y_ADDRESS_START_END_POSITION);
-    epd_phy_spi_data(Ystart & 0xFF);
-    epd_phy_spi_data((Ystart >> 8) & 0xFF);
-    epd_phy_spi_data(Yend & 0xFF);
-    epd_phy_spi_data((Yend >> 8) & 0xFF);
-}
-
-/******************************************************************************
-function :  Set Cursor
-parameter:
-******************************************************************************/
-static void epd_phy_set_cursor(uint16_t Xstart, uint16_t Ystart)
-{
-    epd_phy_spi_cmd(SET_RAM_X_ADDRESS_COUNTER);
-    epd_phy_spi_data((Xstart >> 3) & 0xFF);
-
-    epd_phy_spi_cmd(SET_RAM_Y_ADDRESS_COUNTER);
-    epd_phy_spi_data(Ystart & 0xFF);
-    epd_phy_spi_data((Ystart >> 8) & 0xFF);
-
-}
-
-/******************************************************************************
-function :  Turn On Display
-parameter:
-******************************************************************************/
-static void epd_phy_activate(void)
-{
-    epd_phy_spi_cmd(DISPLAY_UPDATE_CONTROL_2);
-    epd_phy_spi_data(0xC4);
-    epd_phy_spi_cmd(MASTER_ACTIVATION);
-    epd_phy_spi_cmd(TERMINATE_FRAME_READ_WRITE);
-
-    epd_phy_wait_until_idle();
-}
-
-/******************************************************************************
-function :  Clear screen
-parameter:
-******************************************************************************/
-void epd_clear(void)
-{
-    uint16_t Width, Height;
-    Width = (LCD_X_SIZE % 8 == 0)? (LCD_X_SIZE / 8 ): (LCD_X_SIZE / 8 + 1);
-    Height = LCD_Y_SIZE;
-    epd_phy_set_window(0, 0, LCD_X_SIZE, LCD_Y_SIZE);
-    for (uint16_t j = 0; j < Height; j++) {
-        epd_phy_set_cursor(0, j);
-        epd_phy_spi_cmd(WRITE_RAM);
-        for (uint16_t i = 0; i < Width; i++) {
-            epd_phy_spi_data(0XFF);
-        }
-    }
-    epd_phy_activate();
-}
-
-/******************************************************************************
-function :  Enter sleep mode
-parameter:
-******************************************************************************/
-void epd_phy_deepsleep(void)
-{
-    // TODO: Actually use this.
-    epd_phy_spi_cmd(DEEP_SLEEP_MODE);
-    epd_phy_spi_data(0x01);
-    // EPD_WaitUntilIdle();
-}
-
-// Initializes the pins required for the GPIO-based LCD interface.
-// This function configures the GPIO pins used to control the LCD display
-// when the basic GPIO interface is in use. On exit, the LCD controller
-// has been reset and is ready to receive command and data writes.
-static void epd_phy_init_gpio()
-{
-    PIN_State epaper_pin_state;
-    PIN_Config BoardGpioInitTable[] = {
-    EPAPER_CSN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
-    EPAPER_DCN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
-    EPAPER_RESN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
-    EPAPER_BUSY | PIN_INPUT_EN,
-    PIN_TERMINATE
-    };
-
-    epd_pin_h = PIN_open(&epaper_pin_state, BoardGpioInitTable);
-
-    SPI_Params      spiParams;
-
-    /* Open SPI as master (default) */
-    SPI_Params_init(&spiParams); // Defaults are OK
-    epd_spi_h = SPI_open(Board_SPI_MASTER, &spiParams);
-    if (epd_spi_h == NULL) {
-        while (1);
-    }
-}
-
-
-// Initialize DisplayBuffer.
-// This function initializes the display buffer and discards any cached data.
-static void
-epd_init_display_buffer(uint16_t ulValue)
-{
-    // Ok, so this buffer contains the data to be displayed.
-    //  Each pixel is just one bit. Natively this is "portrait" address
-    //  mode, with the first byte occupying the leftmost 8 pixels
-    //  of the top row, with the connector at the bottom.
-    // In the native address scheme (used by all the epd_phy functions),
-    //  the "bottom" of the display is where the cable comes out.
-
-    // Therefore, our buffer is height*width/8 bytes.
-
-    // Let's clear it out.
-    uint8_t init_byte = ulValue ? 0xff : 0x00;
-    memset(epd_display_buffer, init_byte, sizeof(epd_display_buffer));
-}
-
-void epd_phy_init(const unsigned char* lut) {
-    epd_phy_reset();
-
-    epd_phy_spi_cmd(DRIVER_OUTPUT_CONTROL);
-    epd_phy_spi_data((LCD_Y_SIZE - 1) & 0xFF);
-    epd_phy_spi_data(((LCD_Y_SIZE - 1) >> 8) & 0xFF);
-    epd_phy_spi_data(0x00);                     // GD = 0; SM = 0; TB = 0;
-    epd_phy_spi_cmd(BOOSTER_SOFT_START_CONTROL);
-    epd_phy_spi_data(0xD7);
-    epd_phy_spi_data(0xD6);
-    epd_phy_spi_data(0x9D);
-    epd_phy_spi_cmd(WRITE_VCOM_REGISTER);
-    epd_phy_spi_data(0xA8);                     // VCOM 7C
-    epd_phy_spi_cmd(SET_DUMMY_LINE_PERIOD);
-    epd_phy_spi_data(0x1A);                     // 4 dummy lines per gate
-    epd_phy_spi_cmd(SET_GATE_TIME);
-    epd_phy_spi_data(0x08);                     // 2us per line
-    epd_phy_spi_cmd(BORDER_WAVEFORM_CONTROL);
-    epd_phy_spi_data(0x03);
-    epd_phy_spi_cmd(DATA_ENTRY_MODE_SETTING);
-    epd_phy_spi_data(0x03);
-
-    //set the look-up table register
-    epd_phy_spi_cmd(WRITE_LUT_REGISTER);
-    for (uint16_t i = 0; i < 30; i++) {
-        epd_phy_spi_data(lut[i]);
-    }
-}
 
 /**
  * Initial initialization (lol) of the display. Call this only once.
@@ -353,7 +41,7 @@ void init_epd()
 {
     epd_phy_init_gpio();
     epd_init_display_buffer(0);
-    epd_phy_init(epd_lut_full_update);
+    epd_phy_init(0);
 //    EPD_Clear();
 //    EPD_Sleep();
 }
@@ -592,24 +280,7 @@ static uint32_t epd_grColorTranslate(const Graphics_Display *pvDisplayData,
 //*****************************************************************************
 static void epd_grFlush(const Graphics_Display *pvDisplayData) {
     // TODO: Determine whether to clear and replace, or do a selective update.
-
-    uint16_t Width, Height;
-    Width = (LCD_X_SIZE % 8 == 0)? (LCD_X_SIZE / 8 ): (LCD_X_SIZE / 8 + 1);
-    Height = LCD_Y_SIZE;
-
-    uint32_t Addr = 0;
-    // UDOUBLE Offset = ImageName;
-    epd_phy_set_window(0, 0, LCD_X_SIZE, LCD_Y_SIZE);
-    for (uint16_t j = 0; j < Height; j++) {
-        epd_phy_set_cursor(0, j);
-        epd_phy_spi_cmd(WRITE_RAM);
-        // TODO: Just do a full spi write here, and yield.
-        for (uint16_t i = 0; i < Width; i++) {
-            Addr = i + j * Width;
-            epd_phy_spi_data(epd_display_buffer[Addr]);
-        }
-    }
-    epd_phy_activate();
+    epd_phy_flush_buffer();
 }
 
 //*****************************************************************************
@@ -660,10 +331,3 @@ Graphics_Display epd_grGraphicsDisplay = {
 #endif
     .pFxns = &epd_grDisplayFunctions
 };
-
-//*****************************************************************************
-//
-// Close the Doxygen group.
-//! @}
-//
-//*****************************************************************************

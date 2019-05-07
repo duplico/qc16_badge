@@ -27,10 +27,10 @@ Char epaperTaskStack[660];
 
 void epaper_spi_task_fn(UArg a0, UArg a1)
 {
-    qc12_oledInit(0);
+    init_epd(0);
 
     Graphics_Context gr_context;
-    Graphics_initContext(&gr_context, &g_sqc12_oled, &gf_epd);
+    Graphics_initContext(&gr_context, &epd_grGraphicsDisplay, &epd_grDisplayFunctions);
     Graphics_setBackgroundColor(&gr_context, GRAPHICS_COLOR_BLACK);
     Graphics_setForegroundColorTranslated(&gr_context, GRAPHICS_COLOR_WHITE);
     Graphics_clearDisplay(&gr_context);

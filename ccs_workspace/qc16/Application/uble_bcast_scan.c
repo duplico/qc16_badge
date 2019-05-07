@@ -253,12 +253,12 @@ void UBLEBcastScan_createTask(void)
  */
 static void UBLEBcastScan_init(void)
 {
-  ugapBcastCBs_t bcastCBs = {
-  UBLEBcastScan_bcast_stateChangeCB,
-  UBLEBcastScan_bcast_advPrepareCB,
-  UBLEBcastScan_bcast_advDoneCB };
-
-  bStatus_t status;
+//  ugapBcastCBs_t bcastCBs = {
+//  UBLEBcastScan_bcast_stateChangeCB,
+//  UBLEBcastScan_bcast_advPrepareCB,
+//  UBLEBcastScan_bcast_advDoneCB };
+//
+//  bStatus_t status;
 
   // Create an RTOS event used to wake up this application to process events.
   syncEvent = Event_create(NULL, NULL);
@@ -271,13 +271,18 @@ static void UBLEBcastScan_init(void)
 
   uble_stackInit(UBLE_ADDRTYPE_PUBLIC, NULL, UBLEBcastScan_eventProxy,
                  RF_TIME_CRITICAL);
-  ugap_bcastInit(&bcastCBs);
+//  ugap_bcastInit(&bcastCBs);
 
-  status = uble_stackInit(UBLE_ADDRTYPE_PUBLIC, NULL, UBLEBcastScan_eventProxy,
-                          RF_TIME_CRITICAL);
+  uble_stackInit(UBLE_ADDRTYPE_PUBLIC, NULL, UBLEBcastScan_eventProxy,
+                 RF_TIME_CRITICAL);
 
   UBLEBcastScan_initObserver();
   UBLEBcastScan_initBcast();
+
+  // TODO: Use this to start broadcasting:
+//  ugap_bcastStart(1);
+  //  and to stop:
+  // ugap_bcastStop()
 }
 
 /*********************************************************************
@@ -380,6 +385,7 @@ static void UBLEBcastScan_processAppMsg(ubsEvt_t *pMsg)
  */
 static void UBLEBcastScan_bcast_stateChangeCB(ugapBcastState_t newState)
 {
+
   switch (newState)
   {
   case UGAP_BCAST_STATE_INITIALIZED:
@@ -492,10 +498,7 @@ bool UBLEBcastScan_initBcast(void)
   /* Initilaize Micro GAP Broadcaster Role */
   if (SUCCESS == ugap_bcastInit(&bcastCBs))
   {
-    // TODO: Initialize the advertisement:
-//    uble_setParameter(UBLE_PARAM_ADVDATA,
-//                          EDDYSTONE_FRAME_OVERHEAD_LEN + eddystoneAdv.length,
-//                          &eddystoneAdv);
+    // TODO: Initialize the advertisement.
     uble_setParameter(UBLE_PARAM_ADVDATA, sizeof(advertData), advertData);
     return true;
   }
@@ -520,20 +523,12 @@ bool UBLEBcastScan_initObserver(void)
   /* Initialize Micro GAP Observer Role */
   if (SUCCESS == ugap_scanInit(&observerCBs))
   {
-
-    /* This is the spot to do scan request without using the keypress control */
     ugap_scanRequest(UBLE_ADV_CHAN_ALL, 160, 320);
-
     return true;
   }
 
   return false;
 }
-
-// TODO: Use this to start broadcasting:
-// ugap_bcastStart(numAdv)
-//  and to stop:
-// ugap_bcastStop()
 
 /*********************************************************************
  * @fn      UBLEBcastScan_scan_stateChangeCB
@@ -642,7 +637,7 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
  */
 static void UBLEBcastScan_scan_windowCompleteCB (bStatus_t status)
 {
-
+    ugap_bcastStart(1);
 }
 
 /*********************************************************************

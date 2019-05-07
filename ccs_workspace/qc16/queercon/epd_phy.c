@@ -23,7 +23,6 @@ uint8_t epd_display_buffer[(EPD_HEIGHT * EPD_WIDTH + 7) / 8];
 
 //#define GRAM_BUFFER(mapped_x, mapped_y) oled_memory[((LCD_X_SIZE/8) * mapped_y) + (mapped_x / 8)]
 
-// TODO: Use a longer transaction for the full update?
 void epd_phy_spi_cmd(uint8_t cmd) {
     uint8_t tx_buf[1];
     tx_buf[0] = cmd;
@@ -73,8 +72,9 @@ static void epd_phy_reset() {
 /// Wait for the busy signal to end.
 static void epd_phy_wait_until_idle() {
     // Wait for busy=high
-    while (PIN_getInputValue(EPAPER_BUSY)); //LOW: idle, HIGH: busy
-    // TODO: yield
+    while (PIN_getInputValue(EPAPER_BUSY)) { //LOW: idle, HIGH: busy
+        Task_yield();
+    }
 }
 
 /// Set the display window for this update.
@@ -120,10 +120,8 @@ void epd_clear() {
 
 /// Enter deep sleep mode.
 void epd_phy_deepsleep() {
-    // TODO: Actually use this.
     epd_phy_spi_cmd(DEEP_SLEEP_MODE);
     epd_phy_spi_data(0x01);
-    // EPD_WaitUntilIdle();
 }
 
 /// Initialize the GPIO and peripherals needed for the EPD.
@@ -180,7 +178,7 @@ const unsigned char epd_phy_lut_partial_update[] = {
 };
 
 /// Reset, wake, and initialize the e-paper display, to get it ready to write.
-void epd_phy_init(uint8_t partial_update) {
+void epd_phy_begin(uint8_t partial_update) {
     epd_phy_reset();
 
     epd_phy_spi_cmd(DRIVER_OUTPUT_CONTROL);
@@ -218,7 +216,7 @@ void epd_phy_init(uint8_t partial_update) {
 
 void epd_phy_flush_buffer() {
     // TODO: Decide when to use 1 vs 0.
-    epd_phy_init(0);
+    epd_phy_begin(0);
     uint16_t Width, Height;
     Width = (EPD_WIDTH % 8 == 0)? (EPD_WIDTH / 8 ): (EPD_WIDTH / 8 + 1);
     Height = EPD_HEIGHT;
@@ -237,4 +235,10 @@ void epd_phy_flush_buffer() {
     }
     epd_phy_activate();
     epd_phy_deepsleep();
+}
+
+/// The very first initialization of the EPD.
+void epd_phy_init() {
+    epd_phy_init_gpio();
+    epd_init_display_buffer(1);
 }

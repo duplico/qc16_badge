@@ -26,13 +26,6 @@
 #define LANDSCAPE
 //#define LANDSCAPE_FLIP
 
-
-//*****************************************************************************
-//
-// Defines for the pins that are used to communicate with the LCD Driver
-//
-//*****************************************************************************
-
 // TODO: Move to qc16.h once created:
 
 #define BIT0 0b00000001
@@ -56,25 +49,7 @@
 
 //*****************************************************************************
 //
-// This driver operates in four different screen orientations.  They are:
-//
-// * Portrait - The screen is taller than it is wide. This is selected by defining
-//              LANDSCAPE.
-//
-// * Landscape - The screen is wider than it is tall. This is selected by defining
-//               PORTRAIT.
-//
-// * Portrait flip - The screen is taller than it is wide. This is
-//                   selected by defining LANDSCAPE_FLIP.
-//
-// * Landscape flip - The screen is wider than it is tall. This is
-//                    selected by defining PORTRAIT_FLIP.
-//
-// These can also be imagined in terms of screen rotation; if landscape mode is
-// 0 degrees of screen rotation, portrait flip is 90 degrees of clockwise
-// rotation, landscape flip is 180 degrees of rotation, and portrait is
-// 270 degress of clockwise rotation.
-//
+// This driver operates in four different screen orientations.
 // If no screen orientation is selected, "landscape" mode will be used.
 //
 //*****************************************************************************
@@ -109,39 +84,10 @@
 #endif
 
 
-//*****************************************************************************
-//
-// Various LCD Controller command name labels and associated control bits
-//
-//*****************************************************************************
-
-
-//*****************************************************************************
-//
-// Macros for the Display Driver
-//
-//*****************************************************************************
-
-/* All macros can go here. This is typically the color translation function (example below)
-and could also include Set_Address(), Write_Data(), etc. */
-
-
-//
-// Translates a 24-bit RGB color to a display driver-specific color.
-//
-// \param c is the 24-bit RGB color.  The least-significant byte is the blue
-// channel, the next byte is the green channel, and the third byte is the red
-// channel.
-//
-// \return Returns BLACK if the input is black; WHITE otherwise.
-
+/// Translates a 24-bit RGB color to a display driver-specific color.
+/// \return Returns BLACK if the input is black; WHITE otherwise.
 #define DPYCOLORTRANSLATE(c) (c ? 1 : 0)
 
-//*****************************************************************************
-//
-// Prototypes for the globals exported by this driver.
-//
-//*****************************************************************************
 void init_epd();
 extern Graphics_Display epd_grGraphicsDisplay;
 extern const Graphics_Display_Functions epd_grDisplayFunctions;

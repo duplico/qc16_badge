@@ -31,12 +31,14 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
 
     Graphics_Context gr_context;
     Graphics_initContext(&gr_context, &epd_grGraphicsDisplay, &epd_grDisplayFunctions);
-    Graphics_setBackgroundColor(&gr_context, GRAPHICS_COLOR_BLACK);
-    Graphics_setForegroundColorTranslated(&gr_context, GRAPHICS_COLOR_WHITE);
+    Graphics_setBackgroundColor(&gr_context, GRAPHICS_COLOR_WHITE);
+    Graphics_setForegroundColorTranslated(&gr_context, GRAPHICS_COLOR_BLACK);
     Graphics_clearDisplay(&gr_context);
     Graphics_fillCircle(&gr_context, 64, 64, 32);
     Graphics_drawLine(&gr_context, 0, 16, 295, 16);
+    epd_flip();
     Graphics_flushBuffer(&gr_context);
+//    Graphics_flushBuffer(&gr_context);
 
     for (;;)
     {

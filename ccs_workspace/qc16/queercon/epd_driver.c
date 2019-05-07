@@ -27,7 +27,6 @@
 
 uint8_t epd_upside_down = 0;
 
-
 //*****************************************************************************
 //
 // Suggested functions to help facilitate writing the required functions below
@@ -39,8 +38,8 @@ uint8_t epd_upside_down = 0;
  */
 void init_epd()
 {
-    epd_phy_init_gpio();
-    epd_init_display_buffer(0);
+    // TODO: This should probably move to a "UI" section.
+    epd_phy_init();
 }
 
 // TODO: Move
@@ -83,7 +82,7 @@ void epd_flip() {
 //*****************************************************************************
 // TemplateDisplayFix
 static void epd_grPixelDraw(const Graphics_Display * pvDisplayData,
-                               int16_t lX, int16_t lY, uint16_t ulValue) {
+                            int16_t lX, int16_t lY, uint16_t ulValue) {
     if (lX < 0 || lY < 0) {
         return;
     }
@@ -112,10 +111,10 @@ static void epd_grPixelDraw(const Graphics_Display * pvDisplayData,
     buffer_addr = ((LCD_X_SIZE/8) * mapped_y) + (mapped_x / 8);
 
     if (ulValue) {
-//        GRAM_BUFFER(mapped_y, mapped_x) |= val;
+        //        GRAM_BUFFER(mapped_y, mapped_x) |= val;
         epd_display_buffer[buffer_addr] |= val;
     } else {
-//        GRAM_BUFFER(mapped_y, mapped_x) &= ~val;
+        //        GRAM_BUFFER(mapped_y, mapped_x) &= ~val;
         epd_display_buffer[buffer_addr] &= ~val;
     }
 }
@@ -146,10 +145,10 @@ static void epd_grPixelDraw(const Graphics_Display * pvDisplayData,
 //
 //*****************************************************************************
 static void epd_grPixelDrawMultiple(const Graphics_Display * pvDisplayData,
-                                       int16_t lX, int16_t lY, int16_t lX0,
-                                       int16_t lCount, int16_t lBPP,
-                                       const uint8_t *pucData,
-                                       const uint32_t *pucPalette) {
+                                    int16_t lX, int16_t lY, int16_t lX0,
+                                    int16_t lCount, int16_t lBPP,
+                                    const uint8_t *pucData,
+                                    const uint32_t *pucPalette) {
     uint16_t ulByte;
     // Loop while there are more pixels to draw
     while(lCount > 0)
@@ -190,18 +189,18 @@ static void epd_grPixelDrawMultiple(const Graphics_Display * pvDisplayData,
 //
 //*****************************************************************************
 static void epd_grLineDrawH(const Graphics_Display * pvDisplayData,
-                               int16_t lX1, int16_t lX2, int16_t lY,
-                               uint16_t ulValue) {
-  /* Ideally this function shouldn't call pixel draw. It should have it's own
+                            int16_t lX1, int16_t lX2, int16_t lY,
+                            uint16_t ulValue) {
+    /* Ideally this function shouldn't call pixel draw. It should have it's own
   definition using the built in auto-incrementing of the LCD controller and its
   own calls to SetAddress() and WriteData(). Better yet, SetAddress() and WriteData()
   can be made into macros as well to eliminate function call overhead. */
 
-  do
-  {
-    epd_grPixelDraw(pvDisplayData, lX1, lY, ulValue);
-  }
-  while(lX1++ < lX2);
+    do
+    {
+        epd_grPixelDraw(pvDisplayData, lX1, lY, ulValue);
+    }
+    while(lX1++ < lX2);
 }
 
 //*****************************************************************************
@@ -223,11 +222,11 @@ static void epd_grLineDrawH(const Graphics_Display * pvDisplayData,
 //*****************************************************************************
 static void epd_grLineDrawV(const Graphics_Display * pvDisplayData, int16_t lX,
                             int16_t lY1, int16_t lY2, uint16_t ulValue) {
-  do
-  {
-    epd_grPixelDraw(pvDisplayData, lX, lY1, ulValue);
-  }
-  while(lY1++ < lY2);
+    do
+    {
+        epd_grPixelDraw(pvDisplayData, lX, lY1, ulValue);
+    }
+    while(lY1++ < lY2);
 }
 
 //*****************************************************************************
@@ -248,16 +247,16 @@ static void epd_grLineDrawV(const Graphics_Display * pvDisplayData, int16_t lX,
 //
 //*****************************************************************************
 static void epd_grRectFill(const Graphics_Display * pvDisplayData,
-                              const tRectangle *pRect, uint16_t ulValue) {
-  int16_t x0 = pRect->sXMin;
-  int16_t x1 = pRect->sXMax;
-  int16_t y0 = pRect->sYMin;
-  int16_t y1 = pRect->sYMax;
+                           const tRectangle *pRect, uint16_t ulValue) {
+    int16_t x0 = pRect->sXMin;
+    int16_t x1 = pRect->sXMax;
+    int16_t y0 = pRect->sYMin;
+    int16_t y1 = pRect->sYMax;
 
-  while(y0++ <= y1)
-  {
-    epd_grLineDrawH(pvDisplayData, x0, x1, y0, ulValue);
-  }
+    while(y0++ <= y1)
+    {
+        epd_grLineDrawH(pvDisplayData, x0, x1, y0, ulValue);
+    }
 }
 
 //*****************************************************************************
@@ -278,7 +277,7 @@ static void epd_grRectFill(const Graphics_Display * pvDisplayData,
 //
 //*****************************************************************************
 static uint32_t epd_grColorTranslate(const Graphics_Display *pvDisplayData,
-                                        uint32_t ulValue) {
+                                     uint32_t ulValue) {
     //
     // Translate from a 24-bit RGB color to a color accepted by the LCD.
     //
@@ -318,7 +317,7 @@ static void epd_grFlush(const Graphics_Display *pvDisplayData) {
 //
 //*****************************************************************************
 static void epd_grClearScreen(const Graphics_Display *pvDisplayData,
-                                 uint16_t ulValue) {
+                              uint16_t ulValue) {
     // This fills the entire display to clear it
     // Some LCD drivers support a simple command to clear the display
 
@@ -329,14 +328,14 @@ static void epd_grClearScreen(const Graphics_Display *pvDisplayData,
 /// All the functions needed for grlib.
 const Graphics_Display_Functions epd_grDisplayFunctions =
 {
-    .pfnPixelDraw = epd_grPixelDraw,
-    .pfnPixelDrawMultiple = epd_grPixelDrawMultiple,
-    .pfnLineDrawH = epd_grLineDrawH,
-    .pfnLineDrawV = epd_grLineDrawV,
-    .pfnRectFill = epd_grRectFill,
-    .pfnColorTranslate = epd_grColorTranslate,
-    .pfnFlush = epd_grFlush,
-    .pfnClearDisplay = epd_grClearScreen
+ .pfnPixelDraw = epd_grPixelDraw,
+ .pfnPixelDrawMultiple = epd_grPixelDrawMultiple,
+ .pfnLineDrawH = epd_grLineDrawH,
+ .pfnLineDrawV = epd_grLineDrawV,
+ .pfnRectFill = epd_grRectFill,
+ .pfnColorTranslate = epd_grColorTranslate,
+ .pfnFlush = epd_grFlush,
+ .pfnClearDisplay = epd_grClearScreen
 };
 
 /// The driver definition for grlib.

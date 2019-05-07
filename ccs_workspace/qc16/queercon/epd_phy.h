@@ -62,7 +62,9 @@ void epd_phy_init_gpio();
 /// Initialize the display buffer for the e-paper display.
 void epd_init_display_buffer(uint16_t ulValue);
 /// Reset, wake, and initialize the e-paper display, to get it ready to write.
-void epd_phy_init(uint8_t partial_update);
+void epd_phy_begin(uint8_t partial_update);
 void epd_phy_flush_buffer();
+/// Initialize the physical/low-level layer of the e-paper.
+void epd_phy_init();
 
 #endif /* QUEERCON_EPD_PHY_H_ */

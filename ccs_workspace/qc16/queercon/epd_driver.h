@@ -168,10 +168,10 @@ and could also include Set_Address(), Write_Data(), etc. */
 // Prototypes for the globals exported by this driver.
 //
 //*****************************************************************************
-extern void qc12_oledInit(uint8_t invert);
+extern void init_epd();
 extern void qc12oled_WriteCommand(uint8_t ucCommand);
-extern Graphics_Display g_sqc12_oled;
-extern const Graphics_Display_Functions gf_epd;
-extern uint8_t oled_memory[];
+extern Graphics_Display epd_grGraphicsDisplay;
+extern const Graphics_Display_Functions epd_grDisplayFunctions;
+extern uint8_t epd_display_buffer[];
 
 #endif /* QUEERCON_EPD_DRIVER_H_ */

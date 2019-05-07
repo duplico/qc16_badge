@@ -90,7 +90,6 @@
 #include <string.h>
 
 #include <ti/grlib/grlib.h>
-//#include <driverlib/MSP430FR5xx_6xx/driverlib.h>
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/Task.h>
 
@@ -103,12 +102,11 @@
 //
 //*****************************************************************************
 
-/* Global buffer for the display. */
-uint8_t oled_memory[(LCD_X_SIZE * LCD_Y_SIZE * BPP + 7) / 8];
+uint8_t epd_display_buffer[(LCD_X_SIZE * LCD_Y_SIZE * BPP + 7) / 8];
 
-uint8_t oled_upside_down = 0;
+uint8_t epd_upside_down = 0;
 
-const unsigned char lut_full_update[] = {
+const unsigned char epd_lut_full_update[] = {
      0x02, 0x02, 0x01, 0x11, 0x12, 0x12, 0x22, 0x22,
      0x66, 0x69, 0x69, 0x59, 0x58, 0x99, 0x99, 0x88,
      0x00, 0x00, 0x00, 0x00, 0xF8, 0xB4, 0x13, 0x51,
@@ -128,62 +126,58 @@ const unsigned char lut_partial_update[] = {
 //
 //*****************************************************************************
 
-#define GRAM_BUFFER(mapped_x, mapped_y) oled_memory[((LCD_X_SIZE/8) * mapped_y) + (mapped_x / 8)]
+//#define GRAM_BUFFER(mapped_x, mapped_y) oled_memory[((LCD_X_SIZE/8) * mapped_y) + (mapped_x / 8)]
 
-unsigned char masterRxBuffer[5];
-unsigned char masterTxBuffer[5];
-
-SPI_Handle epaper_spi;
-PIN_Handle epaper_pin;
+SPI_Handle epd_spi_h;
+PIN_Handle epd_pin_h;
 
 // TODO: Use a longer transaction for the full update?
-void spi_cmd(uint8_t cmd) {
+void epd_phy_spi_cmd(uint8_t cmd) {
     uint8_t tx_buf[1];
     tx_buf[0] = cmd;
     SPI_Transaction transaction;
     transaction.count = 1;
     transaction.txBuf = (void *) tx_buf;
-    transaction.rxBuf = (void *) masterRxBuffer;
+    transaction.rxBuf = NULL;
     // Set DC low for CMD
-    PIN_setOutputValue(epaper_pin, EPAPER_DCN, 0);
+    PIN_setOutputValue(epd_pin_h, EPAPER_DCN, 0);
     // Set CS low
-    PIN_setOutputValue(epaper_pin, EPAPER_CSN, 0);
+    PIN_setOutputValue(epd_pin_h, EPAPER_CSN, 0);
     // Transmit
-    SPI_transfer(epaper_spi, &transaction);
+    SPI_transfer(epd_spi_h, &transaction);
     // Set CS high
-    PIN_setOutputValue(epaper_pin, EPAPER_CSN, 1);
+    PIN_setOutputValue(epd_pin_h, EPAPER_CSN, 1);
 }
 
-void spi_data(uint8_t dat) {
+void epd_phy_spi_data(uint8_t dat) {
     uint8_t tx_buf[1];
     tx_buf[0] = dat;
     SPI_Transaction transaction;
     transaction.count = 1;
     transaction.txBuf = (void *) tx_buf;
-    transaction.rxBuf = (void *) masterRxBuffer;
+    transaction.rxBuf = NULL;
     // Set DC high for DATA
-    PIN_setOutputValue(epaper_pin, EPAPER_DCN, 1);
+    PIN_setOutputValue(epd_pin_h, EPAPER_DCN, 1);
     // Set CS low
-    PIN_setOutputValue(epaper_pin, EPAPER_CSN, 0);
+    PIN_setOutputValue(epd_pin_h, EPAPER_CSN, 0);
     // Transmit
-    SPI_transfer(epaper_spi, &transaction);
+    SPI_transfer(epd_spi_h, &transaction);
     // Set CS high
-    PIN_setOutputValue(epaper_pin, EPAPER_CSN, 1);
+    PIN_setOutputValue(epd_pin_h, EPAPER_CSN, 1);
 }
 
-/******************************************************************************
-function :  Software reset
-parameter:
-******************************************************************************/
-static void EPD_Reset(void)
+/**
+ * Hardware reset of the display, using the RESN line.
+ */
+static void epd_phy_reset(void)
 {
-
+    // TODO: timing
     // Reset display driver IC (Pulse EPAPER_RESN low for ?????)
-    PIN_setOutputValue(epaper_pin, EPAPER_RESN, 1);
+    PIN_setOutputValue(epd_pin_h, EPAPER_RESN, 1);
     Task_sleep(100000); // Sleep system ticks (not sure how long these are)
-    PIN_setOutputValue(epaper_pin, EPAPER_RESN, 0);
+    PIN_setOutputValue(epd_pin_h, EPAPER_RESN, 0);
     Task_sleep(100000); // Sleep system ticks (not sure how long these are)
-    PIN_setOutputValue(epaper_pin, EPAPER_RESN, 1);
+    PIN_setOutputValue(epd_pin_h, EPAPER_RESN, 1);
     Task_sleep(100000); // Sleep system ticks (not sure how long these are)
 }
 
@@ -191,7 +185,7 @@ static void EPD_Reset(void)
 function :  Wait until the busy_pin goes LOW
 parameter:
 ******************************************************************************/
-void EPD_WaitUntilIdle(void)
+void epd_phy_wait_until_idle(void)
 {
     // Wait for busy=high
     while (PIN_getInputValue(EPAPER_BUSY)); //LOW: idle, HIGH: busy
@@ -202,31 +196,31 @@ void EPD_WaitUntilIdle(void)
 function :  Setting the display window
 parameter:
 ******************************************************************************/
-static void EPD_SetWindows(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend)
+static void epd_phy_set_window(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend)
 {
-    spi_cmd(SET_RAM_X_ADDRESS_START_END_POSITION);
-    spi_data((Xstart >> 3) & 0xFF);
-    spi_data((Xend >> 3) & 0xFF);
+    epd_phy_spi_cmd(SET_RAM_X_ADDRESS_START_END_POSITION);
+    epd_phy_spi_data((Xstart >> 3) & 0xFF);
+    epd_phy_spi_data((Xend >> 3) & 0xFF);
 
-    spi_cmd(SET_RAM_Y_ADDRESS_START_END_POSITION);
-    spi_data(Ystart & 0xFF);
-    spi_data((Ystart >> 8) & 0xFF);
-    spi_data(Yend & 0xFF);
-    spi_data((Yend >> 8) & 0xFF);
+    epd_phy_spi_cmd(SET_RAM_Y_ADDRESS_START_END_POSITION);
+    epd_phy_spi_data(Ystart & 0xFF);
+    epd_phy_spi_data((Ystart >> 8) & 0xFF);
+    epd_phy_spi_data(Yend & 0xFF);
+    epd_phy_spi_data((Yend >> 8) & 0xFF);
 }
 
 /******************************************************************************
 function :  Set Cursor
 parameter:
 ******************************************************************************/
-static void EPD_SetCursor(uint16_t Xstart, uint16_t Ystart)
+static void epd_phy_set_cursor(uint16_t Xstart, uint16_t Ystart)
 {
-    spi_cmd(SET_RAM_X_ADDRESS_COUNTER);
-    spi_data((Xstart >> 3) & 0xFF);
+    epd_phy_spi_cmd(SET_RAM_X_ADDRESS_COUNTER);
+    epd_phy_spi_data((Xstart >> 3) & 0xFF);
 
-    spi_cmd(SET_RAM_Y_ADDRESS_COUNTER);
-    spi_data(Ystart & 0xFF);
-    spi_data((Ystart >> 8) & 0xFF);
+    epd_phy_spi_cmd(SET_RAM_Y_ADDRESS_COUNTER);
+    epd_phy_spi_data(Ystart & 0xFF);
+    epd_phy_spi_data((Ystart >> 8) & 0xFF);
 
 }
 
@@ -234,45 +228,45 @@ static void EPD_SetCursor(uint16_t Xstart, uint16_t Ystart)
 function :  Turn On Display
 parameter:
 ******************************************************************************/
-static void EPD_TurnOnDisplay(void)
+static void epd_phy_activate(void)
 {
-    spi_cmd(DISPLAY_UPDATE_CONTROL_2);
-    spi_data(0xC4);
-    spi_cmd(MASTER_ACTIVATION);
-    spi_cmd(TERMINATE_FRAME_READ_WRITE);
+    epd_phy_spi_cmd(DISPLAY_UPDATE_CONTROL_2);
+    epd_phy_spi_data(0xC4);
+    epd_phy_spi_cmd(MASTER_ACTIVATION);
+    epd_phy_spi_cmd(TERMINATE_FRAME_READ_WRITE);
 
-    EPD_WaitUntilIdle();
+    epd_phy_wait_until_idle();
 }
 
 /******************************************************************************
 function :  Clear screen
 parameter:
 ******************************************************************************/
-void EPD_Clear(void)
+void epd_clear(void)
 {
     uint16_t Width, Height;
     Width = (LCD_X_SIZE % 8 == 0)? (LCD_X_SIZE / 8 ): (LCD_X_SIZE / 8 + 1);
     Height = LCD_Y_SIZE;
-    EPD_SetWindows(0, 0, LCD_X_SIZE, LCD_Y_SIZE);
+    epd_phy_set_window(0, 0, LCD_X_SIZE, LCD_Y_SIZE);
     for (uint16_t j = 0; j < Height; j++) {
-        EPD_SetCursor(0, j);
-        spi_cmd(WRITE_RAM);
+        epd_phy_set_cursor(0, j);
+        epd_phy_spi_cmd(WRITE_RAM);
         for (uint16_t i = 0; i < Width; i++) {
-            spi_data(0XFF);
+            epd_phy_spi_data(0XFF);
         }
     }
-    EPD_TurnOnDisplay();
+    epd_phy_activate();
 }
 
 /******************************************************************************
 function :  Enter sleep mode
 parameter:
 ******************************************************************************/
-void EPD_Sleep(void)
+void epd_phy_deepsleep(void)
 {
     // TODO: Actually use this.
-    spi_cmd(DEEP_SLEEP_MODE);
-    spi_data(0x01);
+    epd_phy_spi_cmd(DEEP_SLEEP_MODE);
+    epd_phy_spi_data(0x01);
     // EPD_WaitUntilIdle();
 }
 
@@ -280,7 +274,7 @@ void EPD_Sleep(void)
 // This function configures the GPIO pins used to control the LCD display
 // when the basic GPIO interface is in use. On exit, the LCD controller
 // has been reset and is ready to receive command and data writes.
-static void InitGPIOLCDInterface()
+static void epd_phy_init_gpio()
 {
     PIN_State epaper_pin_state;
     PIN_Config BoardGpioInitTable[] = {
@@ -291,14 +285,14 @@ static void InitGPIOLCDInterface()
     PIN_TERMINATE
     };
 
-    epaper_pin = PIN_open(&epaper_pin_state, BoardGpioInitTable);
+    epd_pin_h = PIN_open(&epaper_pin_state, BoardGpioInitTable);
 
     SPI_Params      spiParams;
 
     /* Open SPI as master (default) */
     SPI_Params_init(&spiParams); // Defaults are OK
-    epaper_spi = SPI_open(Board_SPI_MASTER, &spiParams);
-    if (epaper_spi == NULL) {
+    epd_spi_h = SPI_open(Board_SPI_MASTER, &spiParams);
+    if (epd_spi_h == NULL) {
         while (1);
     }
 }
@@ -307,61 +301,59 @@ static void InitGPIOLCDInterface()
 // Initialize DisplayBuffer.
 // This function initializes the display buffer and discards any cached data.
 static void
-InitLCDDisplayBuffer(uint16_t ulValue)
+epd_init_display_buffer(uint16_t ulValue)
 {
     // Ok, so this buffer contains the data to be displayed.
     //  Each pixel is just one bit. Natively this is "portrait" address
-    // TODO: Is this explanation correct?
     //  mode, with the first byte occupying the leftmost 8 pixels
     //  of the top row, with the connector at the bottom.
+    // In the native address scheme (used by all the epd_phy functions),
+    //  the "bottom" of the display is where the cable comes out.
 
     // Therefore, our buffer is height*width/8 bytes.
 
     // Let's clear it out.
     uint8_t init_byte = ulValue ? 0xff : 0x00;
-    memset(oled_memory, init_byte, sizeof(oled_memory));
+    memset(epd_display_buffer, init_byte, sizeof(epd_display_buffer));
 }
 
-uint8_t EPD_Init(const unsigned char* lut)
-{
-    EPD_Reset();
+void epd_phy_init(const unsigned char* lut) {
+    epd_phy_reset();
 
-    spi_cmd(DRIVER_OUTPUT_CONTROL);
-    spi_data((LCD_Y_SIZE - 1) & 0xFF);
-    spi_data(((LCD_Y_SIZE - 1) >> 8) & 0xFF);
-    spi_data(0x00);                     // GD = 0; SM = 0; TB = 0;
-    spi_cmd(BOOSTER_SOFT_START_CONTROL);
-    spi_data(0xD7);
-    spi_data(0xD6);
-    spi_data(0x9D);
-    spi_cmd(WRITE_VCOM_REGISTER);
-    spi_data(0xA8);                     // VCOM 7C
-    spi_cmd(SET_DUMMY_LINE_PERIOD);
-    spi_data(0x1A);                     // 4 dummy lines per gate
-    spi_cmd(SET_GATE_TIME);
-    spi_data(0x08);                     // 2us per line
-    spi_cmd(BORDER_WAVEFORM_CONTROL);
-    spi_data(0x03);
-    spi_cmd(DATA_ENTRY_MODE_SETTING);
-    spi_data(0x03);
+    epd_phy_spi_cmd(DRIVER_OUTPUT_CONTROL);
+    epd_phy_spi_data((LCD_Y_SIZE - 1) & 0xFF);
+    epd_phy_spi_data(((LCD_Y_SIZE - 1) >> 8) & 0xFF);
+    epd_phy_spi_data(0x00);                     // GD = 0; SM = 0; TB = 0;
+    epd_phy_spi_cmd(BOOSTER_SOFT_START_CONTROL);
+    epd_phy_spi_data(0xD7);
+    epd_phy_spi_data(0xD6);
+    epd_phy_spi_data(0x9D);
+    epd_phy_spi_cmd(WRITE_VCOM_REGISTER);
+    epd_phy_spi_data(0xA8);                     // VCOM 7C
+    epd_phy_spi_cmd(SET_DUMMY_LINE_PERIOD);
+    epd_phy_spi_data(0x1A);                     // 4 dummy lines per gate
+    epd_phy_spi_cmd(SET_GATE_TIME);
+    epd_phy_spi_data(0x08);                     // 2us per line
+    epd_phy_spi_cmd(BORDER_WAVEFORM_CONTROL);
+    epd_phy_spi_data(0x03);
+    epd_phy_spi_cmd(DATA_ENTRY_MODE_SETTING);
+    epd_phy_spi_data(0x03);
 
     //set the look-up table register
-    spi_cmd(WRITE_LUT_REGISTER);
+    epd_phy_spi_cmd(WRITE_LUT_REGISTER);
     for (uint16_t i = 0; i < 30; i++) {
-        spi_data(lut[i]);
+        epd_phy_spi_data(lut[i]);
     }
-    return 0;
 }
 
-// Initializes the display driver.
-// This function initializes the LCD controller
-// TemplateDisplayFix
-void
-qc12_oledInit(uint8_t invert)
+/**
+ * Initial initialization (lol) of the display. Call this only once.
+ */
+void init_epd()
 {
-    InitGPIOLCDInterface();
-    InitLCDDisplayBuffer(0);
-    EPD_Init(lut_full_update);
+    epd_phy_init_gpio();
+    epd_init_display_buffer(0);
+    epd_phy_init(epd_lut_full_update);
 //    EPD_Clear();
 //    EPD_Sleep();
 }
@@ -389,10 +381,8 @@ qc12_oledInit(uint8_t invert)
 //
 //*****************************************************************************
 // TemplateDisplayFix
-static void
-qc12_oledPixelDraw(const Graphics_Display * pvDisplayData, int16_t lX, int16_t lY,
-                                   uint16_t ulValue)
-{
+static void epd_grPixelDraw(const Graphics_Display * pvDisplayData,
+                               int16_t lX, int16_t lY, uint16_t ulValue) {
     if (lX < 0 || lY < 0) {
         return;
     }
@@ -414,10 +404,10 @@ qc12_oledPixelDraw(const Graphics_Display * pvDisplayData, int16_t lX, int16_t l
 
     if (ulValue) {
 //        GRAM_BUFFER(mapped_y, mapped_x) |= val;
-        oled_memory[buffer_addr] |= val;
+        epd_display_buffer[buffer_addr] |= val;
     } else {
 //        GRAM_BUFFER(mapped_y, mapped_x) &= ~val;
-        oled_memory[buffer_addr] &= ~val;
+        epd_display_buffer[buffer_addr] &= ~val;
     }
 }
 
@@ -446,13 +436,11 @@ qc12_oledPixelDraw(const Graphics_Display * pvDisplayData, int16_t lX, int16_t l
 //! \return None.
 //
 //*****************************************************************************
-static void
-qc12_oledPixelDrawMultiple(const Graphics_Display * pvDisplayData, int16_t lX,
-                                           int16_t lY, int16_t lX0, int16_t lCount,
-                                           int16_t lBPP,
-                                           const uint8_t *pucData,
-                                           const uint32_t *pucPalette)
-{
+static void epd_grPixelDrawMultiple(const Graphics_Display * pvDisplayData,
+                                       int16_t lX, int16_t lY, int16_t lX0,
+                                       int16_t lCount, int16_t lBPP,
+                                       const uint8_t *pucData,
+                                       const uint32_t *pucPalette) {
     uint16_t ulByte;
     // Loop while there are more pixels to draw
     while(lCount > 0)
@@ -465,7 +453,7 @@ qc12_oledPixelDrawMultiple(const Graphics_Display * pvDisplayData, int16_t lX,
         {
             // Draw this pixel in the appropriate color
             if (((uint16_t *)pucPalette)[(ulByte >> (7 - lX0)) & 1]) {
-                qc12_oledPixelDraw(pvDisplayData, lX, lY, 1);
+                epd_grPixelDraw(pvDisplayData, lX, lY, 1);
             }
             lX++;
         }
@@ -492,10 +480,9 @@ qc12_oledPixelDrawMultiple(const Graphics_Display * pvDisplayData, int16_t lX,
 //! \return None.
 //
 //*****************************************************************************
-static void
-qc12_oledLineDrawH(const Graphics_Display * pvDisplayData, int16_t lX1, int16_t lX2,
-                                   int16_t lY, uint16_t ulValue)
-{
+static void epd_grLineDrawH(const Graphics_Display * pvDisplayData,
+                               int16_t lX1, int16_t lX2, int16_t lY,
+                               uint16_t ulValue) {
   /* Ideally this function shouldn't call pixel draw. It should have it's own
   definition using the built in auto-incrementing of the LCD controller and its
   own calls to SetAddress() and WriteData(). Better yet, SetAddress() and WriteData()
@@ -503,7 +490,7 @@ qc12_oledLineDrawH(const Graphics_Display * pvDisplayData, int16_t lX1, int16_t 
 
   do
   {
-    qc12_oledPixelDraw(pvDisplayData, lX1, lY, ulValue);
+    epd_grPixelDraw(pvDisplayData, lX1, lY, ulValue);
   }
   while(lX1++ < lX2);
 }
@@ -525,13 +512,11 @@ qc12_oledLineDrawH(const Graphics_Display * pvDisplayData, int16_t lX1, int16_t 
 //! \return None.
 //
 //*****************************************************************************
-static void
-qc12_oledLineDrawV(const Graphics_Display * pvDisplayData, int16_t lX, int16_t lY1,
-                                   int16_t lY2, uint16_t ulValue)
-{
+static void epd_grLineDrawV(const Graphics_Display * pvDisplayData, int16_t lX,
+                            int16_t lY1, int16_t lY2, uint16_t ulValue) {
   do
   {
-    qc12_oledPixelDraw(pvDisplayData, lX, lY1, ulValue);
+    epd_grPixelDraw(pvDisplayData, lX, lY1, ulValue);
   }
   while(lY1++ < lY2);
 }
@@ -553,10 +538,8 @@ qc12_oledLineDrawV(const Graphics_Display * pvDisplayData, int16_t lX, int16_t l
 //! \return None.
 //
 //*****************************************************************************
-static void
-qc12_oledRectFill(const Graphics_Display * pvDisplayData, const tRectangle *pRect,
-                                  uint16_t ulValue)
-{
+static void epd_grRectFill(const Graphics_Display * pvDisplayData,
+                              const tRectangle *pRect, uint16_t ulValue) {
   int16_t x0 = pRect->sXMin;
   int16_t x1 = pRect->sXMax;
   int16_t y0 = pRect->sYMin;
@@ -564,7 +547,7 @@ qc12_oledRectFill(const Graphics_Display * pvDisplayData, const tRectangle *pRec
 
   while(y0++ <= y1)
   {
-    qc12_oledLineDrawH(pvDisplayData, x0, x1, y0, ulValue);
+    epd_grLineDrawH(pvDisplayData, x0, x1, y0, ulValue);
   }
 }
 
@@ -585,11 +568,8 @@ qc12_oledRectFill(const Graphics_Display * pvDisplayData, const tRectangle *pRec
 //! \return Returns the display-driver specific color.
 //
 //*****************************************************************************
-static uint32_t qc12_oledColorTranslate(const Graphics_Display * pvDisplayData,
-                                        uint32_t  ulValue)
-{
-    /* The DPYCOLORTRANSLATE macro should be defined in TemplateDriver.h */
-
+static uint32_t epd_grColorTranslate(const Graphics_Display *pvDisplayData,
+                                        uint32_t ulValue) {
     //
     // Translate from a 24-bit RGB color to a color accepted by the LCD.
     //
@@ -610,9 +590,7 @@ static uint32_t qc12_oledColorTranslate(const Graphics_Display * pvDisplayData,
 //! \return None.
 //
 //*****************************************************************************
-static void
-qc12_oledFlush(const Graphics_Display *pvDisplayData)
-{
+static void epd_grFlush(const Graphics_Display *pvDisplayData) {
     // TODO: Determine whether to clear and replace, or do a selective update.
 
     uint16_t Width, Height;
@@ -621,17 +599,17 @@ qc12_oledFlush(const Graphics_Display *pvDisplayData)
 
     uint32_t Addr = 0;
     // UDOUBLE Offset = ImageName;
-    EPD_SetWindows(0, 0, LCD_X_SIZE, LCD_Y_SIZE);
+    epd_phy_set_window(0, 0, LCD_X_SIZE, LCD_Y_SIZE);
     for (uint16_t j = 0; j < Height; j++) {
-        EPD_SetCursor(0, j);
-        spi_cmd(WRITE_RAM);
+        epd_phy_set_cursor(0, j);
+        epd_phy_spi_cmd(WRITE_RAM);
         // TODO: Just do a full spi write here, and yield.
         for (uint16_t i = 0; i < Width; i++) {
             Addr = i + j * Width;
-            spi_data(oled_memory[Addr]);
+            epd_phy_spi_data(epd_display_buffer[Addr]);
         }
     }
-    EPD_TurnOnDisplay();
+    epd_phy_activate();
 }
 
 //*****************************************************************************
@@ -647,42 +625,32 @@ qc12_oledFlush(const Graphics_Display *pvDisplayData)
 //! \return None.
 //
 //*****************************************************************************
-static void
-qc12_oledClearScreen (const Graphics_Display *pvDisplayData, uint16_t ulValue)
-{
+static void epd_grClearScreen(const Graphics_Display *pvDisplayData,
+                                 uint16_t ulValue) {
     // This fills the entire display to clear it
     // Some LCD drivers support a simple command to clear the display
 
     uint8_t init_byte = ulValue ? 0xff : 0x00;
-    memset(oled_memory, init_byte, sizeof(oled_memory));
+    memset(epd_display_buffer, init_byte, sizeof(epd_display_buffer));
 }
 
-//*****************************************************************************
-//
-//! The display structure that describes the driver for the blank template.
-//
-//*****************************************************************************
-const Graphics_Display_Functions gf_epd =
+/// All the functions needed for grlib.
+const Graphics_Display_Functions epd_grDisplayFunctions =
 {
-    .pfnPixelDraw = qc12_oledPixelDraw,
-    .pfnPixelDrawMultiple = qc12_oledPixelDrawMultiple,
-    .pfnLineDrawH = qc12_oledLineDrawH,
-    .pfnLineDrawV = qc12_oledLineDrawV,
-    .pfnRectFill = qc12_oledRectFill,
-    .pfnColorTranslate = qc12_oledColorTranslate,
-    .pfnFlush = qc12_oledFlush,
-    .pfnClearDisplay = qc12_oledClearScreen
+    .pfnPixelDraw = epd_grPixelDraw,
+    .pfnPixelDrawMultiple = epd_grPixelDrawMultiple,
+    .pfnLineDrawH = epd_grLineDrawH,
+    .pfnLineDrawV = epd_grLineDrawV,
+    .pfnRectFill = epd_grRectFill,
+    .pfnColorTranslate = epd_grColorTranslate,
+    .pfnFlush = epd_grFlush,
+    .pfnClearDisplay = epd_grClearScreen
 };
 
-//*****************************************************************************
-//
-//! This structure defines the characteristics of a display driver.
-//
-//*****************************************************************************
-
-Graphics_Display g_sqc12_oled = {
+/// The driver definition for grlib.
+Graphics_Display epd_grGraphicsDisplay = {
     .size = sizeof(Graphics_Display),
-    .displayData = oled_memory,
+    .displayData = epd_display_buffer,
 #if defined(LANDSCAPE) || defined(LANDSCAPE_FLIP)
     .width = LCD_Y_SIZE,
     .heigth = LCD_X_SIZE,
@@ -690,7 +658,7 @@ Graphics_Display g_sqc12_oled = {
     .width = LCD_X_SIZE,
     .heigth = LCD_Y_SIZE, // heigth??? lol.
 #endif
-    .pFxns = &gf_epd
+    .pFxns = &epd_grDisplayFunctions
 };
 
 //*****************************************************************************

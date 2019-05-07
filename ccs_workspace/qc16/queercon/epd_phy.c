@@ -114,19 +114,8 @@ void epd_phy_activate() {
 
 /// Clear the screen.
 void epd_clear() {
-    // TODO: rewrite this function.
-    uint16_t Width, Height;
-    Width = (EPD_WIDTH % 8 == 0)? (EPD_WIDTH / 8 ): (EPD_WIDTH / 8 + 1);
-    Height = EPD_HEIGHT;
-    epd_phy_set_window(0, 0, EPD_WIDTH, EPD_HEIGHT);
-    for (uint16_t j = 0; j < Height; j++) {
-        epd_phy_set_cursor(0, j);
-        epd_phy_spi_cmd(WRITE_RAM);
-        for (uint16_t i = 0; i < Width; i++) {
-            epd_phy_spi_data(0XFF);
-        }
-    }
-    epd_phy_activate();
+    memset(epd_display_buffer, 0xFF, sizeof(epd_display_buffer));
+    epd_phy_flush_buffer();
 }
 
 /// Enter deep sleep mode.
@@ -227,8 +216,9 @@ void epd_phy_init(uint8_t partial_update) {
     }
 }
 
-// TODO:
 void epd_phy_flush_buffer() {
+    // TODO: Decide when to use 1 vs 0.
+    epd_phy_init(0);
     uint16_t Width, Height;
     Width = (EPD_WIDTH % 8 == 0)? (EPD_WIDTH / 8 ): (EPD_WIDTH / 8 + 1);
     Height = EPD_HEIGHT;
@@ -246,4 +236,5 @@ void epd_phy_flush_buffer() {
         }
     }
     epd_phy_activate();
+    epd_phy_deepsleep();
 }

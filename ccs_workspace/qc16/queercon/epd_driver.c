@@ -41,9 +41,22 @@ void init_epd()
 {
     epd_phy_init_gpio();
     epd_init_display_buffer(0);
-    epd_phy_init(0);
-//    EPD_Clear();
-//    EPD_Sleep();
+}
+
+// TODO: Move
+#define REVERSE_BYTE(b) (uint8_t)(((b * 0x0802LU & 0x22110LU) | (b * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16)
+
+void epd_flip() {
+    epd_upside_down = !epd_upside_down;
+    uint8_t reverse_temp;
+
+    uint16_t high;
+    for (uint16_t low=0; low<sizeof(epd_display_buffer)/2; low++) {
+        high = (sizeof(epd_display_buffer) - low) - 1;
+        reverse_temp = REVERSE_BYTE(epd_display_buffer[low]);
+        epd_display_buffer[low] = REVERSE_BYTE(epd_display_buffer[high]);
+        epd_display_buffer[high] = reverse_temp;
+    }
 }
 
 //*****************************************************************************
@@ -77,8 +90,16 @@ static void epd_grPixelDraw(const Graphics_Display * pvDisplayData,
     /* This function already has checked that the pixel is within the extents of
        the LCD screen and the color ulValue has already been translated to the LCD.
      */
-    uint16_t mapped_x = MAPPED_X(lX, lY);
-    uint16_t mapped_y = MAPPED_Y(lX, lY);
+    uint16_t mapped_x;
+    uint16_t mapped_y;
+    if (!epd_upside_down) {
+        // Right-side-up
+        mapped_x = MAPPED_X(lX, lY);
+        mapped_y = MAPPED_Y(lX, lY);
+    } else {
+        mapped_x = MAPPED_X_ROTATED(lX, lY);
+        mapped_y = MAPPED_Y_ROTATED(lX, lY);
+    }
 
     // Now, mapped_x and mapped_y are the correct indices, transformed
     //  if necessary, to index our pixel buffer. We can get the needed

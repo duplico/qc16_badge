@@ -92,6 +92,8 @@
 #ifdef LANDSCAPE
 #define MAPPED_X(x, y) (LCD_X_SIZE - (y) - 1)
 #define MAPPED_Y(x, y) (x)
+#define MAPPED_X_ROTATED(x, y) (y)
+#define MAPPED_Y_ROTATED(x, y) (LCD_Y_SIZE - (x) - 1)
 #endif
 #ifdef PORTRAIT
 #define MAPPED_X(x, y) (x)
@@ -140,9 +142,8 @@ and could also include Set_Address(), Write_Data(), etc. */
 // Prototypes for the globals exported by this driver.
 //
 //*****************************************************************************
-extern void init_epd();
-extern void qc12oled_WriteCommand(uint8_t ucCommand);
+void init_epd();
 extern Graphics_Display epd_grGraphicsDisplay;
 extern const Graphics_Display_Functions epd_grDisplayFunctions;
-
+void epd_flip();
 #endif /* QUEERCON_EPD_DRIVER_H_ */

@@ -141,7 +141,7 @@ void epd_phy_init_gpio() {
 
     /* Open SPI as master (default) */
     SPI_Params_init(&spiParams); // Defaults are OK
-    epd_spi_h = SPI_open(Board_SPI_MASTER, &spiParams);
+    epd_spi_h = SPI_open(Board_SPI0, &spiParams);
     if (epd_spi_h == NULL) {
         while (1);
     }

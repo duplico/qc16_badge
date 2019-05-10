@@ -106,15 +106,26 @@ extern const PIN_Config BoardGpioInitTable[];
 #define CC2640R2_LAUNCHXL_FLASH_CS_ON           0
 #define CC2640R2_LAUNCHXL_FLASH_CS_OFF          1
 
+// SPI for the epaper display:
+/// EPD SPI MOSI
+#define EPAPER_SDIO     IOID_25
+/// EPD SPI SCLK
+#define EPAPER_SCLK     IOID_26
+#define EPAPER_CSN      CC2640R2_LAUNCHXL_DIO0
+#define EPAPER_DCN      CC2640R2_LAUNCHXL_DIO1_RFSW
+#define EPAPER_RESN     CC2640R2_LAUNCHXL_DIO12
+#define EPAPER_BUSY     CC2640R2_LAUNCHXL_DIO15
+
 /* SPI Board */
 #define CC2640R2_LAUNCHXL_SPI0_MISO             IOID_8          /* RF1.20 */
 #define CC2640R2_LAUNCHXL_SPI0_MOSI             IOID_9          /* RF1.18 */
 #define CC2640R2_LAUNCHXL_SPI0_CLK              IOID_10         /* RF1.16 */
 #define CC2640R2_LAUNCHXL_SPI0_CSN              PIN_UNASSIGNED
 #define CC2640R2_LAUNCHXL_SPI1_MISO             PIN_UNASSIGNED
-#define CC2640R2_LAUNCHXL_SPI1_MOSI             PIN_UNASSIGNED
-#define CC2640R2_LAUNCHXL_SPI1_CLK              PIN_UNASSIGNED
+#define CC2640R2_LAUNCHXL_SPI1_MOSI             EPAPER_SDIO
+#define CC2640R2_LAUNCHXL_SPI1_CLK              EPAPER_SCLK
 #define CC2640R2_LAUNCHXL_SPI1_CSN              PIN_UNASSIGNED
+
 
 /* UART Board */
 #define CC2640R2_LAUNCHXL_UART_RX               IOID_2          /* RXD */
@@ -457,31 +468,31 @@ typedef enum CC2640R2_LAUNCHXL_TRNGName {
  * Please use the <Driver>_init functions directly rather
  * than Board_init<Driver>.
  */
-#define Board_initADC()         ADC_init()
-#define Board_initADCBuf()      ADCBuf_init()
-#define Board_initGPIO()        GPIO_init()
-#define Board_initPWM()         PWM_init()
-#define Board_initSPI()         SPI_init()
-#define Board_initUART()        UART_init()
-#define Board_initWatchdog()    Watchdog_init()
+//#define Board_initADC()         ADC_init()
+//#define Board_initADCBuf()      ADCBuf_init()
+//#define Board_initGPIO()        GPIO_init()
+//#define Board_initPWM()         PWM_init()
+//#define Board_initSPI()         SPI_init()
+//#define Board_initUART()        UART_init()
+//#define Board_initWatchdog()    Watchdog_init()
 
 /*
  * These macros are provided for backwards compatibility.
  * Please use the 'Board_PIN_xxx' macros to differentiate
  * them from the 'Board_GPIO_xxx' macros.
  */
-#define Board_BUTTON0           Board_PIN_BUTTON0
-#define Board_BUTTON1           Board_PIN_BUTTON1
-#define Board_BTN1              Board_PIN_BTN1
-#define Board_BTN2              Board_PIN_BTN2
-#define Board_LED_ON            Board_GPIO_LED_ON
-#define Board_LED_OFF           Board_GPIO_LED_OFF
-#define Board_LED0              Board_PIN_LED0
-#define Board_LED1              Board_PIN_LED1
-#define Board_LED2              Board_PIN_LED2
-#define Board_RLED              Board_PIN_RLED
-#define Board_GLED              Board_PIN_GLED
-#define Board_ADCBUFCHANNEL0    Board_ADCBUF0CHANNEL0
-#define Board_ADCBUFCHANNEL1    Board_ADCBUF0CHANNEL1
+//#define Board_BUTTON0           Board_PIN_BUTTON0
+//#define Board_BUTTON1           Board_PIN_BUTTON1
+//#define Board_BTN1              Board_PIN_BTN1
+//#define Board_BTN2              Board_PIN_BTN2
+//#define Board_LED_ON            Board_GPIO_LED_ON
+//#define Board_LED_OFF           Board_GPIO_LED_OFF
+//#define Board_LED0              Board_PIN_LED0
+//#define Board_LED1              Board_PIN_LED1
+//#define Board_LED2              Board_PIN_LED2
+//#define Board_RLED              Board_PIN_RLED
+//#define Board_GLED              Board_PIN_GLED
+//#define Board_ADCBUFCHANNEL0    Board_ADCBUF0CHANNEL0
+//#define Board_ADCBUFCHANNEL1    Board_ADCBUF0CHANNEL1
 
 #endif /* STARTUP_BOARD_H_ */

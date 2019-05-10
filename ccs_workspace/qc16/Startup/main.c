@@ -1,6 +1,9 @@
+#include <string.h>
+
 #include <xdc/runtime/Error.h>
 #include <ti/drivers/Power.h>
 #include <ti/drivers/power/PowerCC26XX.h>
+#include <ti/drivers/NVS.h>
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/Task.h>
@@ -24,9 +27,72 @@
 Task_Struct epaperTask;
 Char epaperTaskStack[660];
 
+/* Buffer placed in RAM to hold bytes read from non-volatile storage. */
+static char buffer[64];
+static const char signature[] =
+    {"SimpleLink SDK Non-Volatile Storage (NVS) SPI Example."};
+
 void epaper_spi_task_fn(UArg a0, UArg a1)
 {
     init_epd(0);
+
+
+    NVS_Handle nvsHandle;
+    NVS_Attrs regionAttrs;
+    NVS_Params nvsParams;
+
+    Board_wakeUpExtFlash();
+    NVS_init();
+    NVS_Params_init(&nvsParams);
+    nvsHandle = NVS_open(Board_NVSEXTERNAL, &nvsParams);
+
+    /*
+     * This will populate a NVS_Attrs structure with properties specific
+     * to a NVS_Handle such as region base address, region size,
+     * and sector size.
+     */
+    NVS_getAttrs(nvsHandle, &regionAttrs);
+
+    /* Display the NVS region attributes. */
+//    Display_printf(displayHandle, 0, 0, "Sector Size: 0x%x",
+//            regionAttrs.sectorSize);
+//    Display_printf(displayHandle, 0, 0, "Region Size: 0x%x\n",
+//            regionAttrs.regionSize);
+
+    /*
+     * Copy "sizeof(signature)" bytes from the NVS region base address into
+     * buffer.
+     */
+    NVS_read(nvsHandle, 0, (void *) buffer, sizeof(signature));
+
+    /*
+     * Determine if the NVS region contains the signature string.
+     * Compare the string with the contents copied into buffer.
+     */
+    if (strcmp((char *) buffer, (char *) signature) == 0) {
+
+        /* Write buffer copied from flash to the console. */
+//        Display_printf(displayHandle, 0, 0, "%s", buffer);
+//        Display_printf(displayHandle, 0, 0, "Erasing SPI flash sector...");
+
+        /* Erase the entire flash sector. */
+        NVS_erase(nvsHandle, 0, regionAttrs.sectorSize);
+    }
+    else {
+
+        /* The signature was not found in the NVS region. */
+//        Display_printf(displayHandle, 0, 0, "Writing signature to SPI flash...");
+
+        /*
+         * Write signature to memory. The flash sector is erased prior
+         * to performing the write operation. This is specified by
+         * NVS_WRITE_ERASE.
+         */
+        NVS_write(nvsHandle, 0, (void *) signature, sizeof(signature),
+            NVS_WRITE_ERASE | NVS_WRITE_POST_VERIFY);
+    }
+
+
 
     Graphics_Context gr_context;
     Graphics_initContext(&gr_context, &epd_grGraphicsDisplay, &epd_grDisplayFunctions);

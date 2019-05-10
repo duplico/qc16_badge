@@ -897,7 +897,7 @@ void CC2640R2_LAUNCHXL_wakeUpExtFlash(void)
 {
     PIN_Config extFlashPinTable[] = {
         /* SPI Flash CS */
-        IOID_20 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL |
+        IOID_20 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | // TODO
                 PIN_INPUT_DIS | PIN_DRVSTR_MED,
         PIN_TERMINATE
     };
@@ -933,7 +933,7 @@ void CC2640R2_LAUNCHXL_shutDownExtFlash(void)
 
     PIN_Config extFlashPinTable[] = {
         /* SPI Flash CS*/
-        IOID_20 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL |
+        IOID_20 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | // TODO
                 PIN_INPUT_DIS | PIN_DRVSTR_MED,
         /* SPI Flash CLK */
         IOID_10 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL |

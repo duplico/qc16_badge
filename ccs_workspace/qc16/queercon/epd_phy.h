@@ -15,13 +15,6 @@
 
 // TODO: Move to board.h?
 
-#define EPAPER_SDIO     IOID_9
-#define EPAPER_SCLK     IOID_10
-#define EPAPER_CSN      CC2640R2_LAUNCHXL_DIO0
-#define EPAPER_DCN      CC2640R2_LAUNCHXL_DIO1_RFSW
-#define EPAPER_RESN     CC2640R2_LAUNCHXL_DIO12
-#define EPAPER_BUSY     CC2640R2_LAUNCHXL_DIO15
-
 // EPD2IN9 commands
 #define DRIVER_OUTPUT_CONTROL                       0x01
 #define BOOSTER_SOFT_START_CONTROL                  0x0C

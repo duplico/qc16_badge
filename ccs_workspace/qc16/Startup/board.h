@@ -82,8 +82,9 @@ extern const PIN_Config BoardGpioInitTable[];
 #define CC2640R2_LAUNCHXL_GPIO_LED_OFF          0
 
 /* I2C */
-#define CC2640R2_LAUNCHXL_I2C0_SCL0             IOID_4
-#define CC2640R2_LAUNCHXL_I2C0_SDA0             IOID_5
+// TODO: for prod, this will be:
+#define CC2640R2_LAUNCHXL_I2C0_SCL0             IOID_4 // IOID_28
+#define CC2640R2_LAUNCHXL_I2C0_SDA0             IOID_5 // IOID_29
 
 /* LEDs */
 #define CC2640R2_LAUNCHXL_PIN_LED_ON            1

@@ -84,12 +84,12 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
     status = SPIFFS_write(&fs, f, "test", 4);
     status = SPIFFS_close(&fs, f);
 
-    volatile spiffs_stat stat;
+    spiffs_stat stat;
     status = SPIFFS_stat(&fs, "testfile", &stat);
 
-    volatile char buf[10];
+    char buf[10];
     f = SPIFFS_open(&fs, "testfile", SPIFFS_O_RDONLY, 0);
-    status = SPIFFS_read(&fs, f, buf, 4);
+    status = SPIFFS_read(&fs, f, (void *)buf, 4);
 
 
 //    NVS_init();

@@ -4,6 +4,7 @@
 #include <ti/drivers/Power.h>
 #include <ti/drivers/power/PowerCC26XX.h>
 #include <ti/drivers/NVS.h>
+#include <ti/drivers/I2C.h>
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/Task.h>
@@ -168,6 +169,7 @@ int main()
 {
     PIN_init(BoardGpioInitTable);
     SPI_init();
+    I2C_init();
 #ifdef CACHE_AS_RAM
     // retain cache during standby
     Power_setConstraint(PowerCC26XX_SB_VIMS_CACHE_RETAIN);

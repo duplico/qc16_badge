@@ -195,6 +195,8 @@ const uint_least8_t ADC_count = CC2640R2_LAUNCHXL_ADCCOUNT;
 /*
  *  =============================== Crypto ===============================
  */
+// TODO: Delete
+
 #include <ti/drivers/crypto/CryptoCC26XX.h>
 
 CryptoCC26XX_Object cryptoCC26XXObjects[CC2640R2_LAUNCHXL_CRYPTOCOUNT];
@@ -348,6 +350,8 @@ const uint_least8_t I2C_count = CC2640R2_LAUNCHXL_I2CCOUNT;
 
 #ifndef Board_EXCLUDE_NVS_INTERNAL_FLASH
 
+// TODO: Delete or exclude.
+
 /*
  * Reserve flash sectors for NVS driver use by placing an uninitialized byte
  * array at the desired flash address.
@@ -360,30 +364,6 @@ const uint_least8_t I2C_count = CC2640R2_LAUNCHXL_I2CCOUNT;
 #pragma LOCATION(flashBuf, NVS_REGIONS_BASE);
 #pragma NOINIT(flashBuf);
 static char flashBuf[REGIONSIZE];
-
-#elif defined(__IAR_SYSTEMS_ICC__)
-
-/*
- * Place uninitialized array at NVS_REGIONS_BASE
- */
-static __no_init char flashBuf[REGIONSIZE] @ NVS_REGIONS_BASE;
-
-#elif defined(__GNUC__)
-
-/*
- * Place the flash buffers in the .nvs section created in the gcc linker file.
- * The .nvs section enforces alignment on a sector boundary but may
- * be placed anywhere in flash memory.  If desired the .nvs section can be set
- * to a fixed address by changing the following in the gcc linker file:
- *
- * .nvs (FIXED_FLASH_ADDR) (NOLOAD) : AT (FIXED_FLASH_ADDR) {
- *      *(.nvs)
- * } > REGION_TEXT
- */
-__attribute__ ((section (".nvs")))
-static char flashBuf[REGIONSIZE];
-
-#endif
 
 /* Allocate objects for NVS Internal Regions */
 NVSCC26XX_Object nvsCC26xxObjects[1];
@@ -453,6 +433,8 @@ const uint_least8_t NVS_count = CC2640R2_LAUNCHXL_NVSCOUNT;
 #include <ti/drivers/PIN.h>
 #include <ti/drivers/pin/PINCC26XX.h>
 
+// TODO: Configure all GPIO here:
+
 const PIN_Config BoardGpioInitTable[] = {
 
     CC2640R2_LAUNCHXL_PIN_RLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,       /* LED initially off */
@@ -485,6 +467,7 @@ const PowerCC26XX_Config PowerCC26XX_config = {
     .policyFxn          = &PowerCC26XX_standbyPolicy,
     .enablePolicy       = true,
 #ifdef USE_RCOSC
+    // TODO: define USE_RCOSC
     .calibrateFxn       = &PowerCC26XX_calibrate,
     .calibrateRCOSC_LF  = true,
     .calibrateRCOSC_HF  = true,

@@ -9,3 +9,11 @@ ccs_workspace/qc16/MultiMode_FlashOnly
 boards/epaper_breakout/epaper_breakout_r1.zip
 boards/epaper_breakout/epaper_breakout_r0.zip
 boards/epaper_breakout/out_20190403/out_20190403.zip
+ccs_workspace/qc16/TOOLS/src/sysbios/rom_sysbios.obj
+ccs_workspace/qc16/TOOLS/src/sysbios/rom_sysbios.aem3
+ccs_workspace/qc16/TOOLS/src/makefile.libs
+ccs_workspace/qc16/TOOLS/src/sysbios/m3_Hwi_asm.obj
+ccs_workspace/qc16/TOOLS/src/sysbios/m3_Hwi_asm_switch.obj
+ccs_workspace/qc16/TOOLS/src/sysbios/m3_IntrinsicsSupport_asm.obj
+ccs_workspace/qc16/TOOLS/src/sysbios/m3_TaskSupport_asm.obj
+ccs_workspace/qc16/TOOLS/src/sysbios/makefile

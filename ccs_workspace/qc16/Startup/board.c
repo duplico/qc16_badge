@@ -376,6 +376,8 @@ const NVSCC26XX_HWAttrs nvsCC26xxHWAttrs[1] = {
     },
 };
 
+#endif // __TI_COMPILER_VERSION__
+
 #endif /* Board_EXCLUDE_NVS_INTERNAL_FLASH */
 
 #ifndef Board_EXCLUDE_NVS_EXTERNAL_FLASH

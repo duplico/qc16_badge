@@ -455,31 +455,6 @@ const RFCC26XX_HWAttrsV2 RFCC26XX_hwAttrs = {
 };
 
 /*
- *  =============================== SD ===============================
- */
-#include <ti/drivers/SD.h>
-#include <ti/drivers/sd/SDSPI.h>
-
-SDSPI_Object sdspiObjects[QC16_SDCOUNT];
-
-const SDSPI_HWAttrs sdspiHWAttrs[QC16_SDCOUNT] = {
-    {
-        .spiIndex = QC16_SPI0,
-        .spiCsGpioIndex = QC16_SDSPI_CS
-    }
-};
-
-const SD_Config SD_config[QC16_SDCOUNT] = {
-    {
-        .fxnTablePtr = &SDSPI_fxnTable,
-        .object = &sdspiObjects[QC16_SDSPI0],
-        .hwAttrs = &sdspiHWAttrs[QC16_SDSPI0]
-    },
-};
-
-const uint_least8_t SD_count = QC16_SDCOUNT;
-
-/*
  *  =============================== SPI DMA ===============================
  */
 #include <ti/drivers/SPI.h>

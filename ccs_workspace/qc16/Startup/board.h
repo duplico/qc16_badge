@@ -273,16 +273,6 @@ typedef enum QC16_PWMName {
 } QC16_PWMName;
 
 /*!
- *  @def    QC16_SDName
- *  @brief  Enum of SD names
- */
-typedef enum QC16_SDName {
-    QC16_SDSPI0 = 0,
-
-    QC16_SDCOUNT
-} QC16_SDName;
-
-/*!
  *  @def    QC16_SPIName
  *  @brief  Enum of SPI names
  */

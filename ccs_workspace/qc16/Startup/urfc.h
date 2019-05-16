@@ -134,15 +134,6 @@ extern "C"
 #define RF_FE_INT_BIAS                   (0<<3) //!< Internal Bias
 #define RF_FE_EXT_BIAS                   (1<<3) //!< External Bias
 
-#if defined(CC2650_LAUNCHXL) || defined(CC2640R2_LAUNCHXL) || defined(CC2650DK_7ID)
-
-#define RF_FE_MODE_AND_BIAS (RF_FE_DIFFERENTIAL | RF_FE_EXT_BIAS)  //!< RF Front End Mode and Bias Configuration
-#define RF_FE_IOD_NUM     3           //!< IOD Number
-#define RF_FE_IOD         {NULL, NULL, NULL}    //!< IOD
-#define RF_FE_IOD_VAL     {NULL, NULL, NULL}    //!< IOD Value
-#define RF_FE_SATURATION  0  //!< // RF FE saturation
-#define RF_FE_SENSITIVITY 0  //!< // RF FE sensitivity
-
 /** @} End URF_RF_Front_Settings */
 
 /**
@@ -163,8 +154,6 @@ extern "C"
 #define TX_POWER_MINUS_18_DBM            -18  //!< -18 dBm
 #define TX_POWER_MINUS_21_DBM            -21  //!< -21 dBm
 /** @} End URF_TX_Power */
-
-#endif /* CC2650_LAUNCHXL || CC2640R2_LAUNCHXL || CC2650DK_7ID */
 
 /** @} End URF_Constants */
 

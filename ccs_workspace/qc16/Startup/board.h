@@ -22,10 +22,10 @@
 /* Externs */
 extern const PIN_Config BoardGpioInitTable[];
 
-/* Defines */
-#ifndef CC2640R2_LAUNCHXL
-  #define CC2640R2_LAUNCHXL
-#endif /* CC2640R2_LAUNCHXL */
+///* Defines */
+//#ifndef CC2640R2_LAUNCHXL
+//  #define CC2640R2_LAUNCHXL
+//#endif /* CC2640R2_LAUNCHXL */
 
 /*
  *  ============================================================================
@@ -163,12 +163,12 @@ typedef enum QC16_ADCBufName {
  */
 typedef enum QC16_ADCBuf0ChannelName {
     QC16_ADCBUF0CHANNEL0 = 0,
-    QC16_ADCBUF0CHANNEL1,
-    QC16_ADCBUF0CHANNEL2,
-    QC16_ADCBUF0CHANNEL3,
-    QC16_ADCBUF0CHANNEL4,
-    QC16_ADCBUF0CHANNEL5,
-    QC16_ADCBUF0CHANNEL6,
+//    QC16_ADCBUF0CHANNEL1,
+//    QC16_ADCBUF0CHANNEL2,
+//    QC16_ADCBUF0CHANNEL3,
+//    QC16_ADCBUF0CHANNEL4,
+//    QC16_ADCBUF0CHANNEL5,
+//    QC16_ADCBUF0CHANNEL6,
     QC16_ADCBUF0CHANNEL7,
     QC16_ADCBUF0CHANNELVDDS,
     QC16_ADCBUF0CHANNELDCOUPL,
@@ -184,12 +184,6 @@ typedef enum QC16_ADCBuf0ChannelName {
 typedef enum QC16_ADCName {
     QC16_ADC0 = 0,
     QC16_ADC1,
-    QC16_ADC2,
-    QC16_ADC3,
-    QC16_ADC4,
-    QC16_ADC5,
-    QC16_ADC6,
-    QC16_ADC7,
     QC16_ADCDCOUPL,
     QC16_ADCVSS,
     QC16_ADCVDDS,

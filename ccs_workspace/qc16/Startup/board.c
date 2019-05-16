@@ -35,14 +35,14 @@ ADCBufCC26XX_Object adcBufCC26xxObjects[QC16_ADCBUFCOUNT];
  *  entries. The mapping of dio and internal signals is package dependent.
  */
 const ADCBufCC26XX_AdcChannelLutEntry ADCBufCC26XX_adcChannelLut[QC16_ADCBUF0CHANNELCOUNT] = {
-    {QC16_DIO23_ANALOG, ADC_COMPB_IN_AUXIO7},
-    {QC16_DIO24_ANALOG, ADC_COMPB_IN_AUXIO6},
-    {QC16_DIO25_ANALOG, ADC_COMPB_IN_AUXIO5},
-    {QC16_DIO26_ANALOG, ADC_COMPB_IN_AUXIO4},
-    {QC16_DIO27_ANALOG, ADC_COMPB_IN_AUXIO3},
-    {QC16_DIO28_ANALOG, ADC_COMPB_IN_AUXIO2},
-    {QC16_DIO29_ANALOG, ADC_COMPB_IN_AUXIO1},
-    {QC16_DIO30_ANALOG, ADC_COMPB_IN_AUXIO0},
+    {QC16_DIO23_ANALOG, ADC_COMPB_IN_AUXIO7}, // TODO: Used for battery
+//    {QC16_DIO24_ANALOG, ADC_COMPB_IN_AUXIO6},
+//    {QC16_DIO25_ANALOG, ADC_COMPB_IN_AUXIO5},
+//    {QC16_DIO26_ANALOG, ADC_COMPB_IN_AUXIO4},
+//    {QC16_DIO27_ANALOG, ADC_COMPB_IN_AUXIO3},
+//    {QC16_DIO28_ANALOG, ADC_COMPB_IN_AUXIO2},
+//    {QC16_DIO29_ANALOG, ADC_COMPB_IN_AUXIO1},
+    {QC16_DIO30_ANALOG, ADC_COMPB_IN_AUXIO0}, // TODO: Used for the light sensor
     {PIN_UNASSIGNED, ADC_COMPB_IN_VDDS},
     {PIN_UNASSIGNED, ADC_COMPB_IN_DCOUPL},
     {PIN_UNASSIGNED, ADC_COMPB_IN_VSS},
@@ -78,60 +78,6 @@ const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
     {
         .adcDIO              = QC16_DIO23_ANALOG,
         .adcCompBInput       = ADC_COMPB_IN_AUXIO7,
-        .refSource           = ADCCC26XX_FIXED_REFERENCE,
-        .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
-        .inputScalingEnabled = true,
-        .triggerSource       = ADCCC26XX_TRIGGER_MANUAL,
-        .returnAdjustedVal   = false
-    },
-    {
-        .adcDIO              = QC16_DIO24_ANALOG,
-        .adcCompBInput       = ADC_COMPB_IN_AUXIO6,
-        .refSource           = ADCCC26XX_FIXED_REFERENCE,
-        .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
-        .inputScalingEnabled = true,
-        .triggerSource       = ADCCC26XX_TRIGGER_MANUAL,
-        .returnAdjustedVal   = false
-    },
-    {
-        .adcDIO              = QC16_DIO25_ANALOG,
-        .adcCompBInput       = ADC_COMPB_IN_AUXIO5,
-        .refSource           = ADCCC26XX_FIXED_REFERENCE,
-        .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
-        .inputScalingEnabled = true,
-        .triggerSource       = ADCCC26XX_TRIGGER_MANUAL,
-        .returnAdjustedVal   = false
-    },
-    {
-        .adcDIO              = QC16_DIO26_ANALOG,
-        .adcCompBInput       = ADC_COMPB_IN_AUXIO4,
-        .refSource           = ADCCC26XX_FIXED_REFERENCE,
-        .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
-        .inputScalingEnabled = true,
-        .triggerSource       = ADCCC26XX_TRIGGER_MANUAL,
-        .returnAdjustedVal   = false
-    },
-    {
-        .adcDIO              = QC16_DIO27_ANALOG,
-        .adcCompBInput       = ADC_COMPB_IN_AUXIO3,
-        .refSource           = ADCCC26XX_FIXED_REFERENCE,
-        .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
-        .inputScalingEnabled = true,
-        .triggerSource       = ADCCC26XX_TRIGGER_MANUAL,
-        .returnAdjustedVal   = false
-    },
-    {
-        .adcDIO              = QC16_DIO28_ANALOG,
-        .adcCompBInput       = ADC_COMPB_IN_AUXIO2,
-        .refSource           = ADCCC26XX_FIXED_REFERENCE,
-        .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
-        .inputScalingEnabled = true,
-        .triggerSource       = ADCCC26XX_TRIGGER_MANUAL,
-        .returnAdjustedVal   = false
-    },
-    {
-        .adcDIO              = QC16_DIO29_ANALOG,
-        .adcCompBInput       = ADC_COMPB_IN_AUXIO1,
         .refSource           = ADCCC26XX_FIXED_REFERENCE,
         .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
         .inputScalingEnabled = true,
@@ -179,12 +125,6 @@ const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
 const ADC_Config ADC_config[QC16_ADCCOUNT] = {
     {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC0], &adcCC26xxHWAttrs[QC16_ADC0]},
     {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC1], &adcCC26xxHWAttrs[QC16_ADC1]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC2], &adcCC26xxHWAttrs[QC16_ADC2]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC3], &adcCC26xxHWAttrs[QC16_ADC3]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC4], &adcCC26xxHWAttrs[QC16_ADC4]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC5], &adcCC26xxHWAttrs[QC16_ADC5]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC6], &adcCC26xxHWAttrs[QC16_ADC6]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC7], &adcCC26xxHWAttrs[QC16_ADC7]},
     {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADCDCOUPL], &adcCC26xxHWAttrs[QC16_ADCDCOUPL]},
     {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADCVSS], &adcCC26xxHWAttrs[QC16_ADCVSS]},
     {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADCVDDS], &adcCC26xxHWAttrs[QC16_ADCVDDS]},
@@ -436,7 +376,6 @@ const uint_least8_t NVS_count = QC16_NVSCOUNT;
 #include <ti/drivers/pin/PINCC26XX.h>
 
 // TODO: Configure all GPIO here:
-
 const PIN_Config BoardGpioInitTable[] = {
 
     QC16_PIN_RLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,       /* LED initially off */

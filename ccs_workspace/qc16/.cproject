@@ -165,6 +165,7 @@
 					</folderInfo>
 					<sourceEntries>
 						<entry excluding="TOOLS/cc26xx_app.cmd|TOOLS/src" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="TOOLS/src/sysbios"/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

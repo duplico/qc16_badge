@@ -25,7 +25,7 @@
 #include <ti/drivers/ADCBuf.h>
 #include <ti/drivers/adcbuf/ADCBufCC26XX.h>
 
-ADCBufCC26XX_Object adcBufCC26xxObjects[QC16_ADCBUFCOUNT];
+ADCBufCC26XX_Object adcBufCC26xxObjects[CC2640R2_LAUNCHXL_ADCBUFCOUNT];
 
 /*
  *  This table converts a virtual adc channel into a dio and internal analogue
@@ -34,21 +34,21 @@ ADCBufCC26XX_Object adcBufCC26xxObjects[QC16_ADCBUFCOUNT];
  *  pairs are hardwired. Do not remap them in the table. You may reorder entire
  *  entries. The mapping of dio and internal signals is package dependent.
  */
-const ADCBufCC26XX_AdcChannelLutEntry ADCBufCC26XX_adcChannelLut[QC16_ADCBUF0CHANNELCOUNT] = {
-    {QC16_DIO23_ANALOG, ADC_COMPB_IN_AUXIO7},
-    {QC16_DIO24_ANALOG, ADC_COMPB_IN_AUXIO6},
-    {QC16_DIO25_ANALOG, ADC_COMPB_IN_AUXIO5},
-    {QC16_DIO26_ANALOG, ADC_COMPB_IN_AUXIO4},
-    {QC16_DIO27_ANALOG, ADC_COMPB_IN_AUXIO3},
-    {QC16_DIO28_ANALOG, ADC_COMPB_IN_AUXIO2},
-    {QC16_DIO29_ANALOG, ADC_COMPB_IN_AUXIO1},
-    {QC16_DIO30_ANALOG, ADC_COMPB_IN_AUXIO0},
+const ADCBufCC26XX_AdcChannelLutEntry ADCBufCC26XX_adcChannelLut[CC2640R2_LAUNCHXL_ADCBUF0CHANNELCOUNT] = {
+    {CC2640R2_LAUNCHXL_DIO23_ANALOG, ADC_COMPB_IN_AUXIO7},
+    {CC2640R2_LAUNCHXL_DIO24_ANALOG, ADC_COMPB_IN_AUXIO6},
+    {CC2640R2_LAUNCHXL_DIO25_ANALOG, ADC_COMPB_IN_AUXIO5},
+    {CC2640R2_LAUNCHXL_DIO26_ANALOG, ADC_COMPB_IN_AUXIO4},
+    {CC2640R2_LAUNCHXL_DIO27_ANALOG, ADC_COMPB_IN_AUXIO3},
+    {CC2640R2_LAUNCHXL_DIO28_ANALOG, ADC_COMPB_IN_AUXIO2},
+    {CC2640R2_LAUNCHXL_DIO29_ANALOG, ADC_COMPB_IN_AUXIO1},
+    {CC2640R2_LAUNCHXL_DIO30_ANALOG, ADC_COMPB_IN_AUXIO0},
     {PIN_UNASSIGNED, ADC_COMPB_IN_VDDS},
     {PIN_UNASSIGNED, ADC_COMPB_IN_DCOUPL},
     {PIN_UNASSIGNED, ADC_COMPB_IN_VSS},
 };
 
-const ADCBufCC26XX_HWAttrs adcBufCC26xxHWAttrs[QC16_ADCBUFCOUNT] = {
+const ADCBufCC26XX_HWAttrs adcBufCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADCBUFCOUNT] = {
     {
         .intPriority       = ~0,
         .swiPriority       = 0,
@@ -56,15 +56,15 @@ const ADCBufCC26XX_HWAttrs adcBufCC26xxHWAttrs[QC16_ADCBUFCOUNT] = {
     }
 };
 
-const ADCBuf_Config ADCBuf_config[QC16_ADCBUFCOUNT] = {
+const ADCBuf_Config ADCBuf_config[CC2640R2_LAUNCHXL_ADCBUFCOUNT] = {
     {
         &ADCBufCC26XX_fxnTable,
-        &adcBufCC26xxObjects[QC16_ADCBUF0],
-        &adcBufCC26xxHWAttrs[QC16_ADCBUF0]
+        &adcBufCC26xxObjects[CC2640R2_LAUNCHXL_ADCBUF0],
+        &adcBufCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADCBUF0]
     },
 };
 
-const uint_least8_t ADCBuf_count = QC16_ADCBUFCOUNT;
+const uint_least8_t ADCBuf_count = CC2640R2_LAUNCHXL_ADCBUFCOUNT;
 
 /*
  *  =============================== ADC ===============================
@@ -72,11 +72,11 @@ const uint_least8_t ADCBuf_count = QC16_ADCBUFCOUNT;
 #include <ti/drivers/ADC.h>
 #include <ti/drivers/adc/ADCCC26XX.h>
 
-ADCCC26XX_Object adcCC26xxObjects[QC16_ADCCOUNT];
+ADCCC26XX_Object adcCC26xxObjects[CC2640R2_LAUNCHXL_ADCCOUNT];
 
-const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
+const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADCCOUNT] = {
     {
-        .adcDIO              = QC16_DIO23_ANALOG,
+        .adcDIO              = CC2640R2_LAUNCHXL_DIO23_ANALOG,
         .adcCompBInput       = ADC_COMPB_IN_AUXIO7,
         .refSource           = ADCCC26XX_FIXED_REFERENCE,
         .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
@@ -85,7 +85,7 @@ const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
         .returnAdjustedVal   = false
     },
     {
-        .adcDIO              = QC16_DIO24_ANALOG,
+        .adcDIO              = CC2640R2_LAUNCHXL_DIO24_ANALOG,
         .adcCompBInput       = ADC_COMPB_IN_AUXIO6,
         .refSource           = ADCCC26XX_FIXED_REFERENCE,
         .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
@@ -94,7 +94,7 @@ const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
         .returnAdjustedVal   = false
     },
     {
-        .adcDIO              = QC16_DIO25_ANALOG,
+        .adcDIO              = CC2640R2_LAUNCHXL_DIO25_ANALOG,
         .adcCompBInput       = ADC_COMPB_IN_AUXIO5,
         .refSource           = ADCCC26XX_FIXED_REFERENCE,
         .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
@@ -103,7 +103,7 @@ const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
         .returnAdjustedVal   = false
     },
     {
-        .adcDIO              = QC16_DIO26_ANALOG,
+        .adcDIO              = CC2640R2_LAUNCHXL_DIO26_ANALOG,
         .adcCompBInput       = ADC_COMPB_IN_AUXIO4,
         .refSource           = ADCCC26XX_FIXED_REFERENCE,
         .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
@@ -112,7 +112,7 @@ const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
         .returnAdjustedVal   = false
     },
     {
-        .adcDIO              = QC16_DIO27_ANALOG,
+        .adcDIO              = CC2640R2_LAUNCHXL_DIO27_ANALOG,
         .adcCompBInput       = ADC_COMPB_IN_AUXIO3,
         .refSource           = ADCCC26XX_FIXED_REFERENCE,
         .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
@@ -121,7 +121,7 @@ const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
         .returnAdjustedVal   = false
     },
     {
-        .adcDIO              = QC16_DIO28_ANALOG,
+        .adcDIO              = CC2640R2_LAUNCHXL_DIO28_ANALOG,
         .adcCompBInput       = ADC_COMPB_IN_AUXIO2,
         .refSource           = ADCCC26XX_FIXED_REFERENCE,
         .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
@@ -130,7 +130,7 @@ const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
         .returnAdjustedVal   = false
     },
     {
-        .adcDIO              = QC16_DIO29_ANALOG,
+        .adcDIO              = CC2640R2_LAUNCHXL_DIO29_ANALOG,
         .adcCompBInput       = ADC_COMPB_IN_AUXIO1,
         .refSource           = ADCCC26XX_FIXED_REFERENCE,
         .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
@@ -139,7 +139,7 @@ const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
         .returnAdjustedVal   = false
     },
     {
-        .adcDIO              = QC16_DIO30_ANALOG,
+        .adcDIO              = CC2640R2_LAUNCHXL_DIO30_ANALOG,
         .adcCompBInput       = ADC_COMPB_IN_AUXIO0,
         .refSource           = ADCCC26XX_FIXED_REFERENCE,
         .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_10P9_MS,
@@ -176,21 +176,21 @@ const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
     }
 };
 
-const ADC_Config ADC_config[QC16_ADCCOUNT] = {
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC0], &adcCC26xxHWAttrs[QC16_ADC0]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC1], &adcCC26xxHWAttrs[QC16_ADC1]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC2], &adcCC26xxHWAttrs[QC16_ADC2]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC3], &adcCC26xxHWAttrs[QC16_ADC3]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC4], &adcCC26xxHWAttrs[QC16_ADC4]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC5], &adcCC26xxHWAttrs[QC16_ADC5]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC6], &adcCC26xxHWAttrs[QC16_ADC6]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC7], &adcCC26xxHWAttrs[QC16_ADC7]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADCDCOUPL], &adcCC26xxHWAttrs[QC16_ADCDCOUPL]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADCVSS], &adcCC26xxHWAttrs[QC16_ADCVSS]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADCVDDS], &adcCC26xxHWAttrs[QC16_ADCVDDS]},
+const ADC_Config ADC_config[CC2640R2_LAUNCHXL_ADCCOUNT] = {
+    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[CC2640R2_LAUNCHXL_ADC0], &adcCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADC0]},
+    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[CC2640R2_LAUNCHXL_ADC1], &adcCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADC1]},
+    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[CC2640R2_LAUNCHXL_ADC2], &adcCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADC2]},
+    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[CC2640R2_LAUNCHXL_ADC3], &adcCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADC3]},
+    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[CC2640R2_LAUNCHXL_ADC4], &adcCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADC4]},
+    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[CC2640R2_LAUNCHXL_ADC5], &adcCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADC5]},
+    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[CC2640R2_LAUNCHXL_ADC6], &adcCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADC6]},
+    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[CC2640R2_LAUNCHXL_ADC7], &adcCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADC7]},
+    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[CC2640R2_LAUNCHXL_ADCDCOUPL], &adcCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADCDCOUPL]},
+    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[CC2640R2_LAUNCHXL_ADCVSS], &adcCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADCVSS]},
+    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[CC2640R2_LAUNCHXL_ADCVDDS], &adcCC26xxHWAttrs[CC2640R2_LAUNCHXL_ADCVDDS]},
 };
 
-const uint_least8_t ADC_count = QC16_ADCCOUNT;
+const uint_least8_t ADC_count = CC2640R2_LAUNCHXL_ADCCOUNT;
 
 /*
  *  =============================== Crypto ===============================
@@ -199,9 +199,9 @@ const uint_least8_t ADC_count = QC16_ADCCOUNT;
 
 #include <ti/drivers/crypto/CryptoCC26XX.h>
 
-CryptoCC26XX_Object cryptoCC26XXObjects[QC16_CRYPTOCOUNT];
+CryptoCC26XX_Object cryptoCC26XXObjects[CC2640R2_LAUNCHXL_CRYPTOCOUNT];
 
-const CryptoCC26XX_HWAttrs cryptoCC26XXHWAttrs[QC16_CRYPTOCOUNT] = {
+const CryptoCC26XX_HWAttrs cryptoCC26XXHWAttrs[CC2640R2_LAUNCHXL_CRYPTOCOUNT] = {
     {
         .baseAddr       = CRYPTO_BASE,
         .powerMngrId    = PowerCC26XX_PERIPH_CRYPTO,
@@ -210,10 +210,10 @@ const CryptoCC26XX_HWAttrs cryptoCC26XXHWAttrs[QC16_CRYPTOCOUNT] = {
     }
 };
 
-const CryptoCC26XX_Config CryptoCC26XX_config[QC16_CRYPTOCOUNT] = {
+const CryptoCC26XX_Config CryptoCC26XX_config[CC2640R2_LAUNCHXL_CRYPTOCOUNT] = {
     {
-         .object  = &cryptoCC26XXObjects[QC16_CRYPTO0],
-         .hwAttrs = &cryptoCC26XXHWAttrs[QC16_CRYPTO0]
+         .object  = &cryptoCC26XXObjects[CC2640R2_LAUNCHXL_CRYPTO0],
+         .hwAttrs = &cryptoCC26XXHWAttrs[CC2640R2_LAUNCHXL_CRYPTO0]
     },
 };
 
@@ -236,8 +236,8 @@ GPIO_PinConfig gpioPinConfigs[] = {
     GPIOCC26XX_DIO_13 | GPIO_DO_NOT_CONFIG,  /* Button 0 */
     GPIOCC26XX_DIO_14 | GPIO_DO_NOT_CONFIG,  /* Button 1 */
 
-    GPIOCC26XX_DIO_15 | GPIO_DO_NOT_CONFIG,  /* QC16_SPI_MASTER_READY */
-    GPIOCC26XX_DIO_21 | GPIO_DO_NOT_CONFIG,  /* QC16_SPI_SLAVE_READY */
+    GPIOCC26XX_DIO_15 | GPIO_DO_NOT_CONFIG,  /* CC2640R2_LAUNCHXL_SPI_MASTER_READY */
+    GPIOCC26XX_DIO_21 | GPIO_DO_NOT_CONFIG,  /* CC2640R2_LAUNCHXL_SPI_SLAVE_READY */
     /* Output pins */
     GPIOCC26XX_DIO_07 | GPIO_DO_NOT_CONFIG,  /* Green LED */
     GPIOCC26XX_DIO_06 | GPIO_DO_NOT_CONFIG,  /* Red LED */
@@ -265,14 +265,14 @@ GPIO_PinConfig gpioPinConfigs[] = {
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
     NULL,  /* Button 0 */
     NULL,  /* Button 1 */
-    NULL,  /* QC16_SPI_MASTER_READY */
-    NULL,  /* QC16_SPI_SLAVE_READY */
+    NULL,  /* CC2640R2_LAUNCHXL_SPI_MASTER_READY */
+    NULL,  /* CC2640R2_LAUNCHXL_SPI_SLAVE_READY */
 };
 
 const GPIOCC26XX_Config GPIOCC26XX_config = {
     .pinConfigs         = (GPIO_PinConfig *)gpioPinConfigs,
     .callbacks          = (GPIO_CallbackFxn *)gpioCallbackFunctions,
-    .numberOfPinConfigs = QC16_GPIOCOUNT,
+    .numberOfPinConfigs = CC2640R2_LAUNCHXL_GPIOCOUNT,
     .numberOfCallbacks  = sizeof(gpioCallbackFunctions)/sizeof(GPIO_CallbackFxn),
     .intPriority        = (~0)
 };
@@ -283,9 +283,9 @@ const GPIOCC26XX_Config GPIOCC26XX_config = {
  */
 #include <ti/drivers/timer/GPTimerCC26XX.h>
 
-GPTimerCC26XX_Object gptimerCC26XXObjects[QC16_GPTIMERCOUNT];
+GPTimerCC26XX_Object gptimerCC26XXObjects[CC2640R2_LAUNCHXL_GPTIMERCOUNT];
 
-const GPTimerCC26XX_HWAttrs gptimerCC26xxHWAttrs[QC16_GPTIMERPARTSCOUNT] = {
+const GPTimerCC26XX_HWAttrs gptimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_GPTIMERPARTSCOUNT] = {
     { .baseAddr = GPT0_BASE, .intNum = INT_GPT0A, .intPriority = (~0), .powerMngrId = PowerCC26XX_PERIPH_GPT0, .pinMux = GPT_PIN_0A, },
     { .baseAddr = GPT0_BASE, .intNum = INT_GPT0B, .intPriority = (~0), .powerMngrId = PowerCC26XX_PERIPH_GPT0, .pinMux = GPT_PIN_0B, },
     { .baseAddr = GPT1_BASE, .intNum = INT_GPT1A, .intPriority = (~0), .powerMngrId = PowerCC26XX_PERIPH_GPT1, .pinMux = GPT_PIN_1A, },
@@ -296,15 +296,15 @@ const GPTimerCC26XX_HWAttrs gptimerCC26xxHWAttrs[QC16_GPTIMERPARTSCOUNT] = {
     { .baseAddr = GPT3_BASE, .intNum = INT_GPT3B, .intPriority = (~0), .powerMngrId = PowerCC26XX_PERIPH_GPT3, .pinMux = GPT_PIN_3B, },
 };
 
-const GPTimerCC26XX_Config GPTimerCC26XX_config[QC16_GPTIMERPARTSCOUNT] = {
-    { &gptimerCC26XXObjects[QC16_GPTIMER0], &gptimerCC26xxHWAttrs[QC16_GPTIMER0A], GPT_A },
-    { &gptimerCC26XXObjects[QC16_GPTIMER0], &gptimerCC26xxHWAttrs[QC16_GPTIMER0B], GPT_B },
-    { &gptimerCC26XXObjects[QC16_GPTIMER1], &gptimerCC26xxHWAttrs[QC16_GPTIMER1A], GPT_A },
-    { &gptimerCC26XXObjects[QC16_GPTIMER1], &gptimerCC26xxHWAttrs[QC16_GPTIMER1B], GPT_B },
-    { &gptimerCC26XXObjects[QC16_GPTIMER2], &gptimerCC26xxHWAttrs[QC16_GPTIMER2A], GPT_A },
-    { &gptimerCC26XXObjects[QC16_GPTIMER2], &gptimerCC26xxHWAttrs[QC16_GPTIMER2B], GPT_B },
-    { &gptimerCC26XXObjects[QC16_GPTIMER3], &gptimerCC26xxHWAttrs[QC16_GPTIMER3A], GPT_A },
-    { &gptimerCC26XXObjects[QC16_GPTIMER3], &gptimerCC26xxHWAttrs[QC16_GPTIMER3B], GPT_B },
+const GPTimerCC26XX_Config GPTimerCC26XX_config[CC2640R2_LAUNCHXL_GPTIMERPARTSCOUNT] = {
+    { &gptimerCC26XXObjects[CC2640R2_LAUNCHXL_GPTIMER0], &gptimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_GPTIMER0A], GPT_A },
+    { &gptimerCC26XXObjects[CC2640R2_LAUNCHXL_GPTIMER0], &gptimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_GPTIMER0B], GPT_B },
+    { &gptimerCC26XXObjects[CC2640R2_LAUNCHXL_GPTIMER1], &gptimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_GPTIMER1A], GPT_A },
+    { &gptimerCC26XXObjects[CC2640R2_LAUNCHXL_GPTIMER1], &gptimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_GPTIMER1B], GPT_B },
+    { &gptimerCC26XXObjects[CC2640R2_LAUNCHXL_GPTIMER2], &gptimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_GPTIMER2A], GPT_A },
+    { &gptimerCC26XXObjects[CC2640R2_LAUNCHXL_GPTIMER2], &gptimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_GPTIMER2B], GPT_B },
+    { &gptimerCC26XXObjects[CC2640R2_LAUNCHXL_GPTIMER3], &gptimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_GPTIMER3A], GPT_A },
+    { &gptimerCC26XXObjects[CC2640R2_LAUNCHXL_GPTIMER3], &gptimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_GPTIMER3B], GPT_B },
 };
 
 /*
@@ -313,29 +313,29 @@ const GPTimerCC26XX_Config GPTimerCC26XX_config[QC16_GPTIMERPARTSCOUNT] = {
 #include <ti/drivers/I2C.h>
 #include <ti/drivers/i2c/I2CCC26XX.h>
 
-I2CCC26XX_Object i2cCC26xxObjects[QC16_I2CCOUNT];
+I2CCC26XX_Object i2cCC26xxObjects[CC2640R2_LAUNCHXL_I2CCOUNT];
 
-const I2CCC26XX_HWAttrsV1 i2cCC26xxHWAttrs[QC16_I2CCOUNT] = {
+const I2CCC26XX_HWAttrsV1 i2cCC26xxHWAttrs[CC2640R2_LAUNCHXL_I2CCOUNT] = {
     {
         .baseAddr    = I2C0_BASE,
         .powerMngrId = PowerCC26XX_PERIPH_I2C0,
         .intNum      = INT_I2C_IRQ,
         .intPriority = ~0,
         .swiPriority = 0,
-        .sdaPin      = QC16_I2C0_SDA0,
-        .sclPin      = QC16_I2C0_SCL0,
+        .sdaPin      = CC2640R2_LAUNCHXL_I2C0_SDA0,
+        .sclPin      = CC2640R2_LAUNCHXL_I2C0_SCL0,
     }
 };
 
-const I2C_Config I2C_config[QC16_I2CCOUNT] = {
+const I2C_Config I2C_config[CC2640R2_LAUNCHXL_I2CCOUNT] = {
     {
         .fxnTablePtr = &I2CCC26XX_fxnTable,
-        .object      = &i2cCC26xxObjects[QC16_I2C0],
-        .hwAttrs     = &i2cCC26xxHWAttrs[QC16_I2C0]
+        .object      = &i2cCC26xxObjects[CC2640R2_LAUNCHXL_I2C0],
+        .hwAttrs     = &i2cCC26xxHWAttrs[CC2640R2_LAUNCHXL_I2C0]
     },
 };
 
-const uint_least8_t I2C_count = QC16_I2CCOUNT;
+const uint_least8_t I2C_count = CC2640R2_LAUNCHXL_I2CCOUNT;
 
 /*
  *  =============================== NVS ===============================
@@ -402,7 +402,7 @@ const NVSSPI25X_HWAttrs nvsSPI25XHWAttrs[1] = {
         .spiHandle = NULL,
         .spiIndex = 0,
         .spiBitRate = 4000000,
-        .spiCsnGpioIndex = QC16_GPIO_SPI_FLASH_CS,
+        .spiCsnGpioIndex = CC2640R2_LAUNCHXL_GPIO_SPI_FLASH_CS,
         .statusPollDelayUs = 100,
     },
 };
@@ -410,7 +410,7 @@ const NVSSPI25X_HWAttrs nvsSPI25XHWAttrs[1] = {
 #endif /* Board_EXCLUDE_NVS_EXTERNAL_FLASH */
 
 /* NVS Region index 0 and 1 refer to NVS and NVS SPI respectively */
-const NVS_Config NVS_config[QC16_NVSCOUNT] = {
+const NVS_Config NVS_config[CC2640R2_LAUNCHXL_NVSCOUNT] = {
 #ifndef Board_EXCLUDE_NVS_INTERNAL_FLASH
     {
         .fxnTablePtr = &NVSCC26XX_fxnTable,
@@ -427,7 +427,7 @@ const NVS_Config NVS_config[QC16_NVSCOUNT] = {
 #endif
 };
 
-const uint_least8_t NVS_count = QC16_NVSCOUNT;
+const uint_least8_t NVS_count = CC2640R2_LAUNCHXL_NVSCOUNT;
 
 /*
  *  =============================== PIN ===============================
@@ -439,16 +439,16 @@ const uint_least8_t NVS_count = QC16_NVSCOUNT;
 
 const PIN_Config BoardGpioInitTable[] = {
 
-    QC16_PIN_RLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,       /* LED initially off */
-    QC16_PIN_GLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,       /* LED initially off */
-    QC16_PIN_BTN1 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_BOTHEDGES | PIN_HYSTERESIS,          /* Button is active low */
-    QC16_PIN_BTN2 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_BOTHEDGES | PIN_HYSTERESIS,          /* Button is active low */
-    QC16_SPI_FLASH_CS | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,  /* External flash chip select */
-    QC16_UART_RX | PIN_INPUT_EN | PIN_PULLDOWN,                                              /* UART RX via debugger back channel */
-    QC16_UART_TX | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL,                        /* UART TX via debugger back channel */
-    QC16_SPI0_MOSI | PIN_INPUT_EN | PIN_PULLDOWN,                                            /* SPI master out - slave in */
-    QC16_SPI0_MISO | PIN_INPUT_EN | PIN_PULLDOWN,                                            /* SPI master in - slave out */
-    QC16_SPI0_CLK | PIN_INPUT_EN | PIN_PULLDOWN,                                             /* SPI clock */
+    CC2640R2_LAUNCHXL_PIN_RLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,       /* LED initially off */
+    CC2640R2_LAUNCHXL_PIN_GLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,       /* LED initially off */
+    CC2640R2_LAUNCHXL_PIN_BTN1 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_BOTHEDGES | PIN_HYSTERESIS,          /* Button is active low */
+    CC2640R2_LAUNCHXL_PIN_BTN2 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_BOTHEDGES | PIN_HYSTERESIS,          /* Button is active low */
+    CC2640R2_LAUNCHXL_SPI_FLASH_CS | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,  /* External flash chip select */
+    CC2640R2_LAUNCHXL_UART_RX | PIN_INPUT_EN | PIN_PULLDOWN,                                              /* UART RX via debugger back channel */
+    CC2640R2_LAUNCHXL_UART_TX | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL,                        /* UART TX via debugger back channel */
+    CC2640R2_LAUNCHXL_SPI0_MOSI | PIN_INPUT_EN | PIN_PULLDOWN,                                            /* SPI master out - slave in */
+    CC2640R2_LAUNCHXL_SPI0_MISO | PIN_INPUT_EN | PIN_PULLDOWN,                                            /* SPI master in - slave out */
+    CC2640R2_LAUNCHXL_SPI0_CLK | PIN_INPUT_EN | PIN_PULLDOWN,                                             /* SPI clock */
 
     PIN_TERMINATE
 };
@@ -496,31 +496,31 @@ const PowerCC26XX_Config PowerCC26XX_config = {
 #include <ti/drivers/PWM.h>
 #include <ti/drivers/pwm/PWMTimerCC26XX.h>
 
-PWMTimerCC26XX_Object pwmtimerCC26xxObjects[QC16_PWMCOUNT];
+PWMTimerCC26XX_Object pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWMCOUNT];
 
-const PWMTimerCC26XX_HwAttrs pwmtimerCC26xxHWAttrs[QC16_PWMCOUNT] = {
-    { .pwmPin = QC16_PWMPIN0, .gpTimerUnit = QC16_GPTIMER0A },
-    { .pwmPin = QC16_PWMPIN1, .gpTimerUnit = QC16_GPTIMER0B },
-    { .pwmPin = QC16_PWMPIN2, .gpTimerUnit = QC16_GPTIMER1A },
-    { .pwmPin = QC16_PWMPIN3, .gpTimerUnit = QC16_GPTIMER1B },
-    { .pwmPin = QC16_PWMPIN4, .gpTimerUnit = QC16_GPTIMER2A },
-    { .pwmPin = QC16_PWMPIN5, .gpTimerUnit = QC16_GPTIMER2B },
-    { .pwmPin = QC16_PWMPIN6, .gpTimerUnit = QC16_GPTIMER3A },
-    { .pwmPin = QC16_PWMPIN7, .gpTimerUnit = QC16_GPTIMER3B },
+const PWMTimerCC26XX_HwAttrs pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWMCOUNT] = {
+    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN0, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER0A },
+    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN1, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER0B },
+    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN2, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER1A },
+    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN3, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER1B },
+    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN4, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER2A },
+    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN5, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER2B },
+    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN6, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER3A },
+    { .pwmPin = CC2640R2_LAUNCHXL_PWMPIN7, .gpTimerUnit = CC2640R2_LAUNCHXL_GPTIMER3B },
 };
 
-const PWM_Config PWM_config[QC16_PWMCOUNT] = {
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM0], &pwmtimerCC26xxHWAttrs[QC16_PWM0] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM1], &pwmtimerCC26xxHWAttrs[QC16_PWM1] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM2], &pwmtimerCC26xxHWAttrs[QC16_PWM2] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM3], &pwmtimerCC26xxHWAttrs[QC16_PWM3] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM4], &pwmtimerCC26xxHWAttrs[QC16_PWM4] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM5], &pwmtimerCC26xxHWAttrs[QC16_PWM5] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM6], &pwmtimerCC26xxHWAttrs[QC16_PWM6] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM7], &pwmtimerCC26xxHWAttrs[QC16_PWM7] },
+const PWM_Config PWM_config[CC2640R2_LAUNCHXL_PWMCOUNT] = {
+    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM0], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM0] },
+    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM1], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM1] },
+    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM2], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM2] },
+    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM3], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM3] },
+    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM4], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM4] },
+    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM5], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM5] },
+    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM6], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM6] },
+    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[CC2640R2_LAUNCHXL_PWM7], &pwmtimerCC26xxHWAttrs[CC2640R2_LAUNCHXL_PWM7] },
 };
 
-const uint_least8_t PWM_count = QC16_PWMCOUNT;
+const uint_least8_t PWM_count = CC2640R2_LAUNCHXL_PWMCOUNT;
 
 /*
  *  =============================== RF Driver ===============================
@@ -541,24 +541,24 @@ const RFCC26XX_HWAttrsV2 RFCC26XX_hwAttrs = {
 #include <ti/drivers/SD.h>
 #include <ti/drivers/sd/SDSPI.h>
 
-SDSPI_Object sdspiObjects[QC16_SDCOUNT];
+SDSPI_Object sdspiObjects[CC2640R2_LAUNCHXL_SDCOUNT];
 
-const SDSPI_HWAttrs sdspiHWAttrs[QC16_SDCOUNT] = {
+const SDSPI_HWAttrs sdspiHWAttrs[CC2640R2_LAUNCHXL_SDCOUNT] = {
     {
-        .spiIndex = QC16_SPI0,
-        .spiCsGpioIndex = QC16_SDSPI_CS
+        .spiIndex = CC2640R2_LAUNCHXL_SPI0,
+        .spiCsGpioIndex = CC2640R2_LAUNCHXL_SDSPI_CS
     }
 };
 
-const SD_Config SD_config[QC16_SDCOUNT] = {
+const SD_Config SD_config[CC2640R2_LAUNCHXL_SDCOUNT] = {
     {
         .fxnTablePtr = &SDSPI_fxnTable,
-        .object = &sdspiObjects[QC16_SDSPI0],
-        .hwAttrs = &sdspiHWAttrs[QC16_SDSPI0]
+        .object = &sdspiObjects[CC2640R2_LAUNCHXL_SDSPI0],
+        .hwAttrs = &sdspiHWAttrs[CC2640R2_LAUNCHXL_SDSPI0]
     },
 };
 
-const uint_least8_t SD_count = QC16_SDCOUNT;
+const uint_least8_t SD_count = CC2640R2_LAUNCHXL_SDCOUNT;
 
 /*
  *  =============================== SPI DMA ===============================
@@ -566,14 +566,14 @@ const uint_least8_t SD_count = QC16_SDCOUNT;
 #include <ti/drivers/SPI.h>
 #include <ti/drivers/spi/SPICC26XXDMA.h>
 
-SPICC26XXDMA_Object spiCC26XXDMAObjects[QC16_SPICOUNT];
+SPICC26XXDMA_Object spiCC26XXDMAObjects[CC2640R2_LAUNCHXL_SPICOUNT];
 
 /*
  * NOTE: The SPI instances below can be used by the SD driver to communicate
  * with a SD card via SPI.  The 'defaultTxBufValue' fields below are set to 0xFF
  * to satisfy the SDSPI driver requirement.
  */
-const SPICC26XXDMA_HWAttrsV1 spiCC26XXDMAHWAttrs[QC16_SPICOUNT] = {
+const SPICC26XXDMA_HWAttrsV1 spiCC26XXDMAHWAttrs[CC2640R2_LAUNCHXL_SPICOUNT] = {
     {
         .baseAddr           = SSI0_BASE,
         .intNum             = INT_SSI0_COMB,
@@ -583,10 +583,10 @@ const SPICC26XXDMA_HWAttrsV1 spiCC26XXDMAHWAttrs[QC16_SPICOUNT] = {
         .defaultTxBufValue  = 0xFF,
         .rxChannelBitMask   = 1<<UDMA_CHAN_SSI0_RX,
         .txChannelBitMask   = 1<<UDMA_CHAN_SSI0_TX,
-        .mosiPin            = QC16_SPI0_MOSI,
-        .misoPin            = QC16_SPI0_MISO,
-        .clkPin             = QC16_SPI0_CLK,
-        .csnPin             = QC16_SPI0_CSN,
+        .mosiPin            = CC2640R2_LAUNCHXL_SPI0_MOSI,
+        .misoPin            = CC2640R2_LAUNCHXL_SPI0_MISO,
+        .clkPin             = CC2640R2_LAUNCHXL_SPI0_CLK,
+        .csnPin             = CC2640R2_LAUNCHXL_SPI0_CSN,
         .minDmaTransferSize = 10
     },
     {
@@ -598,28 +598,28 @@ const SPICC26XXDMA_HWAttrsV1 spiCC26XXDMAHWAttrs[QC16_SPICOUNT] = {
         .defaultTxBufValue  = 0xFF,
         .rxChannelBitMask   = 1<<UDMA_CHAN_SSI1_RX,
         .txChannelBitMask   = 1<<UDMA_CHAN_SSI1_TX,
-        .mosiPin            = QC16_SPI1_MOSI,
-        .misoPin            = QC16_SPI1_MISO,
-        .clkPin             = QC16_SPI1_CLK,
-        .csnPin             = QC16_SPI1_CSN,
+        .mosiPin            = CC2640R2_LAUNCHXL_SPI1_MOSI,
+        .misoPin            = CC2640R2_LAUNCHXL_SPI1_MISO,
+        .clkPin             = CC2640R2_LAUNCHXL_SPI1_CLK,
+        .csnPin             = CC2640R2_LAUNCHXL_SPI1_CSN,
         .minDmaTransferSize = 10
     }
 };
 
-const SPI_Config SPI_config[QC16_SPICOUNT] = {
+const SPI_Config SPI_config[CC2640R2_LAUNCHXL_SPICOUNT] = {
     {
          .fxnTablePtr = &SPICC26XXDMA_fxnTable,
-         .object      = &spiCC26XXDMAObjects[QC16_SPI0],
-         .hwAttrs     = &spiCC26XXDMAHWAttrs[QC16_SPI0]
+         .object      = &spiCC26XXDMAObjects[CC2640R2_LAUNCHXL_SPI0],
+         .hwAttrs     = &spiCC26XXDMAHWAttrs[CC2640R2_LAUNCHXL_SPI0]
     },
     {
          .fxnTablePtr = &SPICC26XXDMA_fxnTable,
-         .object      = &spiCC26XXDMAObjects[QC16_SPI1],
-         .hwAttrs     = &spiCC26XXDMAHWAttrs[QC16_SPI1]
+         .object      = &spiCC26XXDMAObjects[CC2640R2_LAUNCHXL_SPI1],
+         .hwAttrs     = &spiCC26XXDMAHWAttrs[CC2640R2_LAUNCHXL_SPI1]
     },
 };
 
-const uint_least8_t SPI_count = QC16_SPICOUNT;
+const uint_least8_t SPI_count = CC2640R2_LAUNCHXL_SPICOUNT;
 
 /*
  *  =============================== UART ===============================
@@ -627,47 +627,47 @@ const uint_least8_t SPI_count = QC16_SPICOUNT;
 #include <ti/drivers/UART.h>
 #include <ti/drivers/uart/UARTCC26XX.h>
 
-UARTCC26XX_Object uartCC26XXObjects[QC16_UARTCOUNT];
+UARTCC26XX_Object uartCC26XXObjects[CC2640R2_LAUNCHXL_UARTCOUNT];
 
-uint8_t uartCC26XXRingBuffer[QC16_UARTCOUNT][32];
+uint8_t uartCC26XXRingBuffer[CC2640R2_LAUNCHXL_UARTCOUNT][32];
 
-const UARTCC26XX_HWAttrsV2 uartCC26XXHWAttrs[QC16_UARTCOUNT] = {
+const UARTCC26XX_HWAttrsV2 uartCC26XXHWAttrs[CC2640R2_LAUNCHXL_UARTCOUNT] = {
     {
         .baseAddr       = UART0_BASE,
         .powerMngrId    = PowerCC26XX_PERIPH_UART0,
         .intNum         = INT_UART0_COMB,
         .intPriority    = ~0,
         .swiPriority    = 0,
-        .txPin          = QC16_UART_TX,
-        .rxPin          = QC16_UART_RX,
+        .txPin          = CC2640R2_LAUNCHXL_UART_TX,
+        .rxPin          = CC2640R2_LAUNCHXL_UART_RX,
         .ctsPin         = PIN_UNASSIGNED,
         .rtsPin         = PIN_UNASSIGNED,
-        .ringBufPtr     = uartCC26XXRingBuffer[QC16_UART0],
-        .ringBufSize    = sizeof(uartCC26XXRingBuffer[QC16_UART0]),
+        .ringBufPtr     = uartCC26XXRingBuffer[CC2640R2_LAUNCHXL_UART0],
+        .ringBufSize    = sizeof(uartCC26XXRingBuffer[CC2640R2_LAUNCHXL_UART0]),
         .txIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_1_8,
         .rxIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_4_8,
         .errorFxn       = NULL
     }
 };
 
-const UART_Config UART_config[QC16_UARTCOUNT] = {
+const UART_Config UART_config[CC2640R2_LAUNCHXL_UARTCOUNT] = {
     {
         .fxnTablePtr = &UARTCC26XX_fxnTable,
-        .object      = &uartCC26XXObjects[QC16_UART0],
-        .hwAttrs     = &uartCC26XXHWAttrs[QC16_UART0]
+        .object      = &uartCC26XXObjects[CC2640R2_LAUNCHXL_UART0],
+        .hwAttrs     = &uartCC26XXHWAttrs[CC2640R2_LAUNCHXL_UART0]
     },
 };
 
-const uint_least8_t UART_count = QC16_UARTCOUNT;
+const uint_least8_t UART_count = CC2640R2_LAUNCHXL_UARTCOUNT;
 
 /*
  *  =============================== UDMA ===============================
  */
 #include <ti/drivers/dma/UDMACC26XX.h>
 
-UDMACC26XX_Object udmaObjects[QC16_UDMACOUNT];
+UDMACC26XX_Object udmaObjects[CC2640R2_LAUNCHXL_UDMACOUNT];
 
-const UDMACC26XX_HWAttrs udmaHWAttrs[QC16_UDMACOUNT] = {
+const UDMACC26XX_HWAttrs udmaHWAttrs[CC2640R2_LAUNCHXL_UDMACOUNT] = {
     {
         .baseAddr    = UDMA0_BASE,
         .powerMngrId = PowerCC26XX_PERIPH_UDMA,
@@ -676,10 +676,10 @@ const UDMACC26XX_HWAttrs udmaHWAttrs[QC16_UDMACOUNT] = {
     }
 };
 
-const UDMACC26XX_Config UDMACC26XX_config[QC16_UDMACOUNT] = {
+const UDMACC26XX_Config UDMACC26XX_config[CC2640R2_LAUNCHXL_UDMACOUNT] = {
     {
-         .object  = &udmaObjects[QC16_UDMA0],
-         .hwAttrs = &udmaHWAttrs[QC16_UDMA0]
+         .object  = &udmaObjects[CC2640R2_LAUNCHXL_UDMA0],
+         .hwAttrs = &udmaHWAttrs[CC2640R2_LAUNCHXL_UDMA0]
     },
 };
 
@@ -691,24 +691,24 @@ const UDMACC26XX_Config UDMACC26XX_config[QC16_UDMACOUNT] = {
 #include <ti/drivers/Watchdog.h>
 #include <ti/drivers/watchdog/WatchdogCC26XX.h>
 
-WatchdogCC26XX_Object watchdogCC26XXObjects[QC16_WATCHDOGCOUNT];
+WatchdogCC26XX_Object watchdogCC26XXObjects[CC2640R2_LAUNCHXL_WATCHDOGCOUNT];
 
-const WatchdogCC26XX_HWAttrs watchdogCC26XXHWAttrs[QC16_WATCHDOGCOUNT] = {
+const WatchdogCC26XX_HWAttrs watchdogCC26XXHWAttrs[CC2640R2_LAUNCHXL_WATCHDOGCOUNT] = {
     {
         .baseAddr    = WDT_BASE,
         .reloadValue = 1000 /* Reload value in milliseconds */
     },
 };
 
-const Watchdog_Config Watchdog_config[QC16_WATCHDOGCOUNT] = {
+const Watchdog_Config Watchdog_config[CC2640R2_LAUNCHXL_WATCHDOGCOUNT] = {
     {
         .fxnTablePtr = &WatchdogCC26XX_fxnTable,
-        .object      = &watchdogCC26XXObjects[QC16_WATCHDOG0],
-        .hwAttrs     = &watchdogCC26XXHWAttrs[QC16_WATCHDOG0]
+        .object      = &watchdogCC26XXObjects[CC2640R2_LAUNCHXL_WATCHDOG0],
+        .hwAttrs     = &watchdogCC26XXHWAttrs[CC2640R2_LAUNCHXL_WATCHDOG0]
     },
 };
 
-const uint_least8_t Watchdog_count = QC16_WATCHDOGCOUNT;
+const uint_least8_t Watchdog_count = CC2640R2_LAUNCHXL_WATCHDOGCOUNT;
 
 /*
  *  ========================= TRNG begin ====================================
@@ -716,10 +716,10 @@ const uint_least8_t Watchdog_count = QC16_WATCHDOGCOUNT;
 #include <TRNGCC26XX.h>
 
 /* TRNG objects */
-TRNGCC26XX_Object trngCC26XXObjects[QC16_TRNGCOUNT];
+TRNGCC26XX_Object trngCC26XXObjects[CC2640R2_LAUNCHXL_TRNGCOUNT];
 
 /* TRNG configuration structure, describing which pins are to be used */
-const TRNGCC26XX_HWAttrs TRNGCC26XXHWAttrs[QC16_TRNGCOUNT] = {
+const TRNGCC26XX_HWAttrs TRNGCC26XXHWAttrs[CC2640R2_LAUNCHXL_TRNGCOUNT] = {
     {
         .powerMngrId    = PowerCC26XX_PERIPH_TRNG,
     }
@@ -740,9 +740,9 @@ const TRNGCC26XX_Config TRNGCC26XX_config[] = {
 extern void Board_initHook(void);
 
 /*
- *  ======== QC16_initGeneral ========
+ *  ======== CC2640R2_LAUNCHXL_initGeneral ========
  */
-void QC16_initGeneral(void)
+void CC2640R2_LAUNCHXL_initGeneral(void)
 {
     Power_init();
 
@@ -756,9 +756,9 @@ void QC16_initGeneral(void)
 }
 
 /*
- *  ======== QC16_sendExtFlashByte ========
+ *  ======== CC2640R2_LAUNCHXL_sendExtFlashByte ========
  */
-void QC16_sendExtFlashByte(PIN_Handle pinHandle, uint8_t byte)
+void CC2640R2_LAUNCHXL_sendExtFlashByte(PIN_Handle pinHandle, uint8_t byte)
 {
     uint8_t i;
 
@@ -791,9 +791,9 @@ void QC16_sendExtFlashByte(PIN_Handle pinHandle, uint8_t byte)
 }
 
 /*
- *  ======== QC16_wakeUpExtFlash ========
+ *  ======== CC2640R2_LAUNCHXL_wakeUpExtFlash ========
  */
-void QC16_wakeUpExtFlash(void)
+void CC2640R2_LAUNCHXL_wakeUpExtFlash(void)
 {
     PIN_Config extFlashPinTable[] = {
         /* SPI Flash CS */
@@ -821,15 +821,15 @@ void QC16_wakeUpExtFlash(void)
 }
 
 /*
- *  ======== QC16_shutDownExtFlash ========
+ *  ======== CC2640R2_LAUNCHXL_shutDownExtFlash ========
  */
-void QC16_shutDownExtFlash(void)
+void CC2640R2_LAUNCHXL_shutDownExtFlash(void)
 {
     /*
      *  To be sure we are putting the flash into sleep and not waking it,
      *  we first have to make a wake up call
      */
-    QC16_wakeUpExtFlash();
+    CC2640R2_LAUNCHXL_wakeUpExtFlash();
 
     PIN_Config extFlashPinTable[] = {
         /* SPI Flash CS*/
@@ -850,7 +850,7 @@ void QC16_shutDownExtFlash(void)
 
     uint8_t extFlashShutdown = 0xB9;
 
-    QC16_sendExtFlashByte(extFlashPinHandle, extFlashShutdown);
+    CC2640R2_LAUNCHXL_sendExtFlashByte(extFlashPinHandle, extFlashShutdown);
 
     PIN_close(extFlashPinHandle);
 }
@@ -861,5 +861,5 @@ void QC16_shutDownExtFlash(void)
  */
 void Board_initHook()
 {
-    QC16_shutDownExtFlash();
+    CC2640R2_LAUNCHXL_shutDownExtFlash();
 }

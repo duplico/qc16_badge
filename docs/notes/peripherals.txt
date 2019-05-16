@@ -1,0 +1,38 @@
+PERIPHERALS TO DEAL WITH
+========================
+
+B2B Serial
+    1 FC1       DIO_0
+    2 --|<--VCC
+    3 TX/RX     DIO_1
+    4 RX/TX     DIO_2
+    5 GND
+    6 FC2       DIO_3
+    
+(U5) SPI Flash
+    CSN         DIO_6
+    DO          DIO_7
+    CLK         DIO_4
+    DI          DIO_5
+    
+Matrix Keypad
+                DIO_8 .. DIO_15, DIO_20
+
+Light sensor (ADC)
+    Photo       DIO_30
+    
+(U4) LED Driver
+    SDA         DIO_27
+    SCL         DIO_28
+    
+(DS) E-paper display
+    SDI         DIO_27
+    SCLK        DIO_26
+    CSN         DIO_25
+    DC          DIO_24
+    RES         DIO_22
+    BUSY        DIO_21
+    
+Battery sensor (ADC)
+    VBAT /\/\/\ DIO_23
+    

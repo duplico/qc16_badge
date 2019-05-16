@@ -53,6 +53,23 @@ extern const PIN_Config BoardGpioInitTable[];
 #define LIGHT_IO_ANALOG IOID_30
 
 /* Digital IOs */
+#define JACK_FC1        IOID_0
+#define JACK_FC2        IOID_3
+#define SPIF_CSN        IOID_6
+#define KEYPAD_0        PIN_UNASSIGNED // TODO: DIO_8
+#define KEYPAD_1        PIN_UNASSIGNED // TODO: DIO_9
+#define KEYPAD_2        PIN_UNASSIGNED // TODO: DIO_10
+#define KEYPAD_3        PIN_UNASSIGNED // TODO: DIO_11
+#define KEYPAD_4        PIN_UNASSIGNED // TODO: DIO_12
+#define KEYPAD_5        PIN_UNASSIGNED // TODO: DIO_13
+#define KEYPAD_6        PIN_UNASSIGNED // TODO: DIO_14
+#define KEYPAD_7        PIN_UNASSIGNED // TODO: DIO_15
+#define KEYPAD_8        PIN_UNASSIGNED // TODO: DIO_20
+#define EPAPER_CSN      IOID_0 // TODO: 6
+#define EPAPER_DC       IOID_1 // TODO: 24
+#define EPAPER_RESN     IOID_12 // TODO: 22
+#define EPAPER_BUSY     IOID_15 // TODO: 21
+
 
 /* Discrete Inputs */
 #define QC16_PIN_BTN1              IOID_13
@@ -93,10 +110,6 @@ extern const PIN_Config BoardGpioInitTable[];
 #define EPAPER_SDIO     IOID_25
 /// EPD SPI SCLK
 #define EPAPER_SCLK     IOID_26
-#define EPAPER_CSN      IOID_0
-#define EPAPER_DCN      IOID_1
-#define EPAPER_RESN     IOID_12
-#define EPAPER_BUSY     IOID_15
 
 /* SPI Board */
 #define QC16_SPI0_MISO             IOID_8          /* RF1.20 */

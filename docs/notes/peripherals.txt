@@ -1,6 +1,13 @@
 PERIPHERALS TO DEAL WITH
 ========================
 
+ANALOG
+
+Light sensor (ADC)
+    Photo       DIO_30
+Battery sensor (ADC)
+    VBAT /\/\/\ DIO_23
+    
 B2B Serial
     1 FC1       DIO_0
     2 --|<--VCC
@@ -18,8 +25,6 @@ B2B Serial
 Matrix Keypad
                 DIO_8 .. DIO_15, DIO_20
 
-Light sensor (ADC)
-    Photo       DIO_30
     
 (U4) LED Driver
     SDA         DIO_27
@@ -33,6 +38,4 @@ Light sensor (ADC)
     RES         DIO_22
     BUSY        DIO_21
     
-Battery sensor (ADC)
-    VBAT /\/\/\ DIO_23
     

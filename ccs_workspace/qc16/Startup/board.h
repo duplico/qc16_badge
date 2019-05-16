@@ -116,6 +116,8 @@ extern const PIN_Config BoardGpioInitTable[];
 #define QC16_SPI0_MOSI             IOID_9          /* RF1.18 */
 #define QC16_SPI0_CLK              IOID_10         /* RF1.16 */
 #define QC16_SPI0_CSN              PIN_UNASSIGNED
+
+// TODO:
 #define QC16_SPI1_MISO             PIN_UNASSIGNED
 #define QC16_SPI1_MOSI             EPAPER_SDIO
 #define QC16_SPI1_CLK              EPAPER_SCLK
@@ -185,18 +187,7 @@ typedef enum QC16_ADCName {
  *  @brief  Enum of GPIO names
  */
 typedef enum QC16_GPIOName {
-    QC16_GPIO_S1 = 0,
-    QC16_GPIO_S2,
-    QC16_SPI_MASTER_READY,
-    QC16_SPI_SLAVE_READY,
-    QC16_GPIO_LED_GREEN,
-    QC16_GPIO_LED_RED,
-    QC16_GPIO_TMP116_EN,
-    QC16_GPIO_SPI_FLASH_CS,
-    QC16_SDSPI_CS,
-    QC16_GPIO_LCD_CS,
-    QC16_GPIO_LCD_POWER,
-    QC16_GPIO_LCD_ENABLE,
+    QC16_GPIO_SPI_FLASH_CS = 0,
     QC16_GPIOCOUNT
 } QC16_GPIOName;
 

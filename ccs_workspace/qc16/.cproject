@@ -69,14 +69,11 @@
 									<listOptionValue builtIn="false" value="${CG_TOOL_ROOT}/include"/>
 								</option>
 								<option id="com.ti.ccstudio.buildDefinitions.TMS470_18.12.compilerID.LITTLE_ENDIAN.1896800300" name="Little endian code [See 'General' page to edit] (--little_endian, -me)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_18.12.compilerID.LITTLE_ENDIAN" useByScannerDiscovery="false" value="true" valueType="boolean"/>
-								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.TMS470_18.12.compilerID.DEFINE.417563099" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_18.12.compilerID.DEFINE" valueType="definedSymbols">
+								<option IS_BUILTIN_EMPTY="false" IS_VALUE_EMPTY="false" id="com.ti.ccstudio.buildDefinitions.TMS470_18.12.compilerID.DEFINE.417563099" name="Pre-define NAME (--define, -D)" superClass="com.ti.ccstudio.buildDefinitions.TMS470_18.12.compilerID.DEFINE" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="${COM_TI_SIMPLELINK_CC2640R2_SDK_SYMBOLS}"/>
+									<listOptionValue builtIn="false" value="Board_EXCLUDE_NVS_INTERNAL_FLASH"/>
 									<listOptionValue builtIn="false" value="CACHE_AS_RAM"/>
 									<listOptionValue builtIn="false" value="DeviceFamily_CC26X0R2"/>
-									<listOptionValue builtIn="false" value="BOARD_DISPLAY_USE_LCD=0"/>
-									<listOptionValue builtIn="false" value="BOARD_DISPLAY_USE_UART=1"/>
-									<listOptionValue builtIn="false" value="BOARD_DISPLAY_USE_UART_ANSI=1"/>
-									<listOptionValue builtIn="false" value="CC2640R2_LAUNCHXL"/>
 									<listOptionValue builtIn="false" value="CC26XX"/>
 									<listOptionValue builtIn="false" value="CC26XX_R2"/>
 									<listOptionValue builtIn="false" value="FEATURE_ADVERTISER"/>
@@ -85,11 +82,8 @@
 									<listOptionValue builtIn="false" value="FEATURE_SCANNER"/>
 									<listOptionValue builtIn="false" value="FEATURE_OBSERVER"/>
 									<listOptionValue builtIn="false" value="HEAPMGR_SIZE=0"/>
-									<listOptionValue builtIn="false" value="ICALL_EVENTS"/>
-									<listOptionValue builtIn="false" value="POWER_SAVING"/>
 									<listOptionValue builtIn="false" value="RF_MULTIMODE"/>
 									<listOptionValue builtIn="false" value="TBM_ACTIVE_ITEMS_ONLY"/>
-									<listOptionValue builtIn="false" value="xUSE_ICALL"/>
 									<listOptionValue builtIn="false" value="xdc_runtime_Assert_DISABLE_ALL"/>
 									<listOptionValue builtIn="false" value="xdc_runtime_Log_DISABLE_ALL"/>
 								</option>
@@ -178,4 +172,10 @@
 	</storageModule>
 	<storageModule moduleId="scannerConfiguration"/>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="refreshScope" versionNumber="2">
+		<configuration configurationName="MultiMode_FlashOnly">
+			<resource resourceType="PROJECT" workspacePath="/qc16"/>
+		</configuration>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

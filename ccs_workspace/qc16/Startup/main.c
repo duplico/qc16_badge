@@ -182,13 +182,6 @@ int main()
     VIMSModeSet(VIMS_BASE, VIMS_MODE_ENABLED);
 #endif //CACHE_AS_RAM
 
-#ifndef POWER_SAVING
-    /* Set constraints for Standby, powerdown and idle mode */
-    /* PowerCC26XX_SB_DISALLOW may be redundant */
-    Power_setConstraint(PowerCC26XX_SB_DISALLOW);
-    Power_setConstraint(PowerCC26XX_IDLE_PD_DISALLOW);
-#endif /* POWER_SAVING */
-
     /* Create Application task. */
     UBLEBcastScan_createTask();
 

@@ -22,11 +22,6 @@
 /* Externs */
 extern const PIN_Config BoardGpioInitTable[];
 
-///* Defines */
-//#ifndef CC2640R2_LAUNCHXL
-//  #define CC2640R2_LAUNCHXL
-//#endif /* CC2640R2_LAUNCHXL */
-
 /*
  *  ============================================================================
  *  RF Front End and Bias configuration symbols for TI reference designs and
@@ -54,24 +49,10 @@ extern const PIN_Config BoardGpioInitTable[];
  */
 
 /* Analog Capable DIOs */
-#define QC16_DIO23_ANALOG          IOID_23
-#define QC16_DIO24_ANALOG          IOID_24
-#define QC16_DIO25_ANALOG          IOID_25
-#define QC16_DIO26_ANALOG          IOID_26
-#define QC16_DIO27_ANALOG          IOID_27
-#define QC16_DIO28_ANALOG          IOID_28
-#define QC16_DIO29_ANALOG          IOID_29
-#define QC16_DIO30_ANALOG          IOID_30
+#define VBAT_IO_ANALOG  IOID_23
+#define LIGHT_IO_ANALOG IOID_30
 
 /* Digital IOs */
-#define QC16_DIO0                  IOID_0
-#define QC16_DIO1_RFSW             IOID_1
-#define QC16_DIO12                 IOID_12
-#define QC16_DIO15                 IOID_15
-#define QC16_DIO16_TDO             IOID_16
-#define QC16_DIO17_TDI             IOID_17
-#define QC16_DIO21                 IOID_21
-#define QC16_DIO22                 IOID_22
 
 /* Discrete Inputs */
 #define QC16_PIN_BTN1              IOID_13
@@ -112,10 +93,10 @@ extern const PIN_Config BoardGpioInitTable[];
 #define EPAPER_SDIO     IOID_25
 /// EPD SPI SCLK
 #define EPAPER_SCLK     IOID_26
-#define EPAPER_CSN      QC16_DIO0
-#define EPAPER_DCN      QC16_DIO1_RFSW
-#define EPAPER_RESN     QC16_DIO12
-#define EPAPER_BUSY     QC16_DIO15
+#define EPAPER_CSN      IOID_0
+#define EPAPER_DCN      IOID_1
+#define EPAPER_RESN     IOID_12
+#define EPAPER_BUSY     IOID_15
 
 /* SPI Board */
 #define QC16_SPI0_MISO             IOID_8          /* RF1.20 */
@@ -140,12 +121,6 @@ extern const PIN_Config BoardGpioInitTable[];
  *  This function initializes the general board specific settings.
  */
 void QC16_initGeneral(void);
-
-/*!
- *  @brief  Turn off the external flash on LaunchPads
- *
- */
-void QC16_shutDownExtFlash(void);
 
 /*!
  *  @def    QC16_ADCBufName
@@ -182,24 +157,14 @@ typedef enum QC16_ADCBuf0ChannelName {
  *  @brief  Enum of ADCs
  */
 typedef enum QC16_ADCName {
-    QC16_ADC0 = 0,
-    QC16_ADC1,
+    QC16_ADC_VBAT = 0,
+    QC16_ADC_LIGHT,
     QC16_ADCDCOUPL,
     QC16_ADCVSS,
     QC16_ADCVDDS,
 
     QC16_ADCCOUNT
 } QC16_ADCName;
-
-/*!
- *  @def    QC16_CryptoName
- *  @brief  Enum of Crypto names
- */
-typedef enum QC16_CryptoName {
-    QC16_CRYPTO0 = 0,
-
-    QC16_CRYPTOCOUNT
-} QC16_CryptoName;
 
 // TODO: The following indexes the pin init array thing
 /*!
@@ -356,129 +321,5 @@ typedef enum QC16_TRNGName {
 
 #define Board_init()            QC16_initGeneral()
 #define Board_initGeneral()     QC16_initGeneral()
-
-/* These #defines allow us to reuse TI-RTOS across other device families */
-
-#define Board_ADC0              QC16_ADC0
-#define Board_ADC1              QC16_ADC1
-
-#define Board_ADCBUF0           QC16_ADCBUF0
-#define Board_ADCBUF0CHANNEL0   QC16_ADCBUF0CHANNEL0
-#define Board_ADCBUF0CHANNEL1   QC16_ADCBUF0CHANNEL1
-
-#define Board_CRYPTO0           QC16_CRYPTO0
-
-#define Board_DIO0              QC16_DIO0
-#define Board_DIO1_RFSW         QC16_DIO1_RFSW
-#define Board_DIO12             QC16_DIO12
-#define Board_DIO15             QC16_DIO15
-#define Board_DIO16_TDO         QC16_DIO16_TDO
-#define Board_DIO17_TDI         QC16_DIO17_TDI
-#define Board_DIO21             QC16_DIO21
-#define Board_DIO22             QC16_DIO22
-
-#define Board_DIO23_ANALOG      QC16_DIO23_ANALOG
-#define Board_DIO24_ANALOG      QC16_DIO24_ANALOG
-#define Board_DIO25_ANALOG      QC16_DIO25_ANALOG
-#define Board_DIO26_ANALOG      QC16_DIO26_ANALOG
-#define Board_DIO27_ANALOG      QC16_DIO27_ANALOG
-#define Board_DIO28_ANALOG      QC16_DIO28_ANALOG
-#define Board_DIO29_ANALOG      QC16_DIO29_ANALOG
-#define Board_DIO30_ANALOG      QC16_DIO30_ANALOG
-
-#define Board_GPIO_BUTTON0      QC16_GPIO_S1
-#define Board_GPIO_BUTTON1      QC16_GPIO_S2
-#define Board_GPIO_BTN1         QC16_GPIO_S1
-#define Board_GPIO_BTN2         QC16_GPIO_S2
-#define Board_GPIO_LED0         QC16_GPIO_LED_RED
-#define Board_GPIO_LED1         QC16_GPIO_LED_GREEN
-#define Board_GPIO_LED2         QC16_GPIO_LED_RED
-#define Board_GPIO_RLED         QC16_GPIO_LED_RED
-#define Board_GPIO_GLED         QC16_GPIO_LED_GREEN
-#define Board_GPIO_LED_ON       QC16_GPIO_LED_ON
-#define Board_GPIO_LED_OFF      QC16_GPIO_LED_OFF
-#define Board_GPIO_TMP116_EN    QC16_GPIO_TMP116_EN
-
-#define Board_GPTIMER0A         QC16_GPTIMER0A
-#define Board_GPTIMER0B         QC16_GPTIMER0B
-#define Board_GPTIMER1A         QC16_GPTIMER1A
-#define Board_GPTIMER1B         QC16_GPTIMER1B
-#define Board_GPTIMER2A         QC16_GPTIMER2A
-#define Board_GPTIMER2B         QC16_GPTIMER2B
-#define Board_GPTIMER3A         QC16_GPTIMER3A
-#define Board_GPTIMER3B         QC16_GPTIMER3B
-
-#define Board_I2C0              QC16_I2C0
-#define Board_I2C_TMP           Board_I2C0
-
-#define Board_NVSINTERNAL       QC16_NVSCC26XX0
-#define Board_NVSEXTERNAL       QC16_NVSSPI25X0
-
-#define Board_PIN_BUTTON0       QC16_PIN_BTN1
-#define Board_PIN_BUTTON1       QC16_PIN_BTN2
-#define Board_PIN_BTN1          QC16_PIN_BTN1
-#define Board_PIN_BTN2          QC16_PIN_BTN2
-#define Board_PIN_LED0          QC16_PIN_RLED
-#define Board_PIN_LED1          QC16_PIN_GLED
-#define Board_PIN_LED2          QC16_PIN_RLED
-#define Board_PIN_RLED          QC16_PIN_RLED
-#define Board_PIN_GLED          QC16_PIN_GLED
-
-#define Board_PWM0              QC16_PWM0
-#define Board_PWM1              QC16_PWM1
-#define Board_PWM2              QC16_PWM2
-#define Board_PWM3              QC16_PWM3
-#define Board_PWM4              QC16_PWM4
-#define Board_PWM5              QC16_PWM5
-#define Board_PWM6              QC16_PWM6
-#define Board_PWM7              QC16_PWM7
-
-#define Board_SD0               QC16_SDSPI0
-
-#define Board_SPI0              QC16_SPI0
-#define Board_SPI1              QC16_SPI1
-#define Board_SPI_FLASH_CS      QC16_SPI_FLASH_CS
-#define Board_FLASH_CS_ON       0
-#define Board_FLASH_CS_OFF      1
-
-#define Board_SPI_MASTER        QC16_SPI0
-#define Board_SPI_SLAVE         QC16_SPI0
-#define Board_SPI_MASTER_READY  QC16_SPI_MASTER_READY
-#define Board_SPI_SLAVE_READY   QC16_SPI_SLAVE_READY
-#define Board_UART0             QC16_UART0
-
-#define Board_WATCHDOG0         QC16_WATCHDOG0
-
-/*
- * These macros are provided for backwards compatibility.
- * Please use the <Driver>_init functions directly rather
- * than Board_init<Driver>.
- */
-//#define Board_initADC()         ADC_init()
-//#define Board_initADCBuf()      ADCBuf_init()
-//#define Board_initGPIO()        GPIO_init()
-//#define Board_initPWM()         PWM_init()
-//#define Board_initSPI()         SPI_init()
-//#define Board_initUART()        UART_init()
-//#define Board_initWatchdog()    Watchdog_init()
-
-/*
- * These macros are provided for backwards compatibility.
- * Please use the 'Board_PIN_xxx' macros to differentiate
- * them from the 'Board_GPIO_xxx' macros.
- */
-//#define Board_BUTTON0           Board_PIN_BUTTON0
-//#define Board_BUTTON1           Board_PIN_BUTTON1
-//#define Board_BTN1              Board_PIN_BTN1
-//#define Board_BTN2              Board_PIN_BTN2
-//#define Board_LED_ON            Board_GPIO_LED_ON
-//#define Board_LED_OFF           Board_GPIO_LED_OFF
-//#define Board_LED0              Board_PIN_LED0
-//#define Board_LED1              Board_PIN_LED1
-//#define Board_LED2              Board_PIN_LED2
-//#define Board_RLED              Board_PIN_RLED
-//#define Board_GLED              Board_PIN_GLED
-//#define Board_ADCBUFCHANNEL0    Board_ADCBUF0CHANNEL0
-//#define Board_ADCBUFCHANNEL1    Board_ADCBUF0CHANNEL1
 
 #endif /* STARTUP_BOARD_H_ */

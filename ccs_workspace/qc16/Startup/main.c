@@ -150,10 +150,11 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
     Graphics_setBackgroundColor(&gr_context, GRAPHICS_COLOR_WHITE);
     Graphics_setForegroundColorTranslated(&gr_context, GRAPHICS_COLOR_BLACK);
     Graphics_clearDisplay(&gr_context);
-    Graphics_fillCircle(&gr_context, 64, 64, 32);
+    Graphics_fillCircle(&gr_context, 128, 64, 32);
     Graphics_drawLine(&gr_context, 0, 16, 295, 16);
     Graphics_setFont(&gr_context, &g_sFontCm14);
     Graphics_drawString(&gr_context, "Queercon 2019", 13, 16, 16, 0);
+    Graphics_drawString(&gr_context, buf, status, 16, 32, 0);
     epd_flip();
     Graphics_flushBuffer(&gr_context);
 

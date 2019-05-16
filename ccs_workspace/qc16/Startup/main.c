@@ -41,8 +41,9 @@ SPIFFSNVS_Data spiffsnvs;
 
 // TODO:
 //
+#define EPD_STACKSIZE 2048
 Task_Struct epaperTask;
-Char epaperTaskStack[660];
+Char epaperTaskStack[EPD_STACKSIZE];
 
 /* Buffer placed in RAM to hold bytes read from non-volatile storage. */
 static char buffer[64];
@@ -58,11 +59,10 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
     NVS_Attrs regionAttrs;
     NVS_Params nvsParams;
 
-    Board_wakeUpExtFlash();
 
     volatile int32_t status;
 
-    status = SPIFFSNVS_config(&spiffsnvs, Board_NVSINTERNAL, &fs, &fsConfig,
+    status = SPIFFSNVS_config(&spiffsnvs, Board_NVSEXTERNAL, &fs, &fsConfig,
                               SPIFFS_LOGICAL_BLOCK_SIZE, SPIFFS_LOGICAL_PAGE_SIZE);
     if (status != SPIFFSNVS_STATUS_SUCCESS) {
         while (1); // Spin forever.
@@ -196,7 +196,7 @@ int main()
     // Configure task
     Task_Params_init(&taskParams);
     taskParams.stack = epaperTaskStack;
-    taskParams.stackSize = 660;
+    taskParams.stackSize = EPD_STACKSIZE;
     taskParams.priority = 1;
     Task_construct(&epaperTask, epaper_spi_task_fn, &taskParams, NULL);
 

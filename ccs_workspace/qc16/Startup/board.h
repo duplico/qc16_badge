@@ -148,14 +148,6 @@ void QC16_initGeneral(void);
 void QC16_shutDownExtFlash(void);
 
 /*!
- *  @brief  Wake up the external flash present on the board files
- *
- *  This function toggles the chip select for the amount of time needed
- *  to wake the chip up.
- */
-void QC16_wakeUpExtFlash(void);
-
-/*!
  *  @def    QC16_ADCBufName
  *  @brief  Enum of ADCs
  */
@@ -215,6 +207,7 @@ typedef enum QC16_CryptoName {
     QC16_CRYPTOCOUNT
 } QC16_CryptoName;
 
+// TODO: The following indexes the pin init array thing
 /*!
  *  @def    QC16_GPIOName
  *  @brief  Enum of GPIO names
@@ -369,8 +362,6 @@ typedef enum QC16_TRNGName {
 
 #define Board_init()            QC16_initGeneral()
 #define Board_initGeneral()     QC16_initGeneral()
-#define Board_shutDownExtFlash() QC16_shutDownExtFlash()
-#define Board_wakeUpExtFlash() QC16_wakeUpExtFlash()
 
 /* These #defines allow us to reuse TI-RTOS across other device families */
 

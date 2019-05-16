@@ -101,7 +101,7 @@ void ht16d_init_io() {
     i2c_params.bitRate = I2C_400kHz;
     i2c_params.transferMode = I2C_MODE_BLOCKING; // TODO: Rewrite to callback.
 
-    ht16d_i2c_h = I2C_open(Board_I2C0, NULL);
+    ht16d_i2c_h = I2C_open(QC16_I2C0, NULL);
     // TODO: Check if it's NULL.
 
 }

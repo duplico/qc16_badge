@@ -35,14 +35,14 @@ ADCBufCC26XX_Object adcBufCC26xxObjects[QC16_ADCBUFCOUNT];
  *  entries. The mapping of dio and internal signals is package dependent.
  */
 const ADCBufCC26XX_AdcChannelLutEntry ADCBufCC26XX_adcChannelLut[QC16_ADCBUF0CHANNELCOUNT] = {
-    {QC16_DIO23_ANALOG, ADC_COMPB_IN_AUXIO7}, // TODO: Used for battery
+    {VBAT_IO_ANALOG, ADC_COMPB_IN_AUXIO7}, // TODO: Used for battery
 //    {QC16_DIO24_ANALOG, ADC_COMPB_IN_AUXIO6},
 //    {QC16_DIO25_ANALOG, ADC_COMPB_IN_AUXIO5},
 //    {QC16_DIO26_ANALOG, ADC_COMPB_IN_AUXIO4},
 //    {QC16_DIO27_ANALOG, ADC_COMPB_IN_AUXIO3},
 //    {QC16_DIO28_ANALOG, ADC_COMPB_IN_AUXIO2},
 //    {QC16_DIO29_ANALOG, ADC_COMPB_IN_AUXIO1},
-    {QC16_DIO30_ANALOG, ADC_COMPB_IN_AUXIO0}, // TODO: Used for the light sensor
+    {LIGHT_IO_ANALOG, ADC_COMPB_IN_AUXIO0}, // TODO: Used for the light sensor
     {PIN_UNASSIGNED, ADC_COMPB_IN_VDDS},
     {PIN_UNASSIGNED, ADC_COMPB_IN_DCOUPL},
     {PIN_UNASSIGNED, ADC_COMPB_IN_VSS},
@@ -76,7 +76,7 @@ ADCCC26XX_Object adcCC26xxObjects[QC16_ADCCOUNT];
 
 const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
     {
-        .adcDIO              = QC16_DIO23_ANALOG,
+        .adcDIO              = VBAT_IO_ANALOG,
         .adcCompBInput       = ADC_COMPB_IN_AUXIO7,
         .refSource           = ADCCC26XX_FIXED_REFERENCE,
         .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
@@ -85,7 +85,7 @@ const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
         .returnAdjustedVal   = false
     },
     {
-        .adcDIO              = QC16_DIO30_ANALOG,
+        .adcDIO              = LIGHT_IO_ANALOG,
         .adcCompBInput       = ADC_COMPB_IN_AUXIO0,
         .refSource           = ADCCC26XX_FIXED_REFERENCE,
         .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_10P9_MS,
@@ -123,39 +123,14 @@ const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
 };
 
 const ADC_Config ADC_config[QC16_ADCCOUNT] = {
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC0], &adcCC26xxHWAttrs[QC16_ADC0]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC1], &adcCC26xxHWAttrs[QC16_ADC1]},
+    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC_VBAT], &adcCC26xxHWAttrs[QC16_ADC_VBAT]},
+    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC_LIGHT], &adcCC26xxHWAttrs[QC16_ADC_LIGHT]},
     {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADCDCOUPL], &adcCC26xxHWAttrs[QC16_ADCDCOUPL]},
     {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADCVSS], &adcCC26xxHWAttrs[QC16_ADCVSS]},
     {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADCVDDS], &adcCC26xxHWAttrs[QC16_ADCVDDS]},
 };
 
 const uint_least8_t ADC_count = QC16_ADCCOUNT;
-
-/*
- *  =============================== Crypto ===============================
- */
-// TODO: Delete
-
-#include <ti/drivers/crypto/CryptoCC26XX.h>
-
-CryptoCC26XX_Object cryptoCC26XXObjects[QC16_CRYPTOCOUNT];
-
-const CryptoCC26XX_HWAttrs cryptoCC26XXHWAttrs[QC16_CRYPTOCOUNT] = {
-    {
-        .baseAddr       = CRYPTO_BASE,
-        .powerMngrId    = PowerCC26XX_PERIPH_CRYPTO,
-        .intNum         = INT_CRYPTO_RESULT_AVAIL_IRQ,
-        .intPriority    = ~0,
-    }
-};
-
-const CryptoCC26XX_Config CryptoCC26XX_config[QC16_CRYPTOCOUNT] = {
-    {
-         .object  = &cryptoCC26XXObjects[QC16_CRYPTO0],
-         .hwAttrs = &cryptoCC26XXHWAttrs[QC16_CRYPTO0]
-    },
-};
 
 /*
  *  =============================== GPIO ===============================

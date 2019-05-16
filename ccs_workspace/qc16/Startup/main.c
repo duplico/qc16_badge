@@ -62,7 +62,7 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
 
     volatile int32_t status;
 
-    status = SPIFFSNVS_config(&spiffsnvs, Board_NVSEXTERNAL, &fs, &fsConfig,
+    status = SPIFFSNVS_config(&spiffsnvs, QC16_NVSSPI25X0, &fs, &fsConfig,
                               SPIFFS_LOGICAL_BLOCK_SIZE, SPIFFS_LOGICAL_PAGE_SIZE);
     if (status != SPIFFSNVS_STATUS_SUCCESS) {
         while (1); // Spin forever.

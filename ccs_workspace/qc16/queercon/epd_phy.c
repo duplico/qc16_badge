@@ -31,13 +31,13 @@ void epd_phy_spi_cmd(uint8_t cmd) {
     transaction.txBuf = (void *) tx_buf;
     transaction.rxBuf = NULL;
     // Set DC low for CMD
-    PIN_setOutputValue(epd_pin_h, EPAPER_DC, 0);
+    PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_DC, 0);
     // Set CS low
-    PIN_setOutputValue(epd_pin_h, EPAPER_CSN, 0);
+    PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_CSN, 0);
     // Transmit
     SPI_transfer(epd_spi_h, &transaction);
     // Set CS high
-    PIN_setOutputValue(epd_pin_h, EPAPER_CSN, 1);
+    PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_CSN, 1);
 }
 
 void epd_phy_spi_data(uint8_t dat) {
@@ -48,31 +48,31 @@ void epd_phy_spi_data(uint8_t dat) {
     transaction.txBuf = (void *) tx_buf;
     transaction.rxBuf = NULL;
     // Set DC high for DATA
-    PIN_setOutputValue(epd_pin_h, EPAPER_DC, 1);
+    PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_DC, 1);
     // Set CS low
-    PIN_setOutputValue(epd_pin_h, EPAPER_CSN, 0);
+    PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_CSN, 0);
     // Transmit
     SPI_transfer(epd_spi_h, &transaction);
     // Set CS high
-    PIN_setOutputValue(epd_pin_h, EPAPER_CSN, 1);
+    PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_CSN, 1);
 }
 
 /// Do a hardware reset of the display, using the RESN line.
 static void epd_phy_reset() {
     // TODO: timing
     // Reset display driver IC (Pulse EPAPER_RESN low for ?????)
-    PIN_setOutputValue(epd_pin_h, EPAPER_RESN, 1);
+    PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_RESN, 1);
     Task_sleep(100000); // Sleep system ticks (not sure how long these are)
-    PIN_setOutputValue(epd_pin_h, EPAPER_RESN, 0);
+    PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_RESN, 0);
     Task_sleep(100000); // Sleep system ticks (not sure how long these are)
-    PIN_setOutputValue(epd_pin_h, EPAPER_RESN, 1);
+    PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_RESN, 1);
     Task_sleep(100000); // Sleep system ticks (not sure how long these are)
 }
 
 /// Wait for the busy signal to end.
 static void epd_phy_wait_until_idle() {
     // Wait for busy=high
-    while (PIN_getInputValue(EPAPER_BUSY)) { //LOW: idle, HIGH: busy
+    while (PIN_getInputValue(QC16_PIN_EPAPER_BUSY)) { //LOW: idle, HIGH: busy
         Task_yield();
     }
 }
@@ -129,10 +129,10 @@ void epd_phy_init_gpio() {
     // TODO: Eliminate this GpioInitTable
     PIN_State epaper_pin_state;
     PIN_Config BoardGpioInitTable[] = {
-    EPAPER_CSN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
-    EPAPER_DC | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
-    EPAPER_RESN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
-    EPAPER_BUSY | PIN_INPUT_EN,
+    QC16_PIN_EPAPER_CSN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
+    QC16_PIN_EPAPER_DC | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
+    QC16_PIN_EPAPER_RESN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
+    QC16_PIN_EPAPER_BUSY | PIN_INPUT_EN,
     PIN_TERMINATE
     };
 

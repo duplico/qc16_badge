@@ -17,6 +17,8 @@
 
 /* Includes */
 #include <ti/drivers/PIN.h>
+#include <ti/drivers/pin/PINCC26XX.h>
+#include <ti/drivers/gpio/GPIOCC26XX.h>
 #include <ti/devices/cc26x0r2/driverlib/ioc.h>
 
 /* Externs */
@@ -48,80 +50,48 @@ extern const PIN_Config BoardGpioInitTable[];
  *      <board signal alias>                  <pin mapping>
  */
 
-/* Analog Capable DIOs */
+// ADC - analog outputs
 #define VBAT_IO_ANALOG  IOID_23
 #define LIGHT_IO_ANALOG IOID_30
 
-/* Digital IOs */
-#define JACK_FC1        IOID_0
-#define JACK_FC2        IOID_3
-#define SPIF_CSN        IOID_6
-#define KEYPAD_0        PIN_UNASSIGNED // TODO: DIO_8
-#define KEYPAD_1        PIN_UNASSIGNED // TODO: DIO_9
-#define KEYPAD_2        PIN_UNASSIGNED // TODO: DIO_10
-#define KEYPAD_3        PIN_UNASSIGNED // TODO: DIO_11
-#define KEYPAD_4        PIN_UNASSIGNED // TODO: DIO_12
-#define KEYPAD_5        PIN_UNASSIGNED // TODO: DIO_13
-#define KEYPAD_6        PIN_UNASSIGNED // TODO: DIO_14
-#define KEYPAD_7        PIN_UNASSIGNED // TODO: DIO_15
-#define KEYPAD_8        PIN_UNASSIGNED // TODO: DIO_20
-#define EPAPER_CSN      IOID_0 // TODO: 6
-#define EPAPER_DC       IOID_1 // TODO: 24
-#define EPAPER_RESN     IOID_12 // TODO: 22
-#define EPAPER_BUSY     IOID_15 // TODO: 21
+// GPIO - digital I/O
+//  Note: the PIN API is preferred, but the SPI flash driver we're using
+//        requires the use of the GPIO API instead, so we will configure
+//        this single pin using it.
+#define QC16_GPIO_SPIF_CSN      GPIOCC26XX_DIO_20 // TODO: GPIOCC26XX_DIO_6
 
+// PIN - digital I/O
+#define QC16_PIN_JACK_FC1       PIN_UNASSIGNED // TODO: PINCC26XX_DIO0
+#define QC16_PIN_JACK_FC2       PIN_UNASSIGNED // TODO: PINCC26XX_DIO3
+#define QC16_PIN_KEYPAD_0       PIN_UNASSIGNED // TODO: PINCC26XX_DIO8
+#define QC16_PIN_KEYPAD_1       PIN_UNASSIGNED // TODO: PINCC26XX_DIO9
+#define QC16_PIN_KEYPAD_2       PIN_UNASSIGNED // TODO: PINCC26XX_DIO10
+#define QC16_PIN_KEYPAD_3       PIN_UNASSIGNED // TODO: PINCC26XX_DIO11
+#define QC16_PIN_KEYPAD_4       PIN_UNASSIGNED // TODO: PINCC26XX_DIO12
+#define QC16_PIN_KEYPAD_5       PIN_UNASSIGNED // TODO: PINCC26XX_DIO13
+#define QC16_PIN_KEYPAD_6       PIN_UNASSIGNED // TODO: PINCC26XX_DIO14
+#define QC16_PIN_KEYPAD_7       PIN_UNASSIGNED // TODO: PINCC26XX_DIO15
+#define QC16_PIN_KEYPAD_8       PIN_UNASSIGNED // TODO: PINCC26XX_DIO16
+#define QC16_PIN_EPAPER_CSN     PINCC26XX_DIO0 // TODO: PINCC26XX_DIO6
+#define QC16_PIN_EPAPER_DC      PINCC26XX_DIO1 // TODO: PINCC26XX_DIO24
+#define QC16_PIN_EPAPER_RESN    PINCC26XX_DIO12 // TODO: PINCC26XX_DIO22
+#define QC16_PIN_EPAPER_BUSY    PINCC26XX_DIO15 // TODO: PINCC26XX_DIO21
 
-/* Discrete Inputs */
-#define QC16_PIN_BTN1              IOID_13
-#define QC16_PIN_BTN2              IOID_14
-
-/* GPIO */
-#define QC16_GPIO_LED_ON           1
-#define QC16_GPIO_LED_OFF          0
-
-/* I2C */
-// TODO: for prod, this will be:
-#define QC16_I2C0_SCL0             IOID_4 // IOID_28
-#define QC16_I2C0_SDA0             IOID_5 // IOID_29
-
-/* LEDs */
-#define QC16_PIN_LED_ON            1
-#define QC16_PIN_LED_OFF           0
-#define QC16_PIN_RLED              IOID_6
-#define QC16_PIN_GLED              IOID_7
-
-/* PWM Outputs */
-#define QC16_PWMPIN0               QC16_PIN_RLED
-#define QC16_PWMPIN1               QC16_PIN_GLED
-#define QC16_PWMPIN2               PIN_UNASSIGNED
-#define QC16_PWMPIN3               PIN_UNASSIGNED
-#define QC16_PWMPIN4               PIN_UNASSIGNED
-#define QC16_PWMPIN5               PIN_UNASSIGNED
-#define QC16_PWMPIN6               PIN_UNASSIGNED
-#define QC16_PWMPIN7               PIN_UNASSIGNED
-
-/* SPI */
-#define QC16_SPI_FLASH_CS          IOID_20
-#define QC16_FLASH_CS_ON           0
-#define QC16_FLASH_CS_OFF          1
+// I2C
+#define QC16_I2C_HT16D_SCL      IOID_4 // TODO: IOID_28
+#define QC16_I2C_HT16D_SDA      IOID_5 // TODO: IOID_29
 
 // SPI for the epaper display:
 /// EPD SPI MOSI
-#define EPAPER_SDIO     IOID_25
+#define QC16_SPI_EPAPER_SDIO     IOID_25 // TODO: IOID_27
 /// EPD SPI SCLK
-#define EPAPER_SCLK     IOID_26
+#define QC16_SPI_EPAPER_SCLK     IOID_26 // TODO: IOID_26
 
-/* SPI Board */
-#define QC16_SPI0_MISO             IOID_8          /* RF1.20 */
-#define QC16_SPI0_MOSI             IOID_9          /* RF1.18 */
+// SPI for the external flash:
+#define QC16_SPIF_MISO             IOID_8          /* RF1.20 */
+#define QC16_SPIF_MOSI             IOID_9          /* RF1.18 */
 #define QC16_SPI0_CLK              IOID_10         /* RF1.16 */
 #define QC16_SPI0_CSN              PIN_UNASSIGNED
-
-// TODO:
-#define QC16_SPI1_MISO             PIN_UNASSIGNED
-#define QC16_SPI1_MOSI             EPAPER_SDIO
-#define QC16_SPI1_CLK              EPAPER_SCLK
-#define QC16_SPI1_CSN              PIN_UNASSIGNED
 
 
 /* UART Board */
@@ -129,6 +99,17 @@ extern const PIN_Config BoardGpioInitTable[];
 #define QC16_UART_TX               IOID_3          /* TXD */
 #define QC16_UART_CTS              IOID_19         /* CTS */
 #define QC16_UART_RTS              IOID_18         /* RTS */
+
+// TODO: Is the following needed?
+/* PWM Outputs */
+#define QC16_PWMPIN0               PIN_UNASSIGNED
+#define QC16_PWMPIN1               PIN_UNASSIGNED
+#define QC16_PWMPIN2               PIN_UNASSIGNED
+#define QC16_PWMPIN3               PIN_UNASSIGNED
+#define QC16_PWMPIN4               PIN_UNASSIGNED
+#define QC16_PWMPIN5               PIN_UNASSIGNED
+#define QC16_PWMPIN6               PIN_UNASSIGNED
+#define QC16_PWMPIN7               PIN_UNASSIGNED
 
 /*!
  *  @brief  Initialize the general board specific settings

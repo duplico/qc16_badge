@@ -35,14 +35,14 @@ ADCBufCC26XX_Object adcBufCC26xxObjects[QC16_ADCBUFCOUNT];
  *  entries. The mapping of dio and internal signals is package dependent.
  */
 const ADCBufCC26XX_AdcChannelLutEntry ADCBufCC26XX_adcChannelLut[QC16_ADCBUF0CHANNELCOUNT] = {
-    {VBAT_IO_ANALOG, ADC_COMPB_IN_AUXIO7}, // TODO: Used for battery
+    {VBAT_IO_ANALOG, ADC_COMPB_IN_AUXIO7},
 //    {QC16_DIO24_ANALOG, ADC_COMPB_IN_AUXIO6},
 //    {QC16_DIO25_ANALOG, ADC_COMPB_IN_AUXIO5},
 //    {QC16_DIO26_ANALOG, ADC_COMPB_IN_AUXIO4},
 //    {QC16_DIO27_ANALOG, ADC_COMPB_IN_AUXIO3},
 //    {QC16_DIO28_ANALOG, ADC_COMPB_IN_AUXIO2},
 //    {QC16_DIO29_ANALOG, ADC_COMPB_IN_AUXIO1},
-    {LIGHT_IO_ANALOG, ADC_COMPB_IN_AUXIO0}, // TODO: Used for the light sensor
+    {LIGHT_IO_ANALOG, ADC_COMPB_IN_AUXIO0},
     {PIN_UNASSIGNED, ADC_COMPB_IN_VDDS},
     {PIN_UNASSIGNED, ADC_COMPB_IN_DCOUPL},
     {PIN_UNASSIGNED, ADC_COMPB_IN_VSS},
@@ -218,8 +218,8 @@ const I2CCC26XX_HWAttrsV1 i2cCC26xxHWAttrs[QC16_I2CCOUNT] = {
         .intNum      = INT_I2C_IRQ,
         .intPriority = ~0,
         .swiPriority = 0,
-        .sdaPin      = QC16_I2C0_SDA0,
-        .sclPin      = QC16_I2C0_SCL0,
+        .sdaPin      = QC16_I2C_HT16D_SDA,
+        .sclPin      = QC16_I2C_HT16D_SCL,
     }
 };
 
@@ -343,11 +343,11 @@ const PIN_Config BoardGpioInitTable[] = {
     QC16_PIN_GLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,       /* LED initially off */
     QC16_PIN_BTN1 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_BOTHEDGES | PIN_HYSTERESIS,          /* Button is active low */
     QC16_PIN_BTN2 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_BOTHEDGES | PIN_HYSTERESIS,          /* Button is active low */
-    QC16_SPI_FLASH_CS | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,  /* External flash chip select */
+    GPIO_SPIF_CSN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,  /* External flash chip select */ // TODO: Remove
     QC16_UART_RX | PIN_INPUT_EN | PIN_PULLDOWN,                                              /* UART RX via debugger back channel */
     QC16_UART_TX | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL,                        /* UART TX via debugger back channel */
-    QC16_SPI0_MOSI | PIN_INPUT_EN | PIN_PULLDOWN,                                            /* SPI master out - slave in */
-    QC16_SPI0_MISO | PIN_INPUT_EN | PIN_PULLDOWN,                                            /* SPI master in - slave out */
+    QC16_SPIF_MOSI | PIN_INPUT_EN | PIN_PULLDOWN,                                            /* SPI master out - slave in */
+    QC16_SPIF_MISO | PIN_INPUT_EN | PIN_PULLDOWN,                                            /* SPI master in - slave out */
     QC16_SPI0_CLK | PIN_INPUT_EN | PIN_PULLDOWN,                                             /* SPI clock */
 
     PIN_TERMINATE
@@ -458,8 +458,8 @@ const SPICC26XXDMA_HWAttrsV1 spiCC26XXDMAHWAttrs[QC16_SPICOUNT] = {
         .defaultTxBufValue  = 0xFF,
         .rxChannelBitMask   = 1<<UDMA_CHAN_SSI0_RX,
         .txChannelBitMask   = 1<<UDMA_CHAN_SSI0_TX,
-        .mosiPin            = QC16_SPI0_MOSI,
-        .misoPin            = QC16_SPI0_MISO,
+        .mosiPin            = QC16_SPIF_MOSI,
+        .misoPin            = QC16_SPIF_MISO,
         .clkPin             = QC16_SPI0_CLK,
         .csnPin             = QC16_SPI0_CSN,
         .minDmaTransferSize = 10
@@ -473,10 +473,10 @@ const SPICC26XXDMA_HWAttrsV1 spiCC26XXDMAHWAttrs[QC16_SPICOUNT] = {
         .defaultTxBufValue  = 0xFF,
         .rxChannelBitMask   = 1<<UDMA_CHAN_SSI1_RX,
         .txChannelBitMask   = 1<<UDMA_CHAN_SSI1_TX,
-        .mosiPin            = QC16_SPI1_MOSI,
-        .misoPin            = QC16_SPI1_MISO,
-        .clkPin             = QC16_SPI1_CLK,
-        .csnPin             = QC16_SPI1_CSN,
+        .mosiPin            = QC16_SPI_EPAPER_SDIO,
+        .misoPin            = PIN_UNASSIGNED,
+        .clkPin             = QC16_SPI_EPAPER_SCLK,
+        .csnPin             = PIN_UNASSIGNED,
         .minDmaTransferSize = 10
     }
 };

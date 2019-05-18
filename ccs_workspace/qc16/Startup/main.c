@@ -55,9 +55,6 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
     init_epd(0);
 
 
-    NVS_Handle nvsHandle;
-    NVS_Attrs regionAttrs;
-    NVS_Params nvsParams;
 
 
     volatile int32_t status;
@@ -92,6 +89,9 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
     f = SPIFFS_open(&fs, "testfile", SPIFFS_O_RDONLY, 0);
     status = SPIFFS_read(&fs, f, (void *)buf, 4);
 
+//    NVS_Handle nvsHandle;
+//    NVS_Attrs regionAttrs;
+//    NVS_Params nvsParams;
 
 //    NVS_init();
 //    NVS_Params_init(&nvsParams);

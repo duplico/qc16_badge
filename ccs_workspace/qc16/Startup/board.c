@@ -133,6 +133,28 @@ const ADC_Config ADC_config[QC16_ADCCOUNT] = {
 const uint_least8_t ADC_count = QC16_ADCCOUNT;
 
 /*
+ *  =============================== PIN ===============================
+ */
+#include <ti/drivers/PIN.h>
+#include <ti/drivers/pin/PINCC26XX.h>
+
+// TODO: Configure all GPIO here:
+const PIN_Config BoardGpioInitTable[] = {
+//    QC16_GPIO_SPIF_CSN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,  /* External flash chip select */ // TODO: Remove
+    QC16_PIN_EPAPER_CSN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
+    QC16_PIN_EPAPER_DC | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
+    QC16_PIN_EPAPER_RESN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
+    QC16_PIN_EPAPER_BUSY | PIN_INPUT_EN,
+    PIN_TERMINATE
+};
+
+const PINCC26XX_HWAttrs PINCC26XX_hwAttrs = {
+    .intPriority = ~0,
+    .swiPriority = 0
+};
+
+
+/*
  *  =============================== GPIO ===============================
  */
 #include <ti/drivers/GPIO.h>
@@ -141,14 +163,13 @@ const uint_least8_t ADC_count = QC16_ADCCOUNT;
 /*
  * Array of Pin configurations
  * NOTE: The order of the pin configurations must coincide with what was
- *       defined in CC2640R2_LAUNCHXL.h
+ *       defined in CC2640R2_LAUNCHXL.h (See QC16_GPIOName)
  * NOTE: Pins not used for interrupts should be placed at the end of the
  *       array. Callback entries can be omitted from callbacks array to
  *       reduce memory usage.
  */
 GPIO_PinConfig gpioPinConfigs[] = {
-    /* SPI Flash CSN */
-    GPIOCC26XX_DIO_20 | GPIO_DO_NOT_CONFIG,
+    QC16_GPIO_SPIF_CSN | GPIO_CFG_OUTPUT | GPIO_CFG_OUT_HIGH | GPIO_CFG_OUT_STD | GPIO_CFG_OUT_STR_LOW, // SPIF CS
 };
 
 /*
@@ -159,10 +180,7 @@ GPIO_PinConfig gpioPinConfigs[] = {
  *       reduce memory usage (if placed at end of gpioPinConfigs array).
  */
 GPIO_CallbackFxn gpioCallbackFunctions[] = {
-    NULL,  /* Button 0 */
-    NULL,  /* Button 1 */
-    NULL,  /* QC16_SPI_MASTER_READY */
-    NULL,  /* QC16_SPI_SLAVE_READY */
+    NULL,  // SPIF CS
 };
 
 const GPIOCC26XX_Config GPIOCC26XX_config = {
@@ -324,40 +342,6 @@ const NVS_Config NVS_config[QC16_NVSCOUNT] = {
 };
 
 const uint_least8_t NVS_count = QC16_NVSCOUNT;
-
-/*
- *  =============================== PIN ===============================
- */
-#include <ti/drivers/PIN.h>
-#include <ti/drivers/pin/PINCC26XX.h>
-
-
-//EPAPER_CSN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
-//EPAPER_DCN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
-//EPAPER_RESN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
-//EPAPER_BUSY | PIN_INPUT_EN,
-
-// TODO: Configure all GPIO here:
-const PIN_Config BoardGpioInitTable[] = {
-    QC16_PIN_RLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,       /* LED initially off */
-    QC16_PIN_GLED | PIN_GPIO_OUTPUT_EN | PIN_GPIO_LOW | PIN_PUSHPULL | PIN_DRVSTR_MAX,       /* LED initially off */
-    QC16_PIN_BTN1 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_BOTHEDGES | PIN_HYSTERESIS,          /* Button is active low */
-    QC16_PIN_BTN2 | PIN_INPUT_EN | PIN_PULLUP | PIN_IRQ_BOTHEDGES | PIN_HYSTERESIS,          /* Button is active low */
-    GPIO_SPIF_CSN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,  /* External flash chip select */ // TODO: Remove
-    QC16_UART_RX | PIN_INPUT_EN | PIN_PULLDOWN,                                              /* UART RX via debugger back channel */
-    QC16_UART_TX | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL,                        /* UART TX via debugger back channel */
-    QC16_SPIF_MOSI | PIN_INPUT_EN | PIN_PULLDOWN,                                            /* SPI master out - slave in */
-    QC16_SPIF_MISO | PIN_INPUT_EN | PIN_PULLDOWN,                                            /* SPI master in - slave out */
-    QC16_SPI0_CLK | PIN_INPUT_EN | PIN_PULLDOWN,                                             /* SPI clock */
-
-    PIN_TERMINATE
-};
-
-const PINCC26XX_HWAttrs PINCC26XX_hwAttrs = {
-    .intPriority = ~0,
-    .swiPriority = 0
-};
-
 /*
  *  =============================== Power ===============================
  */
@@ -612,28 +596,4 @@ const TRNGCC26XX_Config TRNGCC26XX_config[] = {
 /*
  *  ========================= TRNG end ====================================
  */
-extern void Board_initHook(void);
 
-/*
- *  ======== QC16_initGeneral ========
- */
-void QC16_initGeneral(void)
-{
-    Power_init();
-
-    if (PIN_init(BoardGpioInitTable) != PIN_SUCCESS) {
-        /* Error with PIN_init */
-        while (1);
-    }
-
-    /* Perform board-specific initialization */
-    Board_initHook();
-}
-
-/*
- *  ======== Board_initHook ========
- *  Called by Board_init() to perform board-specific initialization.
- */
-void Board_initHook()
-{
-}

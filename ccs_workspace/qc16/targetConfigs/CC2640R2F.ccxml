@@ -10,11 +10,23 @@
                 <choice Name="Probe supplied power" value="1">
                     <property Type="stringfield" Value="3.3" id="Voltage Level"/>
                 </choice>
+            <choice Name="Target supplied power" value="0">
+                    <property Type="choicelist" Value="1" id="Voltage Selection">
+                        <choice Name="User specified value" value="1">
+                            <property Type="stringfield" Value="3.3" id="Voltage Level"/>
+                        </choice>
+                    </property>
+                </choice>
             </property>
             <property Type="choicelist" Value="0" id="JTAG Signal Isolation"/>
             <property Type="choicelist" Value="4" id="SWD Mode Settings">
                 <choice Name="cJTAG (1149.7) 2-pin advanced modes" value="enable">
                     <property Type="choicelist" Value="1" id="XDS110 Aux Port"/>
+                </choice>
+            </property>
+            <property Type="choicelist" Value="0" id="The JTAG TCLK Frequency (MHz)">
+                <choice Name="Fixed with user specified value" value="SPECIFIC">
+                    <property Type="stringfield" Value="100.0kHz" id="-- Enter a value from 100.0kHz to 2.5MHz"/>
                 </choice>
             </property>
             <platform XML_version="1.2" id="platform_0">

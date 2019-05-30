@@ -52,111 +52,110 @@ static const char signature[] =
 
 void epaper_spi_task_fn(UArg a0, UArg a1)
 {
-    init_epd(0);
-
-
-
+//    init_epd(0);
 
     volatile int32_t status;
 
-    status = SPIFFSNVS_config(&spiffsnvs, QC16_NVSSPI25X0, &fs, &fsConfig,
-                              SPIFFS_LOGICAL_BLOCK_SIZE, SPIFFS_LOGICAL_PAGE_SIZE);
-    if (status != SPIFFSNVS_STATUS_SUCCESS) {
-        while (1); // Spin forever.
-    }
-    status = SPIFFS_mount(&fs, &fsConfig, spiffsWorkBuffer,
-        spiffsFileDescriptorCache, sizeof(spiffsFileDescriptorCache),
-        spiffsReadWriteCache, sizeof(spiffsReadWriteCache), NULL);
-
-    if (status == SPIFFS_ERR_NOT_A_FS) {
-        // Needs to be formatted before mounting.
-        status = SPIFFS_format(&fs);
-        status = SPIFFS_mount(&fs, &fsConfig, spiffsWorkBuffer,
-            spiffsFileDescriptorCache, sizeof(spiffsFileDescriptorCache),
-            spiffsReadWriteCache, sizeof(spiffsReadWriteCache), NULL);
-    }
-
-    status = SPIFFS_creat(&fs, "testfile", 0);
-    spiffs_file f;
-    f = SPIFFS_open(&fs, "testfile", SPIFFS_O_CREAT + SPIFFS_O_WRONLY, 0);
-    status = SPIFFS_write(&fs, f, "test", 4);
-    status = SPIFFS_close(&fs, f);
-
-    spiffs_stat stat;
-    status = SPIFFS_stat(&fs, "testfile", &stat);
-
-    char buf[10];
-    f = SPIFFS_open(&fs, "testfile", SPIFFS_O_RDONLY, 0);
-    status = SPIFFS_read(&fs, f, (void *)buf, 4);
-
-//    NVS_Handle nvsHandle;
-//    NVS_Attrs regionAttrs;
-//    NVS_Params nvsParams;
-
-//    NVS_init();
-//    NVS_Params_init(&nvsParams);
-//    nvsHandle = NVS_open(Board_NVSEXTERNAL, &nvsParams);
-//
-//    /*
-//     * This will populate a NVS_Attrs structure with properties specific
-//     * to a NVS_Handle such as region base address, region size,
-//     * and sector size.
-//     */
-//    NVS_getAttrs(nvsHandle, &regionAttrs);
-//
-//    /* Display the NVS region attributes. */
-////    Display_printf(displayHandle, 0, 0, "Sector Size: 0x%x",
-////            regionAttrs.sectorSize);
-////    Display_printf(displayHandle, 0, 0, "Region Size: 0x%x\n",
-////            regionAttrs.regionSize);
-//
-//    /*
-//     * Copy "sizeof(signature)" bytes from the NVS region base address into
-//     * buffer.
-//     */
-//    NVS_read(nvsHandle, 0, (void *) buffer, sizeof(signature));
-//
-//    /*
-//     * Determine if the NVS region contains the signature string.
-//     * Compare the string with the contents copied into buffer.
-//     */
-//    if (strcmp((char *) buffer, (char *) signature) == 0) {
-//
-//        /* Write buffer copied from flash to the console. */
-////        Display_printf(displayHandle, 0, 0, "%s", buffer);
-////        Display_printf(displayHandle, 0, 0, "Erasing SPI flash sector...");
-//
-//        /* Erase the entire flash sector. */
-//        NVS_erase(nvsHandle, 0, regionAttrs.sectorSize);
+//    status = SPIFFSNVS_config(&spiffsnvs, QC16_NVSSPI25X0, &fs, &fsConfig,
+//                              SPIFFS_LOGICAL_BLOCK_SIZE, SPIFFS_LOGICAL_PAGE_SIZE);
+//    if (status != SPIFFSNVS_STATUS_SUCCESS) {
+//        while (1); // Spin forever.
 //    }
-//    else {
+//    status = SPIFFS_mount(&fs, &fsConfig, spiffsWorkBuffer,
+//        spiffsFileDescriptorCache, sizeof(spiffsFileDescriptorCache),
+//        spiffsReadWriteCache, sizeof(spiffsReadWriteCache), NULL);
 //
-//        /* The signature was not found in the NVS region. */
-////        Display_printf(displayHandle, 0, 0, "Writing signature to SPI flash...");
-//
-//        /*
-//         * Write signature to memory. The flash sector is erased prior
-//         * to performing the write operation. This is specified by
-//         * NVS_WRITE_ERASE.
-//         */
-//        NVS_write(nvsHandle, 0, (void *) signature, sizeof(signature),
-//            NVS_WRITE_ERASE | NVS_WRITE_POST_VERIFY);
+//    if (status == SPIFFS_ERR_NOT_A_FS) {
+//        // Needs to be formatted before mounting.
+//        status = SPIFFS_format(&fs);
+//        status = SPIFFS_mount(&fs, &fsConfig, spiffsWorkBuffer,
+//            spiffsFileDescriptorCache, sizeof(spiffsFileDescriptorCache),
+//            spiffsReadWriteCache, sizeof(spiffsReadWriteCache), NULL);
 //    }
+//
+//    status = SPIFFS_creat(&fs, "testfile", 0);
+//    spiffs_file f;
+//    f = SPIFFS_open(&fs, "testfile", SPIFFS_O_CREAT + SPIFFS_O_WRONLY, 0);
+//    status = SPIFFS_write(&fs, f, "test", 4);
+//    status = SPIFFS_close(&fs, f);
+//
+//    spiffs_stat stat;
+//    status = SPIFFS_stat(&fs, "testfile", &stat);
+//
+//    char buf[10];
+//    f = SPIFFS_open(&fs, "testfile", SPIFFS_O_RDONLY, 0);
+//    status = SPIFFS_read(&fs, f, (void *)buf, 4);
 
 
 
-    Graphics_Context gr_context;
-    Graphics_initContext(&gr_context, &epd_grGraphicsDisplay, &epd_grDisplayFunctions);
-    Graphics_setBackgroundColor(&gr_context, GRAPHICS_COLOR_WHITE);
-    Graphics_setForegroundColorTranslated(&gr_context, GRAPHICS_COLOR_BLACK);
-    Graphics_clearDisplay(&gr_context);
-    Graphics_fillCircle(&gr_context, 128, 64, 32);
-    Graphics_drawLine(&gr_context, 0, 16, 295, 16);
-    Graphics_setFont(&gr_context, &g_sFontCm14);
-    Graphics_drawString(&gr_context, "Queercon 2019", 13, 16, 16, 0);
-    Graphics_drawString(&gr_context, buf, status, 16, 32, 0);
-    epd_flip();
-    Graphics_flushBuffer(&gr_context);
+    NVS_Handle nvsHandle;
+    volatile NVS_Attrs regionAttrs;
+    NVS_Params nvsParams;
+
+    NVS_init();
+    NVS_Params_init(&nvsParams);
+    nvsHandle = NVS_open(QC16_NVSSPI25X0, &nvsParams);
+
+    /*
+     * This will populate a NVS_Attrs structure with properties specific
+     * to a NVS_Handle such as region base address, region size,
+     * and sector size.
+     */
+    NVS_getAttrs(nvsHandle, &regionAttrs);
+
+    /* Display the NVS region attributes. */
+//    Display_printf(displayHandle, 0, 0, "Sector Size: 0x%x",
+//            regionAttrs.sectorSize);
+//    Display_printf(displayHandle, 0, 0, "Region Size: 0x%x\n",
+//            regionAttrs.regionSize);
+
+    /*
+     * Copy "sizeof(signature)" bytes from the NVS region base address into
+     * buffer.
+     */
+    status = NVS_read(nvsHandle, 0, (void *) buffer, sizeof(signature));
+
+    /*
+     * Determine if the NVS region contains the signature string.
+     * Compare the string with the contents copied into buffer.
+     */
+    if (strcmp((char *) buffer, (char *) signature) == 0) {
+
+        /* Write buffer copied from flash to the console. */
+//        Display_printf(displayHandle, 0, 0, "%s", buffer);
+//        Display_printf(displayHandle, 0, 0, "Erasing SPI flash sector...");
+
+        /* Erase the entire flash sector. */
+//        status = NVS_erase(nvsHandle, 0, regionAttrs.sectorSize);
+    }
+    else {
+
+        /* The signature was not found in the NVS region. */
+//        Display_printf(displayHandle, 0, 0, "Writing signature to SPI flash...");
+
+        /*
+         * Write signature to memory. The flash sector is erased prior
+         * to performing the write operation. This is specified by
+         * NVS_WRITE_ERASE.
+         */
+        status = NVS_write(nvsHandle, 0, (void *) signature, sizeof(signature),
+            NVS_WRITE_ERASE | NVS_WRITE_POST_VERIFY);
+    }
+
+
+
+//    Graphics_Context gr_context;
+//    Graphics_initContext(&gr_context, &epd_grGraphicsDisplay, &epd_grDisplayFunctions);
+//    Graphics_setBackgroundColor(&gr_context, GRAPHICS_COLOR_WHITE);
+//    Graphics_setForegroundColorTranslated(&gr_context, GRAPHICS_COLOR_BLACK);
+//    Graphics_clearDisplay(&gr_context);
+//    Graphics_fillCircle(&gr_context, 128, 64, 32);
+//    Graphics_drawLine(&gr_context, 0, 16, 295, 16);
+//    Graphics_setFont(&gr_context, &g_sFontCm14);
+//    Graphics_drawString(&gr_context, "Queercon 2019", 13, 16, 16, 0);
+////    Graphics_drawString(&gr_context, buf, status, 16, 32, 0);
+//    epd_flip();
+//    Graphics_flushBuffer(&gr_context);
 
     for (;;)
     {
@@ -168,7 +167,11 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
 
 int main()
 {
-    PIN_init(BoardGpioInitTable);
+    Power_init();
+    if (PIN_init(BoardGpioInitTable) != PIN_SUCCESS) {
+        /* Error with PIN_init */
+        while (1);
+    }
     SPI_init();
     I2C_init();
 #ifdef CACHE_AS_RAM

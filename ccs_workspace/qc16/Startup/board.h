@@ -58,47 +58,45 @@ extern const PIN_Config BoardGpioInitTable[];
 //  Note: the PIN API is preferred, but the SPI flash driver we're using
 //        requires the use of the GPIO API instead, so we will configure
 //        this single pin using it.
-#define QC16_GPIO_SPIF_CSN      GPIOCC26XX_DIO_20 // TODO: GPIOCC26XX_DIO_6
+#define QC16_GPIO_SPIF_CSN      GPIOCC26XX_DIO_06
 
 // PIN - digital I/O
-#define QC16_PIN_JACK_FC1       PIN_UNASSIGNED // TODO: PINCC26XX_DIO0
-#define QC16_PIN_JACK_FC2       PIN_UNASSIGNED // TODO: PINCC26XX_DIO3
-#define QC16_PIN_KEYPAD_0       PIN_UNASSIGNED // TODO: PINCC26XX_DIO8
-#define QC16_PIN_KEYPAD_1       PIN_UNASSIGNED // TODO: PINCC26XX_DIO9
-#define QC16_PIN_KEYPAD_2       PIN_UNASSIGNED // TODO: PINCC26XX_DIO10
-#define QC16_PIN_KEYPAD_3       PIN_UNASSIGNED // TODO: PINCC26XX_DIO11
-#define QC16_PIN_KEYPAD_4       PIN_UNASSIGNED // TODO: PINCC26XX_DIO12
-#define QC16_PIN_KEYPAD_5       PIN_UNASSIGNED // TODO: PINCC26XX_DIO13
-#define QC16_PIN_KEYPAD_6       PIN_UNASSIGNED // TODO: PINCC26XX_DIO14
-#define QC16_PIN_KEYPAD_7       PIN_UNASSIGNED // TODO: PINCC26XX_DIO15
-#define QC16_PIN_KEYPAD_8       PIN_UNASSIGNED // TODO: PINCC26XX_DIO16
-#define QC16_PIN_EPAPER_CSN     PINCC26XX_DIO0 // TODO: PINCC26XX_DIO6
-#define QC16_PIN_EPAPER_DC      PINCC26XX_DIO1 // TODO: PINCC26XX_DIO24
-#define QC16_PIN_EPAPER_RESN    PINCC26XX_DIO12 // TODO: PINCC26XX_DIO22
-#define QC16_PIN_EPAPER_BUSY    PINCC26XX_DIO15 // TODO: PINCC26XX_DIO21
+#define QC16_PIN_JACK_FC1       PINCC26XX_DIO0
+#define QC16_PIN_JACK_FC2       PINCC26XX_DIO3
+#define QC16_PIN_KEYPAD_0       PINCC26XX_DIO8
+#define QC16_PIN_KEYPAD_1       PINCC26XX_DIO9
+#define QC16_PIN_KEYPAD_2       PINCC26XX_DIO10
+#define QC16_PIN_KEYPAD_3       PINCC26XX_DIO11
+#define QC16_PIN_KEYPAD_4       PINCC26XX_DIO12
+#define QC16_PIN_KEYPAD_5       PINCC26XX_DIO13
+#define QC16_PIN_KEYPAD_6       PINCC26XX_DIO14
+#define QC16_PIN_KEYPAD_7       PINCC26XX_DIO15
+#define QC16_PIN_KEYPAD_8       PINCC26XX_DIO16
+#define QC16_PIN_EPAPER_CSN     PINCC26XX_DIO25
+#define QC16_PIN_EPAPER_DC      PINCC26XX_DIO24
+#define QC16_PIN_EPAPER_RESN    PINCC26XX_DIO22
+#define QC16_PIN_EPAPER_BUSY    PINCC26XX_DIO21
 
 // I2C
-#define QC16_I2C_HT16D_SCL      IOID_4 // TODO: IOID_28
-#define QC16_I2C_HT16D_SDA      IOID_5 // TODO: IOID_29
+#define QC16_I2C_HT16D_SCL      IOID_28
+#define QC16_I2C_HT16D_SDA      IOID_29
 
 // SPI for the epaper display:
 /// EPD SPI MOSI
-#define QC16_SPI_EPAPER_SDIO     IOID_25 // TODO: IOID_27
+#define QC16_SPI_EPAPER_SDIO     IOID_27
 /// EPD SPI SCLK
-#define QC16_SPI_EPAPER_SCLK     IOID_26 // TODO: IOID_26
+#define QC16_SPI_EPAPER_SCLK     IOID_26
 
 // SPI for the external flash:
-#define QC16_SPIF_MISO             IOID_8          /* RF1.20 */
-#define QC16_SPIF_MOSI             IOID_9          /* RF1.18 */
-#define QC16_SPI0_CLK              IOID_10         /* RF1.16 */
-#define QC16_SPI0_CSN              PIN_UNASSIGNED
+#define QC16_SPIF_MISO             IOID_7
+#define QC16_SPIF_MOSI             IOID_5
+#define QC16_SPI0_CLK              IOID_4
+#define QC16_SPI0_CSN              PIN_UNASSIGNED // Actually 6, dunno if we're going to get to use it. // TODO: line length
 
 
 /* UART Board */
 #define QC16_UART_RX               IOID_2          /* RXD */
-#define QC16_UART_TX               IOID_3          /* TXD */
-#define QC16_UART_CTS              IOID_19         /* CTS */
-#define QC16_UART_RTS              IOID_18         /* RTS */
+#define QC16_UART_TX               IOID_1          /* TXD */
 
 // TODO: Is the following needed?
 /* PWM Outputs */
@@ -162,7 +160,6 @@ typedef enum QC16_ADCName {
     QC16_ADCCOUNT
 } QC16_ADCName;
 
-// TODO: The following indexes the pin init array thing
 /*!
  *  @def    QC16_GPIOName
  *  @brief  Enum of GPIO names

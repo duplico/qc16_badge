@@ -163,6 +163,133 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
 //    epd_flip();
 //    Graphics_flushBuffer(&gr_context);
 
+//    ht16d_all_one_color(10,10,10);
+
+#define BTN_ROW_1 0x10
+#define BTN_ROW_2 0x20
+#define BTN_ROW_3 0x30
+#define BTN_ROW_4 0x40
+#define BTN_COL_1 0x01
+#define BTN_COL_2 0x02
+#define BTN_COL_3 0x03
+#define BTN_COL_4 0x04
+#define BTN_COL_5 0x05
+
+#define BTN_NONE 0x00
+#define BTN_UP (BTN_ROW_1 | BTN_COL_1)
+#define BTN_DOWN (BTN_ROW_1 | BTN_COL_2)
+#define BTN_LEFT (BTN_ROW_1 | BTN_COL_3)
+#define BTN_RIGHT (BTN_ROW_1 | BTN_COL_4)
+#define BTN_F1 (BTN_ROW_2 | BTN_COL_1)
+#define BTN_F2 (BTN_ROW_2 | BTN_COL_2)
+#define BTN_F3 (BTN_ROW_2 | BTN_COL_3)
+#define BTN_F4 (BTN_ROW_2 | BTN_COL_4)
+#define BTN_RED (BTN_ROW_3 | BTN_COL_1)
+#define BTN_ORG (BTN_ROW_3 | BTN_COL_2)
+#define BTN_YEL (BTN_ROW_3 | BTN_COL_3)
+#define BTN_GRN (BTN_ROW_3 | BTN_COL_4)
+#define BTN_BLU (BTN_ROW_3 | BTN_COL_5)
+#define BTN_PUR (BTN_ROW_4 | BTN_COL_1)
+#define BTN_ROT (BTN_ROW_4 | BTN_COL_2)
+#define BTN_BACK (BTN_ROW_4 | BTN_COL_3)
+#define BTN_OK (BTN_ROW_4 | BTN_COL_5)
+
+
+    // TODO: consider enabling hysteresis?
+    PIN_State btn_state;
+    // The ROW SCAN sets ROWS as INPUTS, with PULL DOWNS
+    //              and, COLS as OUTPUTS, HIGH.
+    PIN_Config btn_row_scan[] = {
+           QC16_PIN_KP_ROW_1 | PIN_INPUT_EN | PIN_PULLDOWN,
+           QC16_PIN_KP_ROW_2 | PIN_INPUT_EN | PIN_PULLDOWN,
+           QC16_PIN_KP_ROW_3 | PIN_INPUT_EN | PIN_PULLDOWN,
+           QC16_PIN_KP_ROW_4 | PIN_INPUT_EN | PIN_PULLDOWN,
+           QC16_PIN_KP_COL_1 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH, // | PIN_OPENSOURCE,
+           QC16_PIN_KP_COL_2 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH, // | PIN_OPENSOURCE,
+           QC16_PIN_KP_COL_3 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH, // | PIN_OPENSOURCE,
+           QC16_PIN_KP_COL_4 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH, // | PIN_OPENSOURCE,
+           QC16_PIN_KP_COL_5 | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH, // | PIN_OPENSOURCE,
+           PIN_TERMINATE
+    };
+
+    PIN_Handle kb_pin_h;
+    kb_pin_h = PIN_open(&btn_state, btn_row_scan);
+
+    uint8_t button_press = BTN_NONE;
+    uint8_t button_press_prev = BTN_NONE;
+    uint8_t kb_mashed;
+    while (1) {
+        Task_sleep(100);
+        button_press_prev = button_press;
+        button_press = BTN_NONE;
+        kb_mashed = 0;
+        // 1 system tick is probably 10 us (0.1 ms)
+        // So, 100 ticks == 10ms == 1cs
+        // SET ROWS AS INPUTS, WITH PULLDOWNS
+        // SET COLS AS OUTPUTS HIGH
+        PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_1, 1);
+        PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_2, 1);
+        PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_3, 1);
+        PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_4, 1);
+        PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_5, 1);
+        // ...
+        // Are any ROWS HIGH?
+        for (uint8_t r=1; r<5; r++) {
+            // this is row r
+            // row pin to read is r+QC16_PIN_KP_ROW_1-1
+            PIN_Id pin_to_read;
+            if (r < 4)
+                pin_to_read = QC16_PIN_KP_ROW_1 + r - 1;
+            else
+                pin_to_read = QC16_PIN_KP_ROW_4;
+            if (PIN_getInputValue(pin_to_read)) {
+                // high => pressed
+                if (button_press & 0xF0) {
+                    // another row already pressed, kb is mashed.
+                    kb_mashed = 1;
+                    break;
+                }
+                button_press = r << 4; // row is the upper nibble.
+                // Now, figure out which column it is. Set all columns low:
+                PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_1, 0);
+                PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_2, 0);
+                PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_3, 0);
+                PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_4, 0);
+                PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_5, 0);
+
+                // set each column high, in turn:
+                for (uint8_t c=1; c<6; c++) {
+                    PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_1 + c - 1, 1);
+                    if (PIN_getInputValue(pin_to_read)) {
+                        // If the relevant row reads high, this col,row is pressed.
+                        if (button_press & 0x0F) {
+                            // if multiple columns are pressed already, then
+                            // we have a mashing situation on our hands.
+                            kb_mashed = 1;
+                        }
+                        button_press |= c; // row is already in the upper nibble.
+                    }
+                    PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_1 + c - 1, 0);
+                }
+
+            }
+        }
+
+        // TODO: Check whether it's BOTH a row and col detected.
+        //  If MULTIPLE, ignore due to mashing.
+        if (kb_mashed) {
+            // ignore.
+            // do ignoring things.
+        } else {
+            if (button_press && button_press == button_press_prev) {
+                // A button is pressed.
+                Task_sleep(99);
+                // TODO
+                continue;
+            }
+        }
+    }
+
     for (;;)
     {
         // Get the ticks since startup

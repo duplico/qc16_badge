@@ -1,0 +1,61 @@
+DECISIONS WERE MADE
+===================
+
+Queercon call - Thursday May 30th 2019
+
+Key concepts:
+
+ - There is a "cyber world" overlaid on Vegas
+ 
+ - The goal is to create or enable or activate a Queercon in the cyber world.
+ 
+ - The cyber world doesn't have the same geography as the real world, but there
+   are points where it corresponds/overlaps. These correspond to important
+   places at the con.
+
+ - Your badge is a cyber deck - a specialized hacking tool that can connect 
+   you to the cyber world.
+   
+ - There is a digital currency called Queer Coin, which you earn and spend, and
+   is stored on your badge.
+   
+ - Your badge runs an Agent, a piece of software that you can send to interact
+   with the cyber world.
+   
+ - Agents do missions, which are assigned by Handlers.
+ 
+ - Handlers assign missions automatically, without needing the human Handlers
+   to do anything other than be nearby. There are also one or two virtual 
+   Handlers that can be accessed at any time.
+   
+ - Base stations are physical links between the real world and the cyber world;
+   they exist in both. The base stations are how the cyber world bleeds into
+   queercon, whereas the badges are how queercon reaches into the cyber world.
+
+ - The badge MAY store some images from the cyber world, corresponding to
+   events that the badgeholder participated in. This way, you can bring
+   queercon home with you.
+   
+Mechanics:
+
+ - C badges (access passes) are unique, and add capabilities to the Q badges
+   when connected.
+ 
+ - At least some capabilities of the C badges are one shot per Q badge.
+
+
+Questions:
+
+ - Does the cyber world extend to any part of DC proper, or just QC?
+ 
+ - What form do the missions take? How do you equip your agent to run the 
+   missions?
+   
+ - We need a better word than "Base station" for the physical links between
+   the worlds.
+   
+ - What does the agent look like?
+ 
+ - How do you earn queercoin, exactly?
+ 
+ - How do you spend queercoin, exactly? And on what?

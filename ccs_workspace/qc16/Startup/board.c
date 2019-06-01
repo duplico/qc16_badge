@@ -139,7 +139,7 @@ const uint_least8_t ADC_count = QC16_ADCCOUNT;
 #include <ti/drivers/pin/PINCC26XX.h>
 
 // TODO: Configure all GPIO here:
-const PIN_Config BoardGpioInitTable[] = {
+const PIN_Config qc16_pin_init_table[] = {
 //    QC16_GPIO_SPIF_CSN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,  /* External flash chip select */ // TODO: Remove
     QC16_PIN_EPAPER_CSN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
     QC16_PIN_EPAPER_DC | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,

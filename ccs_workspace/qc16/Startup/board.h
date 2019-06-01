@@ -22,7 +22,7 @@
 #include <ti/devices/cc26x0r2/driverlib/ioc.h>
 
 /* Externs */
-extern const PIN_Config BoardGpioInitTable[];
+extern const PIN_Config qc16_pin_init_table[];
 
 /*
  *  ============================================================================

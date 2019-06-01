@@ -168,8 +168,9 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
 int main()
 {
     Power_init();
-    if (PIN_init(BoardGpioInitTable) != PIN_SUCCESS) {
+    if (PIN_init(qc16_pin_init_table) != PIN_SUCCESS) {
         /* Error with PIN_init */
+        // TODO
         while (1);
     }
     SPI_init();

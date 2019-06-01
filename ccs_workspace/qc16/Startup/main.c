@@ -25,6 +25,7 @@
 #include <third_party/spiffs/spiffs.h>
 
 #include "queercon/epd_driver.h"
+#include "queercon/ht16d35b.h"
 
 // TODO:
 #define SPIFFS_LOGICAL_BLOCK_SIZE    (4096)
@@ -55,7 +56,12 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
 //    init_epd(0);
 
     volatile int32_t status;
+//
+//    ht16d_init_io();
+//    ht16d_init();
 
+////////////////////////////////////
+//
 //    status = SPIFFSNVS_config(&spiffsnvs, QC16_NVSSPI25X0, &fs, &fsConfig,
 //                              SPIFFS_LOGICAL_BLOCK_SIZE, SPIFFS_LOGICAL_PAGE_SIZE);
 //    if (status != SPIFFSNVS_STATUS_SUCCESS) {
@@ -85,63 +91,63 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
 //    char buf[10];
 //    f = SPIFFS_open(&fs, "testfile", SPIFFS_O_RDONLY, 0);
 //    status = SPIFFS_read(&fs, f, (void *)buf, 4);
+////////////////////////////////
 
+//    NVS_Handle nvsHandle;
+//    volatile NVS_Attrs regionAttrs;
+//    NVS_Params nvsParams;
+//
+//    NVS_init();
+//    NVS_Params_init(&nvsParams);
+//    nvsHandle = NVS_open(QC16_NVSSPI25X0, &nvsParams);
+//
+//    /*
+//     * This will populate a NVS_Attrs structure with properties specific
+//     * to a NVS_Handle such as region base address, region size,
+//     * and sector size.
+//     */
+//    NVS_getAttrs(nvsHandle, &regionAttrs);
+//
+//    /* Display the NVS region attributes. */
+////    Display_printf(displayHandle, 0, 0, "Sector Size: 0x%x",
+////            regionAttrs.sectorSize);
+////    Display_printf(displayHandle, 0, 0, "Region Size: 0x%x\n",
+////            regionAttrs.regionSize);
+//
+//    /*
+//     * Copy "sizeof(signature)" bytes from the NVS region base address into
+//     * buffer.
+//     */
+//    status = NVS_read(nvsHandle, 0, (void *) buffer, sizeof(signature));
+//
+//    /*
+//     * Determine if the NVS region contains the signature string.
+//     * Compare the string with the contents copied into buffer.
+//     */
+//    if (strcmp((char *) buffer, (char *) signature) == 0) {
+//
+//        /* Write buffer copied from flash to the console. */
+////        Display_printf(displayHandle, 0, 0, "%s", buffer);
+////        Display_printf(displayHandle, 0, 0, "Erasing SPI flash sector...");
+//
+//        /* Erase the entire flash sector. */
+////        status = NVS_erase(nvsHandle, 0, regionAttrs.sectorSize);
+//    }
+//    else {
+//
+//        /* The signature was not found in the NVS region. */
+////        Display_printf(displayHandle, 0, 0, "Writing signature to SPI flash...");
+//
+//        /*
+//         * Write signature to memory. The flash sector is erased prior
+//         * to performing the write operation. This is specified by
+//         * NVS_WRITE_ERASE.
+//         */
+//        status = NVS_write(nvsHandle, 0, (void *) signature, sizeof(signature),
+//            NVS_WRITE_ERASE | NVS_WRITE_POST_VERIFY);
+//    }
 
-
-    NVS_Handle nvsHandle;
-    volatile NVS_Attrs regionAttrs;
-    NVS_Params nvsParams;
-
-    NVS_init();
-    NVS_Params_init(&nvsParams);
-    nvsHandle = NVS_open(QC16_NVSSPI25X0, &nvsParams);
-
-    /*
-     * This will populate a NVS_Attrs structure with properties specific
-     * to a NVS_Handle such as region base address, region size,
-     * and sector size.
-     */
-    NVS_getAttrs(nvsHandle, &regionAttrs);
-
-    /* Display the NVS region attributes. */
-//    Display_printf(displayHandle, 0, 0, "Sector Size: 0x%x",
-//            regionAttrs.sectorSize);
-//    Display_printf(displayHandle, 0, 0, "Region Size: 0x%x\n",
-//            regionAttrs.regionSize);
-
-    /*
-     * Copy "sizeof(signature)" bytes from the NVS region base address into
-     * buffer.
-     */
-    status = NVS_read(nvsHandle, 0, (void *) buffer, sizeof(signature));
-
-    /*
-     * Determine if the NVS region contains the signature string.
-     * Compare the string with the contents copied into buffer.
-     */
-    if (strcmp((char *) buffer, (char *) signature) == 0) {
-
-        /* Write buffer copied from flash to the console. */
-//        Display_printf(displayHandle, 0, 0, "%s", buffer);
-//        Display_printf(displayHandle, 0, 0, "Erasing SPI flash sector...");
-
-        /* Erase the entire flash sector. */
-//        status = NVS_erase(nvsHandle, 0, regionAttrs.sectorSize);
-    }
-    else {
-
-        /* The signature was not found in the NVS region. */
-//        Display_printf(displayHandle, 0, 0, "Writing signature to SPI flash...");
-
-        /*
-         * Write signature to memory. The flash sector is erased prior
-         * to performing the write operation. This is specified by
-         * NVS_WRITE_ERASE.
-         */
-        status = NVS_write(nvsHandle, 0, (void *) signature, sizeof(signature),
-            NVS_WRITE_ERASE | NVS_WRITE_POST_VERIFY);
-    }
-
+////////////////////////////////////
 
 
 //    Graphics_Context gr_context;

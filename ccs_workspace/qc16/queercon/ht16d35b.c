@@ -102,8 +102,9 @@ void ht16d_init_io() {
     i2c_params.transferMode = I2C_MODE_BLOCKING; // TODO: Rewrite to callback.
 
     ht16d_i2c_h = I2C_open(QC16_I2C0, NULL);
-    // TODO: Check if it's NULL.
-
+    if (ht16d_i2c_h == NULL) {
+        while (1); // TODO: spin forever if it broke.
+    }
 }
 
 /// Transmit a `len` byte array `txdat` to the HT16D35B.
@@ -120,6 +121,9 @@ void ht16d_send_array(uint8_t txdat[], uint8_t len) {
     transaction.readCount = 0;
 
     status = I2C_transfer(ht16d_i2c_h, &transaction);
+    if (!status) {
+        while (1); // TODO: post
+    }
     // Currently, this blocks until completion.
     // TODO: Check status.
 }
@@ -154,6 +158,9 @@ void ht16d_read_reg(uint8_t reg[]) {
     transaction.readCount = 21;
 
     status = I2C_transfer(ht16d_i2c_h, &transaction);
+    if (!status) {
+        while (1);
+    }
     // Currently, this blocks until completion.
     // TODO: Check status.
 }
@@ -199,7 +206,7 @@ void ht16d_init() {
     // Set column pin control for in-use cols (HTCMD_COM_PIN_CTL)
     ht16_d_send_cmd_dat(HTCMD_COM_PIN_CTL, 0b0001111);
     // Set constant current ratio (HTCMD_I_RATIO) // TODO: calibrate.
-    ht16_d_send_cmd_dat(HTCMD_I_RATIO, 0b0111); // 0b000 (max) is :fire: :fire:
+    ht16_d_send_cmd_dat(HTCMD_I_RATIO, 0b0111); // MINIMUM CURRENT. 0b000 (max) is :fire: :fire:
     // Set columns to 3 (0--2), and HIGH SCAN mode (HTCMD_COM_NUM)
     ht16_d_send_cmd_dat(HTCMD_COM_NUM, 0x02);
 
@@ -209,7 +216,6 @@ void ht16d_init() {
     ht16_d_send_cmd_dat(HTCMD_SYS_OSC_CTL, 0b10); // Activate oscillator.
 
     ht16d_all_one_color(0,0,0); // Turn off all the LEDs.
-
     ht16_d_send_cmd_dat(HTCMD_SYS_OSC_CTL, 0b11); // Activate oscillator & display.
 }
 

@@ -207,6 +207,8 @@ static void UBLEBcastScan_taskFxn(UArg a0, UArg a1)
 
     for (;;)
     {
+        // TODO: Consider moving the main application logic loop into here.
+
         // Waits for an event to be posted associated with the calling thread.
         // Note that an event associated with a thread is posted when a
         // message is queued to the message receive queue of the thread

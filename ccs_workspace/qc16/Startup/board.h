@@ -126,6 +126,8 @@ typedef enum QC16_ADCBufName {
     QC16_ADCBUFCOUNT
 } QC16_ADCBufName;
 
+// TODO: Rename these:
+
 /*!
  *  @def    QC16_ADCBuf0SourceName
  *  @brief  Enum of ADCBuf channels

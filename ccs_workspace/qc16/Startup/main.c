@@ -48,6 +48,10 @@ SPIFFSNVS_Data spiffsnvs;
 Task_Struct epaperTask;
 Char epaperTaskStack[EPD_STACKSIZE];
 
+#define ADC_STACKSIZE 512
+Task_Struct adc_task;
+char adc_task_stack[ADC_STACKSIZE];
+
 /* Buffer placed in RAM to hold bytes read from non-volatile storage. */
 static char buffer[64];
 static const char signature[] =
@@ -180,10 +184,10 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
 #define LED_BRIGHTNESS_INTERVAL 12500
 uint_fast16_t vbat_out = 0;
 
-// TODO: Should we be using ADCBuf so this can be asynchronous?
+// TODO: Should we be using ADCBuf so this can be asynchronous? (and run in a clock)
 //  Because... the ADC module blocks. Womp.
 // TODO: Consider moving into application loop
-void led_brightness_task_fn(UArg a0)
+void led_brightness_task_fn(UArg a0, UArg a1)
 {
     ADC_Handle light_adc_h, vbat_adc_h;
     ADC_Params adcp;
@@ -276,14 +280,21 @@ int main()
     taskParams.priority = 1;
     Task_construct(&epaperTask, epaper_spi_task_fn, &taskParams, NULL);
 
-    Clock_Params clockParams;
-    Error_Block eb;
-    Error_init(&eb);
+    Task_Params_init(&taskParams);
+    taskParams.stack = adc_task_stack;
+    taskParams.stackSize = ADC_STACKSIZE;
+    taskParams.priority = 1;
+    Task_construct(&adc_task, led_brightness_task_fn, &taskParams, NULL);
 
-    Clock_Params_init(&clockParams);
-    clockParams.period = LED_BRIGHTNESS_INTERVAL;
-    clockParams.startFlag = TRUE;
-    adc_clock_h = Clock_create(led_brightness_task_fn, 2, &clockParams, &eb);
+//    Clock_Params clockParams;
+//    Error_Block eb;
+//    Error_init(&eb);
+//
+//    Clock_Params_init(&clockParams);
+//    clockParams.period = LED_BRIGHTNESS_INTERVAL;
+//    clockParams.startFlag = TRUE;
+//    adc_clock_h = Clock_create(led_brightness_task_fn, 2, &clockParams, &eb);
+
 
 //    Clock_Params_init(&clockParams);
 //    clockParams.period = 0; // One-shot clock.

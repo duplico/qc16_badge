@@ -206,8 +206,7 @@ void ht16d_init() {
     // Set column pin control for in-use cols (HTCMD_COM_PIN_CTL)
     ht16_d_send_cmd_dat(HTCMD_COM_PIN_CTL, 0b0001111);
     // Set constant current ratio (HTCMD_I_RATIO) // TODO: calibrate.
-//    ht16_d_send_cmd_dat(HTCMD_I_RATIO, 0b0111); // MINIMUM CURRENT. 0b000 (max) is :fire: :fire:
-    ht16_d_send_cmd_dat(HTCMD_I_RATIO, 0b0000); // MINIMUM CURRENT. 0b000 (max) is :fire: :fire:
+    ht16_d_send_cmd_dat(HTCMD_I_RATIO, 0b0111); // MINIMUM CURRENT. 0b000 is max.
     // Set columns to 3 (0--2), and HIGH SCAN mode (HTCMD_COM_NUM)
     ht16_d_send_cmd_dat(HTCMD_COM_NUM, 0x02);
 

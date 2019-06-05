@@ -7,11 +7,21 @@
 #include <stdint.h>
 
 #include <xdc/runtime/Error.h>
+
+#include <ti/grlib/grlib.h>
+#include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Clock.h>
+#include <ti/sysbios/knl/Task.h>
+#include <ti/sysbios/knl/Event.h>
 #include <ti/drivers/PIN.h>
+
+#include <queercon/epd_driver.h>
 
 #include "ui.h"
 #include "board.h"
+
+static Event_Handle ui_event_h;
+Graphics_Context ui_gr_context;
 
 Clock_Handle kb_debounce_clock_h;
 PIN_Handle kb_pin_h;
@@ -30,6 +40,10 @@ PIN_Config btn_row_scan[] = {
 };
 
 uint8_t kb_active_key = BTN_NONE;
+
+#define UI_STACKSIZE 2048
+Task_Struct ui_task;
+uint8_t ui_task_stack[UI_STACKSIZE];
 
 void kb_clock_swi(UArg a0) {
     static uint8_t button_press = BTN_NONE;
@@ -125,6 +139,36 @@ void kb_clock_swi(UArg a0) {
     }
 }
 
+void ui_draw_main_menu() {
+    Graphics_fillCircle(&ui_gr_context, 100, 100, 50);
+    Graphics_drawLine(&ui_gr_context, 0, 16, 295, 16);
+    Graphics_setFont(&ui_gr_context, &g_sFontCm14);
+    Graphics_drawString(&ui_gr_context, "Queercon 2019", 13, 16, 16, 0);
+    Graphics_flushBuffer(&ui_gr_context);
+}
+
+void ui_task_fn(UArg a0, UArg a1) {
+    UInt events;
+    Event_post(ui_event_h, UI_EVENT_REFRESH);
+
+    while (1) {
+        events = Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_ALL, BIOS_WAIT_FOREVER);
+
+        if (events & UI_EVENT_REFRESH) {
+            // time to redraw the current view.
+            // TODO: wrong:
+            ui_draw_main_menu();
+        }
+
+        if (events & UI_EVENT_KB) {
+            // keyboard press.
+        }
+
+        Task_yield();
+    }
+
+}
+
 void ui_init() {
     // IO init:
 
@@ -141,4 +185,19 @@ void ui_init() {
     clockParams.period = UI_CLOCK_TICKS;
     clockParams.startFlag = TRUE;
     kb_debounce_clock_h = Clock_create(kb_clock_swi, 2, &clockParams, &eb);
+
+    // TODO: rename all the taskParams and such
+    Task_Params taskParams;
+    Task_Params_init(&taskParams);
+    taskParams.stack = ui_task_stack;
+    taskParams.stackSize = UI_STACKSIZE;
+    taskParams.priority = 1;
+    Task_construct(&ui_task, ui_task_fn, &taskParams, NULL);
+
+    Graphics_initContext(&ui_gr_context, &epd_grGraphicsDisplay, &epd_grDisplayFunctions);
+    Graphics_setBackgroundColor(&ui_gr_context, GRAPHICS_COLOR_WHITE);
+    Graphics_setForegroundColorTranslated(&ui_gr_context, GRAPHICS_COLOR_BLACK);
+    Graphics_clearDisplay(&ui_gr_context);
+
+    ui_event_h = Event_create(NULL, NULL);
 }

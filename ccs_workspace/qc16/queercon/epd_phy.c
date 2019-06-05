@@ -35,6 +35,7 @@ void epd_phy_spi_cmd(uint8_t cmd) {
     // Set CS low
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_CSN, 0);
     // Transmit
+    // TODO: everything explodes here:
     SPI_transfer(epd_spi_h, &transaction);
     // Set CS high
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_CSN, 1);

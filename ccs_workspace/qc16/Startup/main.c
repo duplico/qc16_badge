@@ -44,7 +44,7 @@ SPIFFSNVS_Data spiffsnvs;
 
 // TODO:
 //
-#define EPD_STACKSIZE 2048
+#define EPD_STACKSIZE 512
 Task_Struct epaperTask;
 Char epaperTaskStack[EPD_STACKSIZE];
 
@@ -164,21 +164,6 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
 
 ////////////////////////////////////
 
-
-//    Graphics_Context gr_context;
-//    Graphics_initContext(&gr_context, &epd_grGraphicsDisplay, &epd_grDisplayFunctions);
-//    Graphics_setBackgroundColor(&gr_context, GRAPHICS_COLOR_WHITE);
-//    Graphics_setForegroundColorTranslated(&gr_context, GRAPHICS_COLOR_BLACK);
-//    Graphics_clearDisplay(&gr_context);
-//    Graphics_fillCircle(&gr_context, 128, 64, 32);
-//    Graphics_drawLine(&gr_context, 0, 16, 295, 16);
-//    Graphics_setFont(&gr_context, &g_sFontCm14);
-//    Graphics_drawString(&gr_context, "Queercon 2019", 13, 16, 16, 0);
-////    Graphics_drawString(&gr_context, buf, status, 16, 32, 0);
-//    epd_flip();
-//    Graphics_flushBuffer(&gr_context);
-
-//    ht16d_all_one_color(10,10,10);
 }
 
 #define LED_BRIGHTNESS_INTERVAL 12500
@@ -294,7 +279,6 @@ int main()
 //    clockParams.period = LED_BRIGHTNESS_INTERVAL;
 //    clockParams.startFlag = TRUE;
 //    adc_clock_h = Clock_create(led_brightness_task_fn, 2, &clockParams, &eb);
-
 
 //    Clock_Params_init(&clockParams);
 //    clockParams.period = 0; // One-shot clock.

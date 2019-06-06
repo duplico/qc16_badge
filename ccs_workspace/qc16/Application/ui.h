@@ -18,11 +18,12 @@
 
 // let's start KB events from the top
 #define UI_EVENT_KB_FLIP Event_Id_31
-#define UI_EVENT_KB Event_Id_30
+#define UI_EVENT_KB_PRESS Event_Id_30
+#define UI_EVENT_KB_RELEASE Event_Id_29
 // and the rest from the bottom:
 #define UI_EVENT_REFRESH Event_Id_00
 
-#define UI_EVENT_ALL (UI_EVENT_KB_FLIP | UI_EVENT_KB | UI_EVENT_REFRESH)
+#define UI_EVENT_ALL (UI_EVENT_KB_FLIP | UI_EVENT_KB_PRESS | UI_EVENT_REFRESH)
 
 #define BTN_ROW_1 0x10
 #define BTN_ROW_2 0x20

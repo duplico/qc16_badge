@@ -20,6 +20,7 @@ SPI_Handle epd_spi_h;
 PIN_Handle epd_pin_h;
 
 uint8_t epd_display_buffer[(EPD_HEIGHT * EPD_WIDTH + 7) / 8];
+uint8_t epd_do_partial = 0;
 
 //#define GRAM_BUFFER(mapped_x, mapped_y) oled_memory[((LCD_X_SIZE/8) * mapped_y) + (mapped_x / 8)]
 
@@ -218,7 +219,8 @@ void epd_phy_begin(uint8_t partial_update) {
 
 void epd_phy_flush_buffer() {
     // TODO: Decide when to use 1 vs 0.
-    epd_phy_begin(0);
+    epd_phy_begin(epd_do_partial);
+    epd_do_partial = 0;
     uint16_t Width, Height;
     Width = (EPD_WIDTH % 8 == 0)? (EPD_WIDTH / 8 ): (EPD_WIDTH / 8 + 1);
     Height = EPD_HEIGHT;

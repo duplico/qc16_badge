@@ -25,7 +25,7 @@
 //
 //*****************************************************************************
 
-uint8_t epd_upside_down = 0;
+uint8_t epd_upside_down = 1;
 
 //*****************************************************************************
 //
@@ -159,10 +159,13 @@ static void epd_grPixelDrawMultiple(const Graphics_Display * pvDisplayData,
         // Loop through the pixels in this byte of image data
         for(; (lX0 < 8) && lCount; lX0++, lCount--)
         {
-            // Draw this pixel in the appropriate color
-            if (((uint16_t *)pucPalette)[(ulByte >> (7 - lX0)) & 1]) {
-                epd_grPixelDraw(pvDisplayData, lX, lY, 1);
-            }
+            volatile uint16_t val;
+            val = (ulByte >> (7 - lX0)) & 1;
+            epd_grPixelDraw(pvDisplayData, lX, lY, val);
+//            // Draw this pixel in the appropriate color
+//            if (((uint16_t *)pucPalette)[(ulByte >> (7 - lX0)) & 1]) {
+//                epd_grPixelDraw(pvDisplayData, lX, lY, 1);
+//            }
             lX++;
         }
 

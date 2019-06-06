@@ -26,8 +26,6 @@
 #include <third_party/spiffs/SPIFFSNVS.h>
 #include <third_party/spiffs/spiffs.h>
 
-#include "queercon/epd_driver.h"
-#include "queercon/ht16d35b.h"
 #include "ui.h"
 
 // TODO:
@@ -44,9 +42,6 @@ SPIFFSNVS_Data spiffsnvs;
 
 // TODO:
 //
-#define EPD_STACKSIZE 512
-Task_Struct epaperTask;
-Char epaperTaskStack[EPD_STACKSIZE];
 
 #define ADC_STACKSIZE 512
 Task_Struct adc_task;
@@ -56,24 +51,6 @@ char adc_task_stack[ADC_STACKSIZE];
 static char buffer[64];
 static const char signature[] =
     {"SimpleLink SDK Non-Volatile Storage (NVS) SPI Example."};
-
-void epaper_spi_task_fn(UArg a0, UArg a1)
-{
-//    init_epd(0);
-
-    volatile int32_t status;
-
-    ht16d_init_io();
-    ht16d_init();
-
-    ht16d_all_one_color(255,255,255);
-
-    for (;;)
-    {
-        // Get the ticks since startup
-        uint32_t tickStart = Clock_getTicks();
-        Task_yield();
-    }
 
 ////////////////////////////////////
 //
@@ -164,10 +141,8 @@ void epaper_spi_task_fn(UArg a0, UArg a1)
 
 ////////////////////////////////////
 
-}
-
 #define LED_BRIGHTNESS_INTERVAL 12500
-uint_fast16_t vbat_out = 0;
+uint_fast16_t vbat_out_uvolts = 0;
 
 // TODO: Should we be using ADCBuf so this can be asynchronous? (and run in a clock)
 //  Because... the ADC module blocks. Womp.
@@ -213,7 +188,7 @@ void led_brightness_task_fn(UArg a0, UArg a1)
 
         res = ADC_convert(vbat_adc_h, (uint16_t*) &adc_value);
         if (res == ADC_STATUS_SUCCESS) {
-            vbat_out = ADC_convertToMicroVolts(vbat_adc_h, adc_value);
+            vbat_out_uvolts = ADC_convertToMicroVolts(vbat_adc_h, adc_value);
         }
 
         if (AONBatMonNewTempMeasureReady()) {
@@ -251,19 +226,13 @@ int main()
     VIMSModeSet(VIMS_BASE, VIMS_MODE_ENABLED);
 #endif //CACHE_AS_RAM
 
+    // Create the BLE task:
+    UBLEBcastScan_createTask();
+    // Create the UI tasks:
     ui_init();
 
-    /* Create Application task. */
-    UBLEBcastScan_createTask();
-
-    // Set up the epaper task:
+    // Set up the ADC reader task:
     Task_Params taskParams;
-    // Configure task
-    Task_Params_init(&taskParams);
-    taskParams.stack = epaperTaskStack;
-    taskParams.stackSize = EPD_STACKSIZE;
-    taskParams.priority = 1;
-    Task_construct(&epaperTask, epaper_spi_task_fn, &taskParams, NULL);
 
     Task_Params_init(&taskParams);
     taskParams.stack = adc_task_stack;
@@ -279,29 +248,6 @@ int main()
 //    clockParams.period = LED_BRIGHTNESS_INTERVAL;
 //    clockParams.startFlag = TRUE;
 //    adc_clock_h = Clock_create(led_brightness_task_fn, 2, &clockParams, &eb);
-
-//    Clock_Params_init(&clockParams);
-//    clockParams.period = 0; // One-shot clock.
-//    clockParams.startFlag = FALSE;
-//    screen_anim_clock_h = Clock_create(screen_anim_tick_swi, 100, &clockParams, NULL); // Wait 100 ticks (1ms) before firing for the first time.
-//
-//    Clock_Params_init(&clockParams);
-//    clockParams.period = 0;
-//    clockParams.startFlag = FALSE;
-//    arm_anim_clock_h = Clock_create(arm_anim_tick_swi, ARM_ANIM_PERIOD, &clockParams, NULL);
-//
-//    Clock_Params blink_clock_params;
-//    Clock_Params_init(&blink_clock_params);
-//    blink_clock_params.period = BLINK_LEN; // 500 ms recurring
-//    blink_clock_params.startFlag = FALSE; // Don't auto-start (only when we blink-on)
-//    screen_blink_clock_h = Clock_create(screen_blink_tick_swi, 0, &blink_clock_params, NULL);
-//
-//    Clock_Params csecs_clock_params;
-//    Clock_Params_init(&csecs_clock_params);
-//    csecs_clock_params.period = 1000; // 10 ms recurring ( 1 centisecond)
-//    csecs_clock_params.startFlag = FALSE; // Auto-start off.
-//    csecs_clock_h = Clock_create(csecs_swi, 1000, &csecs_clock_params, NULL);
-
 
 
     BIOS_start();     /* enable interrupts and start SYS/BIOS */

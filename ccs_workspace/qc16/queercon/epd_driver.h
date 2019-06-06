@@ -92,4 +92,5 @@ void init_epd();
 extern Graphics_Display epd_grGraphicsDisplay;
 extern const Graphics_Display_Functions epd_grDisplayFunctions;
 void epd_flip();
+extern uint8_t epd_do_partial;
 #endif /* QUEERCON_EPD_DRIVER_H_ */

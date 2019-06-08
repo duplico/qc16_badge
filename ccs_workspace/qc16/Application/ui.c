@@ -515,9 +515,10 @@ void ui_draw_top_bar() {
     Graphics_drawRectangle(&ui_gr_context, &rect);
 
     Graphics_setFont(&ui_gr_context, &g_sFontCmss16b);
-    char bat_text[4] = "3.0";
-    sprintf(bat_text, "%d.%d", vbat_out_uvolts/1000000, (vbat_out_uvolts/100000) % 10);
-    Graphics_drawStringCentered(&ui_gr_context, (int8_t *) bat_text, 3, 248 + (291-248)/2, 2 - 1 + (18-2)/2, 0);
+    Graphics_setFont(&ui_gr_context, &g_sFontFixed6x8);
+    char bat_text[5] = "3.0V";
+    sprintf(bat_text, "%d.%dV", vbat_out_uvolts/1000000, (vbat_out_uvolts/100000) % 10);
+    Graphics_drawStringCentered(&ui_gr_context, (int8_t *) bat_text, 4, 248 + (291-248)/2, 2 + (18-2)/2, 0);
     Graphics_flushBuffer(&ui_gr_context);
 
     // Is our agent around? Draw the agent symbol.
@@ -541,7 +542,7 @@ void ui_draw_main_menu() {
 
 void ui_task_fn(UArg a0, UArg a1) {
     UInt events;
-    uint8_t light_brightness = 32;
+    uint8_t light_brightness = 0;
 
     // TODO: move these:
     init_epd();

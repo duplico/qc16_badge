@@ -17,3 +17,7 @@ ccs_workspace/qc16/TOOLS/src/sysbios/m3_Hwi_asm_switch.obj
 ccs_workspace/qc16/TOOLS/src/sysbios/m3_IntrinsicsSupport_asm.obj
 ccs_workspace/qc16/TOOLS/src/sysbios/m3_TaskSupport_asm.obj
 ccs_workspace/qc16/TOOLS/src/sysbios/makefile
+ccs_workspace/cbadge/.launches
+ccs_workspace/cbadge/Debug
+ccs_workspace/tirtos_builds_CC2640R2_LAUNCHXL_release_ccs
+ccs_workspace/adcbufcontinuous_CC2640R2_LAUNCHXL_tirtos_ccs

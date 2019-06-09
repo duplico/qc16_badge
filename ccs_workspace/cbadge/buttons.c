@@ -9,17 +9,15 @@
 
 #include <msp430.h>
 
-#define NUM_SEN     3                       // Defines number of sensors
-#define KEY_LVL     600                     // Defines threshold for a key press
-/*Set to ~ half the max delta expected*/
+#include "cbadge.h"
 
 // Global variables for sensing
-unsigned int base_cnt[NUM_SEN] = { 1230, 1230, 1230};
-unsigned int meas_cnt[NUM_SEN];
-int delta_cnt[NUM_SEN];
-unsigned char key_press[NUM_SEN];
+unsigned int base_cnt[3];
+unsigned int meas_cnt[3];
+int delta_cnt[3];
+unsigned char key_press[3];
 char key_pressed;
-const unsigned char electrode_bit[NUM_SEN]={BIT5, BIT1, BIT6,};
+const unsigned char electrode_bit[3]={BIT5, BIT1, BIT6,};
 
 /// Measure all the inputs.
 void measure_count(void)
@@ -29,7 +27,7 @@ void measure_count(void)
     // Configure the timer: (There's only Timer B0)
     // We use Timer B to read the captouch input.
     // Use INCLK, and count in continuous 16-bit mode.
-    TB0CTL = TBSSEL__INCLK + MC__CONTINUOUS;                   // INCLK, cont mode
+    TB0CTL = TBSSEL__INCLK + MC__CONTINUOUS;
 
     // Configure the CCR (CCR1 on TB0):
     //  Capture on both rising and falling edges of the clock (CM_3)
@@ -37,7 +35,7 @@ void measure_count(void)
     //  Capture mode. (CAP)
     TB0CCTL1 = CM__BOTH + CCIS__GND + CAP__CAPTURE;
 
-    for (i = 0; i<NUM_SEN; i++)
+    for (i = 0; i<3; i++)
     {
         // Select the correct button:
         switch(i) {
@@ -55,16 +53,16 @@ void measure_count(void)
             break;
         }
 
-        // Clear the timer:
+        // Zero the captouch timer:
         TB0CTL |= TBCLR;
 
-        // Delay 0.5 ms using the WDT.
-        WDTCTL = WDT_MDLY_0_5;
+        // Delay 0.064 ms using the WDT.
+        WDTCTL = WDT_MDLY_0_064;
         __bis_SR_register(LPM0_bits+GIE);
 
         // Toggle the capture signal, to capture the current counter,
         //  copying it into TB0CCR1.
-        TB0CCTL1 ^= CCIS0;                        // Create SW capture of CCR1
+        TB0CCTL1 ^= CCIS0;
         meas_cnt[i] = TB0CCR1;
         // Hold the WDT.
         WDTCTL = WDTPW + WDTHOLD;
@@ -78,28 +76,32 @@ void button_calibrate() {
     uint8_t i;
     measure_count();
     // Copy that into base_cnt.
-    for (i = 0; i<NUM_SEN; i++)
+    for (i = 0; i<3; i++)
         base_cnt[i] = meas_cnt[i];
 
     // Do that 15 more times, to get a really crappy average for some reason.
     // TODO: We should consider persisting this average.
     for(i=15; i>0; i--) {
         measure_count();
-        for (uint8_t j = 0; j<NUM_SEN; j++)
+        for (uint8_t j = 0; j<3; j++)
             base_cnt[j] = (meas_cnt[j]+base_cnt[j])/2;
     }
 }
 
 void button_poll() {
-    uint8_t j = KEY_LVL;
-    key_pressed = 0;
+    // Track the previous state of the buttons. The upper nibble will
+    //  be the PREVIOUS state of each button, and the lower nibble
+    //  will store the CURRENT state of each button. BIT3 and BIT7,
+    //  the highest bit of each nibble, are unused.
+    static uint8_t button_state = 0;
 
     // Measure all buttons:
     measure_count();
 
     // For each button...
-    for (uint8_t i = 0; i<NUM_SEN; i++)
+    for (uint8_t i = 0; i<3; i++)
     {
+        uint8_t button_bit = (BIT0 << i);
         // What's the change in our measurement?
         delta_cnt[i] = base_cnt[i] - meas_cnt[i];
 
@@ -114,22 +116,26 @@ void button_poll() {
 
         // If the measurement DECREASED, more than our threshold, that
         //  IS a button press.
-        if (delta_cnt[i] > j) {
-            // Indicate that this key is pressed.
-            key_press[i] = 1;
-            // Increase our detection threshold to this detection level:
-            j = delta_cnt[i];
-            // Mark this as the pressed-est key:
-            key_pressed = i+1;
+        if (delta_cnt[i] > KEY_LVL) {
+            // If the button is not already marked as pressed...
+            if (!(button_state & button_bit)) {
+                button_state |= button_bit;
+                // BUTTON PRESSED:
+                s_button |= button_bit;
+            }
         } else {
-            key_press[i] = 0;
+            if (button_state & button_bit) {
+                button_state &= ~button_bit;
+                // BUTTON RELEASED:
+                s_button |= (button_bit << 4);
+            }
         }
     }
 
     // TODO: Was this actually needed?
     // If no key is pressed, gradually lower the baseline.
 //    if (!key_pressed) {
-//        for (uint8_t i = 0; i<NUM_SEN; i++)
+//        for (uint8_t i = 0; i<3; i++)
 //            base_cnt[i] = base_cnt[i] - 1;
 //    }
 }

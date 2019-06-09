@@ -163,10 +163,16 @@ int main( void )
     }
 }
 
-// TODO: Add the ability to time out serial comms.
 #pragma vector=WDT_VECTOR
 __interrupt void watchdog_timer(void)
 {
+    if (serial_active_ticks && serial_phy_state) {
+        serial_active_ticks--;
+    } else if (serial_phy_state){
+        // timeout.
+        // TODO:
+//        serial_phy_state = SERIAL_PHY_STATE_IDLE;
+    }
     f_time_loop = 1;
     __bic_SR_register_on_exit(LPM3_bits);
 }

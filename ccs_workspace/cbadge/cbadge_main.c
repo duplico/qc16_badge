@@ -41,14 +41,14 @@ void init_io() {
     // GPIO:
     // P1.0     LED A       (SEL 00; DIR 1)
     // P1.1     B2B DIO1    (SEL 00; DIR 1)
-    // P1.2     TX (alt)    (SEL 01; DIR 1)
-    // P1.3     RX (alt)    (SEL 01; DIR 0)
+    // P1.2     RX (alt)    (SEL 01; DIR 0)
+    // P1.3     TX (alt)    (SEL 01; DIR 1)
     // P1.4     B2B DIO2    (SEL 00; DIR 0)
     // P1.5     B1          (SEL 00; DIR 0)
     // P1.6     RX (base)   (SEL 01; DIR 0)
     // P1.7     TX (base)   (SEL 01; DIR 1)
-    P1DIR = 0b10000111;
-    P1SEL0 = 0b00000000; // LSB
+    P1DIR = 0b10001011;
+    P1SEL0 = 0b11001100; // LSB
     P1SEL1 = 0b00000000; // MSB
     // P2.0     LED B       (SEL: 00; DIR 1)
     // P2.1     B2          (SEL: 00; DIR 0)
@@ -61,6 +61,9 @@ void init_io() {
 }
 
 void init_serial() {
+    // We'll start with the ALTERNATE config.
+    SYSCFG3 |= USCIARMP_1;
+
     // Pause the UART peripheral:
     UCA0CTLW0 |= UCSWRST;
     // Source the baud rate generation from SMCLK (1 MHz)
@@ -83,6 +86,7 @@ void init() {
     // Set up the clock system:
     init_clocks();
     init_io();
+    init_serial();
     // Note: Serial alternative switching is controlled by TBRMP in SYSCFG3
 
     // Enable interrupt for the WDT:
@@ -101,7 +105,7 @@ int main( void )
     //       powered-up, then switch that pin to an output to signal that
     //       this
 
-    while (1)
+     while (1)
     {
         button_poll();
 
@@ -125,6 +129,15 @@ int main( void )
         }
         if (s_button & BUTTON_RELEASE_J3) {
             s_button &= ~BUTTON_RELEASE_J3;
+        }
+
+        if (UCA0IFG & UCRXIFG) {
+            // We got a message!
+            LEDA_PORT_OUT ^= LEDA_PIN;
+            LEDB_PORT_OUT ^= LEDB_PIN;
+            LEDC_PORT_OUT ^= LEDC_PIN;
+            volatile uint8_t i;
+            i = UCA0RXBUF;
         }
 
         // Delay 16 ms:

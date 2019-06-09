@@ -24,4 +24,11 @@
 		<nature>org.eclipse.cdt.core.ccnature</nature>
 		<nature>org.eclipse.cdt.managedbuilder.core.ScannerConfigNature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>qc16_serial_common.h</name>
+			<type>1</type>
+			<locationURI>WORKSPACE_LOC/qc16_common/qc16_serial_common.h</locationURI>
+		</link>
+	</linkedResources>
 </projectDescription>

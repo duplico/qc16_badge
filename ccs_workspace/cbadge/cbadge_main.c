@@ -4,11 +4,16 @@
 
 #include <cbadge.h>
 
+#include "serial.h"
 #include "buttons.h"
 
 uint8_t s_button = 0x00;
 volatile uint8_t f_serial = 0x00;
 volatile uint8_t f_time_loop = 0x00;
+
+// TODO: initialize
+cbadge_conf_t my_conf;
+cbadge_conf_t my_conf_backup;
 
 /// Initialize clock signals and the three system clocks.
 /**
@@ -64,24 +69,6 @@ void init_io() {
     P2SEL1 = 0x00;
 }
 
-void init_serial() {
-    // We'll start with the ALTERNATE config.
-    SYSCFG3 |= USCIARMP_1;
-
-    // Pause the UART peripheral:
-    UCA0CTLW0 |= UCSWRST;
-    // Source the baud rate generation from SMCLK (1 MHz)
-    UCA0CTLW0 |= UCSSEL__SMCLK;
-    // Configure the baud rate to 9600.
-    //  (See page 589 in the family user's guide, SLAU445I)
-    UCA0BR0 = 6; // 1000000/9600/16
-    UCA0BR1 = 0x00;
-    UCA0MCTLW = 0x2000 | UCOS16 | UCBRF_8;
-    // Activate the UART:
-    UCA0CTLW0 &= ~UCSWRST;
-    UCA0IE |= UCTXIE | UCRXIE;
-}
-
 /// Perform basic initialization of the cbadge.
 void init() {
     // Stop the watchdog timer.
@@ -123,6 +110,8 @@ int main( void )
             //  towards the bottom of our main loop that will clear it for us.
         }
 
+        // TODO: If we're connected to a qbadge, and a button is pressed,
+        //       send something about it.
         if (s_button & BUTTON_PRESS_J1) {
             LEDA_PORT_OUT ^= LEDA_PIN;
             s_button &= ~BUTTON_PRESS_J1;
@@ -150,8 +139,14 @@ int main( void )
             LEDA_PORT_OUT ^= LEDA_PIN;
             LEDB_PORT_OUT ^= LEDB_PIN;
             LEDC_PORT_OUT ^= LEDC_PIN;
+
+            serial_handle_rx();
+
             f_serial = 0;
         }
+
+        // TODO: If we're an ACTIVE BADGE, we should be sending our own
+        //       serial HELO messages...
 
         if (f_serial == SERIAL_TX_DONE) {
             f_serial = 0;
@@ -168,7 +163,7 @@ int main( void )
     }
 }
 
-
+// TODO: Add the ability to time out serial comms.
 #pragma vector=WDT_VECTOR
 __interrupt void watchdog_timer(void)
 {

@@ -10,11 +10,8 @@
 
 #include <stdint.h>
 
+#include "cbadge.h"
 #include "qc16_serial_common.h"
-
-typedef struct {
-    uint16_t badge_id;
-} cbadge_conf_t;
 
 // We can store all our connections for 0.3kB.
 
@@ -23,5 +20,8 @@ typedef struct {
 #define SERIAL_PHY_STATE_RX_PAYLOAD 2
 #define SERIAL_PHY_STATE_TX_HEADER 17
 #define SERIAL_PHY_STATE_TX_PAYLOAD 18
+
+void serial_handle_rx();
+void init_serial();
 
 #endif /* SERIAL_H_ */

@@ -21,6 +21,9 @@
 #define SERIAL_PHY_STATE_TX_HEADER 17
 #define SERIAL_PHY_STATE_TX_PAYLOAD 18
 
+extern volatile uint8_t serial_phy_state;
+extern volatile uint8_t serial_active_ticks;
+
 void serial_handle_rx();
 void init_serial();
 

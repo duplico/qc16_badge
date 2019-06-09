@@ -2,8 +2,8 @@
 #define QC16_SERIAL_COMMON_H_
 
 typedef struct {
-    uint8_t opcode;
-    uint8_t payload_len;
+    __packed uint8_t opcode;
+    __packed uint8_t payload_len;
     uint16_t from_id;
     uint16_t to_id;
     uint16_t crc16;

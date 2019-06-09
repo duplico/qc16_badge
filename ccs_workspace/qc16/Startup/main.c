@@ -145,10 +145,13 @@ static const char signature[] =
 
 ////////////////////////////////////
 
+#include <qc16_serial_common.h>
+
 void serial_task_fn(UArg a0, UArg a1) {
+    serial_header_t header_out;
     uint8_t alternate_pins = 0;
     char input;
-    char output[] = {1,5,7,200};
+    char syncword = SERIAL_PHY_SYNC_WORD;
     UART_Handle uart;
     UART_Params uart_params;
 
@@ -167,9 +170,15 @@ void serial_task_fn(UArg a0, UArg a1) {
     }
 
     while (1) {
+        header_out.from_id = 1;
+        header_out.opcode = SERIAL_OPCODE_HELO;
+        header_out.payload_len = 0;
+        header_out.to_id = SERIAL_ID_ANY;
+        header_out.crc16 = 0xffff; // TODO
 
         // Send a beacon, then listen for a while.
-        UART_write(uart, output, 4);
+        UART_write(uart, &syncword, 1);
+        UART_write(uart, (uint8_t *)(&header_out), sizeof(serial_header_t));
 
         // Now, try to read something. This "blocks", meaning it pends on a
         //  semaphore, so it's OK to just wait on this.

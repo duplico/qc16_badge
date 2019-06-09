@@ -22,6 +22,7 @@ const unsigned char electrode_bit[3]={BIT5, BIT1, BIT6,};
 /// Measure all the inputs.
 void measure_count(void)
 {
+    // TODO: Totally refactor this.
     unsigned char i;
 
     // Configure the timer: (There's only Timer B0)
@@ -88,7 +89,7 @@ void button_calibrate() {
     }
 }
 
-void button_poll() {
+void button_poll(uint8_t button_id) {
     // Track the previous state of the buttons. The upper nibble will
     //  be the PREVIOUS state of each button, and the lower nibble
     //  will store the CURRENT state of each button. BIT3 and BIT7,

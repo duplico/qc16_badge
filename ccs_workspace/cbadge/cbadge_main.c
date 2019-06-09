@@ -7,6 +7,8 @@
 #include "buttons.h"
 
 uint8_t s_button = 0x00;
+volatile uint8_t f_serial = 0x00;
+volatile uint8_t f_time_loop = 0x00;
 
 /// Initialize clock signals and the three system clocks.
 /**
@@ -40,16 +42,18 @@ void init_io() {
 
     // GPIO:
     // P1.0     LED A       (SEL 00; DIR 1)
-    // P1.1     B2B DIO1    (SEL 00; DIR 1)
+    // P1.1     B2B ABS     (SEL 00; DIR 0) (pull-down)
     // P1.2     RX (alt)    (SEL 01; DIR 0)
     // P1.3     TX (alt)    (SEL 01; DIR 1)
-    // P1.4     B2B DIO2    (SEL 00; DIR 0)
+    // P1.4     B2B DIO2    (SEL 00; DIR 1)
     // P1.5     B1          (SEL 00; DIR 0)
     // P1.6     RX (base)   (SEL 01; DIR 0)
     // P1.7     TX (base)   (SEL 01; DIR 1)
     P1DIR = 0b10001011;
     P1SEL0 = 0b11001100; // LSB
     P1SEL1 = 0b00000000; // MSB
+    P1REN = 0b00000010;
+    P1OUT = 0x00;
     // P2.0     LED B       (SEL: 00; DIR 1)
     // P2.1     B2          (SEL: 00; DIR 0)
     //  ~~(There are no P.{2..5})~~
@@ -75,7 +79,7 @@ void init_serial() {
     UCA0MCTLW = 0x2000 | UCOS16 | UCBRF_8;
     // Activate the UART:
     UCA0CTLW0 &= ~UCSWRST;
-//    UCA0IE |= UCTXIE | UCRXIE; // TODO
+    UCA0IE |= UCTXIE | UCRXIE;
 }
 
 /// Perform basic initialization of the cbadge.
@@ -100,14 +104,24 @@ int main( void )
 {
     init();
 
-    // TODO: Read P1.4 to determine whether we're free-standing, or
-    //       if we're connected to a badge that's powering us. If we're
-    //       powered-up, then switch that pin to an output to signal that
-    //       this
+    // Read P1.1 to determine whether we're free-standing, or
+    //  if we're connected to a badge that's powering us. If we're
+    //  powered-up, then switch that pin to an output to signal that
+    //  this
+    if (P1IN & BIT1) {
+        // Assert the Active Badge Signal (ABS, P1.1).
+        P1DIR |= BIT1;
+        P1OUT |= BIT1;
+        // TODO: Set this badge as "powered-up"
+    }
 
-     while (1)
-    {
-        button_poll();
+    while (1) {
+        // TODO: this is a mess:
+        if (f_time_loop) {
+            button_poll();
+            // We DON'T clear f_time_loop here, because there's another section
+            //  towards the bottom of our main loop that will clear it for us.
+        }
 
         if (s_button & BUTTON_PRESS_J1) {
             LEDA_PORT_OUT ^= LEDA_PIN;
@@ -131,13 +145,21 @@ int main( void )
             s_button &= ~BUTTON_RELEASE_J3;
         }
 
-        if (UCA0IFG & UCRXIFG) {
+        if (f_serial == SERIAL_RX_DONE) {
             // We got a message!
             LEDA_PORT_OUT ^= LEDA_PIN;
             LEDB_PORT_OUT ^= LEDB_PIN;
             LEDC_PORT_OUT ^= LEDC_PIN;
-            volatile uint8_t i;
-            i = UCA0RXBUF;
+            f_serial = 0;
+        }
+
+        if (f_serial == SERIAL_TX_DONE) {
+            f_serial = 0;
+        }
+
+
+        if (f_time_loop) {
+            f_time_loop = 0;
         }
 
         // Delay 16 ms:
@@ -150,5 +172,6 @@ int main( void )
 #pragma vector=WDT_VECTOR
 __interrupt void watchdog_timer(void)
 {
+    f_time_loop = 1;
     __bic_SR_register_on_exit(LPM3_bits);
 }

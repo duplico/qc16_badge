@@ -9,6 +9,7 @@
 #define CBADGE_H_
 
 #define KEY_LVL 190 //125
+#define SERIAL_BUFFER_LEN 32
 
 #define LEDA_PORT_OUT P2OUT
 #define LEDA_PIN BIT7
@@ -24,6 +25,10 @@
 #define BUTTON_RELEASE_J2 BIT5
 #define BUTTON_RELEASE_J3 BIT6
 
+#define SERIAL_RX_DONE 1
+#define SERIAL_TX_DONE 2
+
 extern uint8_t s_button;
+volatile extern uint8_t f_serial;
 
 #endif /* CBADGE_H_ */

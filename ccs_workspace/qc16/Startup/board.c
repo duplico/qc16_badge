@@ -498,7 +498,7 @@ const UARTCC26XX_HWAttrsV2 uartCC26XXHWAttrs[QC16_UARTCOUNT] = {
         .rtsPin         = PIN_UNASSIGNED,
         .ringBufPtr     = uartCC26XXRingBuffer[QC16_UART0_BASE],
         .ringBufSize    = sizeof(uartCC26XXRingBuffer[QC16_UART0_BASE]),
-        .txIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_1_8,
+        .txIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_7_8,
         .rxIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_4_8,
         .errorFxn       = NULL
     },

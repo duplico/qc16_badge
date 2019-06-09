@@ -146,39 +146,37 @@ static const char signature[] =
 ////////////////////////////////////
 
 void serial_task_fn(UArg a0, UArg a1) {
-    char        input;
+    uint8_t alternate_pins = 0;
+    char input;
+    char output[] = {1,5,7,200};
     UART_Handle uart;
-    UART_Params uart_base_params;
-    UART_Params uart_alt_params;
-    // Initialize the UART driver.
-    UART_init();
+    UART_Params uart_params;
 
-    UART_Params_init(&uart_base_params);
-    uart_base_params.baudRate = 9600;
-    uart_base_params.readDataMode = UART_DATA_BINARY;
-    uart_base_params.writeDataMode = UART_DATA_BINARY;
-    uart_base_params.readEcho = UART_ECHO_OFF;
-    uart_base_params.readReturnMode = UART_RETURN_FULL;
-    uart_base_params.readTimeout = 1000; // TODO
+    UART_Params_init(&uart_params);
+    uart_params.baudRate = 9600;
+    uart_params.readDataMode = UART_DATA_BINARY;
+    uart_params.writeDataMode = UART_DATA_BINARY;
+    uart_params.readEcho = UART_ECHO_OFF;
+    uart_params.readReturnMode = UART_RETURN_FULL;
+    uart_params.readTimeout = 1000; // TODO
+    uart = UART_open(QC16_UART0_BASE, &uart_params);
 
-    UART_Params_init(&uart_alt_params);
-    uart_base_params.baudRate = 9600;
-    uart_base_params.readDataMode = UART_DATA_BINARY;
-    uart_base_params.writeDataMode = UART_DATA_BINARY;
-    uart_base_params.readEcho = UART_ECHO_OFF;
-    uart_base_params.readReturnMode = UART_RETURN_FULL;
-    uart_base_params.readTimeout = 1000; // TODO
-
-    // Open an instance of the UART drivers
-    uart = UART_open(QC16_UART0_BASE, &uart_base_params);
     if (uart == NULL) {
         // UART_open() failed
         while (1); // TODO
     }
-    // Loop forever echoing
+
     while (1) {
-        UART_read(uart, &input, 1);
-        UART_write(uart, &input, 1);
+
+        // Send a beacon, then listen for a while.
+        UART_write(uart, output, 4);
+
+        // Now, try to read something. This "blocks", meaning it pends on a
+        //  semaphore, so it's OK to just wait on this.
+//        UART_read(uart, &input, 1);
+//        UART_close(uart);
+//        alternate_pins = !alternate_pins;
+        Task_sleep(10000);
     }
 }
 
@@ -257,6 +255,7 @@ int main()
     SPI_init();
     I2C_init();
     ADC_init();
+    UART_init();
 #ifdef CACHE_AS_RAM
     // retain cache during standby
     Power_setConstraint(PowerCC26XX_SB_VIMS_CACHE_RETAIN);

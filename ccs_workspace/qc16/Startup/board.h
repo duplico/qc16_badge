@@ -95,8 +95,8 @@ extern const PIN_Config qc16_pin_init_table[];
 
 
 /* UART Board */
-#define QC16_UART_RX               IOID_2          /* RXD */
-#define QC16_UART_TX               IOID_1          /* TXD */
+#define QC16_UART_RX_BASE               IOID_2
+#define QC16_UART_TX_BASE               IOID_1
 
 // TODO: Is the following needed?
 /* PWM Outputs */
@@ -253,7 +253,8 @@ typedef enum QC16_SPIName {
  *  @brief  Enum of UARTs
  */
 typedef enum QC16_UARTName {
-    QC16_UART0 = 0,
+    QC16_UART0_BASE = 0,
+    QC16_UART0_ALT,
 
     QC16_UARTCOUNT
 } QC16_UARTName;

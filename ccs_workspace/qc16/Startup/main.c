@@ -47,6 +47,10 @@ SPIFFSNVS_Data spiffsnvs;
 Task_Struct adc_task;
 char adc_task_stack[ADC_STACKSIZE];
 
+#define SERIAL_STACKSIZE 512
+Task_Struct serial_task;
+char serial_task_stack[SERIAL_STACKSIZE];
+
 /* Buffer placed in RAM to hold bytes read from non-volatile storage. */
 static char buffer[64];
 static const char signature[] =
@@ -140,6 +144,44 @@ static const char signature[] =
 //    }
 
 ////////////////////////////////////
+
+void serial_task_fn(UArg a0, UArg a1) {
+    char        input;
+    UART_Handle uart;
+    UART_Params uart_base_params;
+    UART_Params uart_alt_params;
+    // Initialize the UART driver.
+    UART_init();
+
+    UART_Params_init(&uart_base_params);
+    uart_base_params.baudRate = 9600;
+    uart_base_params.readDataMode = UART_DATA_BINARY;
+    uart_base_params.writeDataMode = UART_DATA_BINARY;
+    uart_base_params.readEcho = UART_ECHO_OFF;
+    uart_base_params.readReturnMode = UART_RETURN_FULL;
+    uart_base_params.readTimeout = 1000; // TODO
+
+    UART_Params_init(&uart_alt_params);
+    uart_base_params.baudRate = 9600;
+    uart_base_params.readDataMode = UART_DATA_BINARY;
+    uart_base_params.writeDataMode = UART_DATA_BINARY;
+    uart_base_params.readEcho = UART_ECHO_OFF;
+    uart_base_params.readReturnMode = UART_RETURN_FULL;
+    uart_base_params.readTimeout = 1000; // TODO
+
+    // Open an instance of the UART drivers
+    uart = UART_open(QC16_UART0_BASE, &uart_base_params);
+    if (uart == NULL) {
+        // UART_open() failed
+        while (1); // TODO
+    }
+    // Loop forever echoing
+    while (1) {
+        UART_read(uart, &input, 1);
+        UART_write(uart, &input, 1);
+    }
+}
+
 
 #define LED_BRIGHTNESS_INTERVAL 12500
 uint_fast16_t vbat_out_uvolts = 0;
@@ -239,6 +281,12 @@ int main()
     taskParams.stackSize = ADC_STACKSIZE;
     taskParams.priority = 1;
     Task_construct(&adc_task, led_brightness_task_fn, &taskParams, NULL);
+
+    Task_Params_init(&taskParams);
+    taskParams.stack = serial_task_stack;
+    taskParams.stackSize = SERIAL_STACKSIZE;
+    taskParams.priority = 1;
+    Task_construct(&serial_task, serial_task_fn, &taskParams, NULL);
 
 //    Clock_Params clockParams;
 //    Error_Block eb;

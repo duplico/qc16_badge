@@ -482,6 +482,7 @@ const uint_least8_t SPI_count = QC16_SPICOUNT;
 
 UARTCC26XX_Object uartCC26XXObjects[QC16_UARTCOUNT];
 
+// TODO: probably only need one?
 uint8_t uartCC26XXRingBuffer[QC16_UARTCOUNT][32];
 
 const UARTCC26XX_HWAttrsV2 uartCC26XXHWAttrs[QC16_UARTCOUNT] = {
@@ -491,12 +492,28 @@ const UARTCC26XX_HWAttrsV2 uartCC26XXHWAttrs[QC16_UARTCOUNT] = {
         .intNum         = INT_UART0_COMB,
         .intPriority    = ~0,
         .swiPriority    = 0,
-        .txPin          = QC16_UART_TX,
-        .rxPin          = QC16_UART_RX,
+        .txPin          = QC16_UART_TX_BASE,
+        .rxPin          = QC16_UART_RX_BASE,
         .ctsPin         = PIN_UNASSIGNED,
         .rtsPin         = PIN_UNASSIGNED,
-        .ringBufPtr     = uartCC26XXRingBuffer[QC16_UART0],
-        .ringBufSize    = sizeof(uartCC26XXRingBuffer[QC16_UART0]),
+        .ringBufPtr     = uartCC26XXRingBuffer[QC16_UART0_BASE],
+        .ringBufSize    = sizeof(uartCC26XXRingBuffer[QC16_UART0_BASE]),
+        .txIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_1_8,
+        .rxIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_4_8,
+        .errorFxn       = NULL
+    },
+    {
+        .baseAddr       = UART0_BASE,
+        .powerMngrId    = PowerCC26XX_PERIPH_UART0,
+        .intNum         = INT_UART0_COMB,
+        .intPriority    = ~0,
+        .swiPriority    = 0,
+        .txPin          = QC16_UART_RX_BASE, // Note reversed direction
+        .rxPin          = QC16_UART_TX_BASE, // Note reversed direction.
+        .ctsPin         = PIN_UNASSIGNED,
+        .rtsPin         = PIN_UNASSIGNED,
+        .ringBufPtr     = uartCC26XXRingBuffer[QC16_UART0_ALT],
+        .ringBufSize    = sizeof(uartCC26XXRingBuffer[QC16_UART0_ALT]),
         .txIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_1_8,
         .rxIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_4_8,
         .errorFxn       = NULL
@@ -506,8 +523,13 @@ const UARTCC26XX_HWAttrsV2 uartCC26XXHWAttrs[QC16_UARTCOUNT] = {
 const UART_Config UART_config[QC16_UARTCOUNT] = {
     {
         .fxnTablePtr = &UARTCC26XX_fxnTable,
-        .object      = &uartCC26XXObjects[QC16_UART0],
-        .hwAttrs     = &uartCC26XXHWAttrs[QC16_UART0]
+        .object      = &uartCC26XXObjects[QC16_UART0_BASE],
+        .hwAttrs     = &uartCC26XXHWAttrs[QC16_UART0_BASE]
+    },
+    {
+        .fxnTablePtr = &UARTCC26XX_fxnTable,
+        .object      = &uartCC26XXObjects[QC16_UART0_ALT],
+        .hwAttrs     = &uartCC26XXHWAttrs[QC16_UART0_ALT]
     },
 };
 

@@ -11,6 +11,10 @@
 #define KEY_LVL 190 //125
 #define SERIAL_BUFFER_LEN 32
 
+typedef struct {
+    uint16_t badge_id;
+} cbadge_conf_t;
+
 #define LEDA_PORT_OUT P2OUT
 #define LEDA_PIN BIT7
 #define LEDB_PORT_OUT P2OUT
@@ -28,6 +32,7 @@
 #define SERIAL_RX_DONE 1
 #define SERIAL_TX_DONE 2
 
+extern cbadge_conf_t my_conf;
 extern uint8_t s_button;
 volatile extern uint8_t f_serial;
 

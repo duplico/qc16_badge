@@ -11,14 +11,57 @@
 #include <cbadge.h>
 #include "serial.h"
 
-volatile serial_header_t serial_header = {0,};
+volatile serial_header_t serial_header_in = {0,};
+serial_header_t serial_header_out = {0,};
 volatile uint8_t *serial_header_buf;
 volatile uint8_t serial_buffer[SERIAL_BUFFER_LEN] = {0,};
 volatile uint8_t serial_phy_state = 0;
 volatile uint8_t serial_phy_index = 0;
 
-// TODO: Add the ability to time out.
+void serial_handle_rx() {
+    // We just got a complete serial message
+    //  (header and, possibly, payload).
+    switch(serial_header_in.opcode) {
+    case SERIAL_OPCODE_HELO:
+        // Need to send an ACK.
+        serial_header_out.from_id = my_conf.badge_id;
+        serial_header_out.opcode = SERIAL_OPCODE_ACK;
+        serial_header_out.payload_len = 0;
+        serial_header_out.to_id = SERIAL_ID_ANY;
+        // We are now connected.
+        break;
+    case SERIAL_OPCODE_ACK:
+        // Connection done, what's next?
+        break;
+    }
+}
 
+void serial_send_start() {
+    // TODO: assert serial_phy_state == SERIAL_PHY_STATE_IDLE
+    serial_phy_state = SERIAL_PHY_STATE_IDLE;
+    UCA0TXBUF = SERIAL_PHY_SYNC_WORD;
+    // The interrupts will take it from here.
+}
+
+void init_serial() {
+    // We'll start with the ALTERNATE config.
+    SYSCFG3 |= USCIARMP_1;
+
+    // Pause the UART peripheral:
+    UCA0CTLW0 |= UCSWRST;
+    // Source the baud rate generation from SMCLK (1 MHz)
+    UCA0CTLW0 |= UCSSEL__SMCLK;
+    // Configure the baud rate to 9600.
+    //  (See page 589 in the family user's guide, SLAU445I)
+    UCA0BR0 = 6; // 1000000/9600/16
+    UCA0BR1 = 0x00;
+    UCA0MCTLW = 0x2000 | UCOS16 | UCBRF_8;
+    // Activate the UART:
+    UCA0CTLW0 &= ~UCSWRST;
+    UCA0IE |= UCTXIE | UCRXIE;
+}
+
+// TODO: Add the ability to time out serial comms.
 #pragma vector=USCI_A0_VECTOR
 __interrupt void serial_isr() {
     // TODO: If a higher-number (lower priority) interrupt is unused,
@@ -30,10 +73,10 @@ __interrupt void serial_isr() {
         case SERIAL_PHY_STATE_TX_HEADER:
             // We just finished sending header byte index serial_phy_index.
             serial_phy_index++;
-            if (serial_phy_index < sizeof(serial_header)) {
+            if (serial_phy_index < sizeof(serial_header_in)) {
                 // The header isn't finished sending yet.
                 // TODO: Confirm that this serializes properly between platforms:
-                UCA0TXBUF = ((uint8_t *) (&serial_header))[serial_phy_index];
+                UCA0TXBUF = ((uint8_t *) (&serial_header_in))[serial_phy_index];
                 break; // done; don't fall through.
             } else {
                 // Header is completely sent.
@@ -48,7 +91,7 @@ __interrupt void serial_isr() {
             //  That is, we just transmitted serial_buffer[serial_phy_index-1]
             //  (or, if serial_phy_index == 0, we just finished sending a header)
 
-            if (serial_phy_index == serial_header.payload_len) {
+            if (serial_phy_index == serial_header_in.payload_len) {
                 // Done sending.
                 serial_phy_state = SERIAL_PHY_STATE_IDLE;
                 serial_phy_index = 0;
@@ -67,16 +110,24 @@ __interrupt void serial_isr() {
     case UCIV__UCTXIFG:
         // Transmit buffer full' ready to load another byte to send.
         switch(serial_phy_state) {
+        case SERIAL_PHY_STATE_IDLE:
+            // We just sent a sync byte. Time to send the header:
+            serial_phy_state = SERIAL_PHY_STATE_TX_HEADER;
+            serial_phy_index = 0;
+            // fall through...
         case SERIAL_PHY_STATE_TX_HEADER:
-            // We just finished sending header byte index serial_phy_index.
-            serial_phy_index++;
-            if (serial_phy_index < sizeof(serial_header)) {
-                // The header isn't finished sending yet.
-                // TODO: Confirm that this serializes properly between platforms:
-                UCA0TXBUF = ((uint8_t *) (&serial_header))[serial_phy_index];
-                break; // done; don't fall through.
+            // This works slightly differently than the receiving version.
+            //  It's time to TRANSMIT serial_header_out[serial_phy_index]
+            //  because we just sent serial_header_out[serial_phy_index-1]
+            //  (or, if serial_phy_index == 0, it was the syncbyte)
+
+            if (serial_phy_index < sizeof(serial_header_out)) {
+                // Need to send another.
+                UCA0TXBUF = ((uint8_t *) (&serial_header_out))[serial_phy_index];
+                serial_phy_index++;
+                break; // Don't fall through; we need to stay in this case.
             } else {
-                // Header is completely sent.
+                // Done sending the header.
                 serial_phy_state = SERIAL_PHY_STATE_TX_PAYLOAD;
                 serial_phy_index = 0;
                 // Fall through, and let the logic below handle this...
@@ -84,11 +135,10 @@ __interrupt void serial_isr() {
         case SERIAL_PHY_STATE_TX_PAYLOAD:
             // This works slightly differently than the receiving version.
             //  It's time to TRANSMIT serial_buffer[serial_phy_index]
-            //  (it hasn't already been done).
-            //  That is, we just transmitted serial_buffer[serial_phy_index-1]
-            //  (or, if serial_phy_index == 0, we just finished sending a header)
+            //  because we just sent serial_buffer[serial_phy_index-1]
+            //  (or, if serial_phy_index == 0, it was the header)
 
-            if (serial_phy_index == serial_header.payload_len) {
+            if (serial_phy_index == serial_header_in.payload_len) {
                 // Done sending.
                 serial_phy_state = SERIAL_PHY_STATE_IDLE;
                 serial_phy_index = 0;
@@ -101,6 +151,8 @@ __interrupt void serial_isr() {
                 UCA0TXBUF = serial_buffer[serial_phy_index];
                 serial_phy_index++;
             }
+            break;
+        default:
             break;
         }
         break;

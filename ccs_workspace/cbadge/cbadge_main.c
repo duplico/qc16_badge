@@ -127,7 +127,7 @@ int main( void )
                     current_button = current_button & 0x0f;
                 } else {
                     // It's ok to poll a button.
-                    button_poll_new(current_button);
+                    button_poll(current_button);
                     current_button += 1;
                     if (current_button == 3)
                         current_button = 0;

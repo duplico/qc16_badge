@@ -63,6 +63,9 @@ void init_serial() {
 
     // Activate the UART:
     UCA0CTLW0 &= ~UCSWRST;
+
+    // TODO: clear that initial TXIV
+
     UCA0IE |= UCTXIE | UCRXIE;
 }
 
@@ -155,7 +158,6 @@ __interrupt void serial_isr() {
                 serial_phy_state = SERIAL_PHY_STATE_IDLE;
                 serial_phy_index = 0;
                 // Done.
-                // TODO: check CRC (but not here)
                 f_serial = SERIAL_TX_DONE;
                 LPM3_EXIT;
             } else {

@@ -7,15 +7,19 @@
 #include "serial.h"
 #include "buttons.h"
 
+uint8_t s_activated = 0x00;
 uint8_t s_button = 0x00;
 volatile uint8_t f_serial = 0x00;
 volatile uint8_t f_time_loop = 0x00;
 
 // TODO: initialize
 #pragma PERSISTENT(my_conf)
-cbadge_conf_t my_conf;
-#pragma PERSISTENT(my_conf_backup)
-cbadge_conf_t my_conf_backup;
+cbadge_conf_t my_conf = {
+    .activated=0,
+    .active=0,
+    .badge_id=0,
+    .initialized=0,
+};
 
 /// Initialize clock signals and the three system clocks.
 /**
@@ -73,6 +77,17 @@ void init_io() {
     P2OUT = 0x00;
 }
 
+void init_conf() {
+    if (!my_conf.initialized) {
+        // this is first boot.
+        // TODO:
+        my_conf.initialized=1;
+        my_conf.badge_id=1001;
+        my_conf.activated=0;
+    }
+    my_conf.active=0;
+}
+
 /// Perform basic initialization of the cbadge.
 void init() {
     // Stop the watchdog timer.
@@ -82,6 +97,7 @@ void init() {
     init_clocks();
     init_io();
     init_serial();
+    init_conf();
     // Note: Serial alternative switching is controlled by TBRMP in SYSCFG3
 
     // Enable interrupt for the WDT:
@@ -96,14 +112,21 @@ int main( void )
     init();
 
     // Read P1.1 to determine whether we're free-standing, or
-    //  if we're connected to a badge that's powering us. If we're
-    //  powered-up, then switch that pin to an output to signal that
-    //  this
-    if (P1IN & BIT1) {
+    //  if we're connected to a badge that's powering us. If it's LOW,
+    //  then this badge is active WITHOUT another badge powering us.
+    //  How cool! Switch that pin to an output to signal that
+    //  this badge is now active.
+    if (!(P1IN & BIT1)) {
+        // We are under our own power.
         // Assert the Active Badge Signal (ABS, P1.1).
         P1DIR |= BIT1;
         P1OUT |= BIT1;
-        // TODO: Set this badge as "powered-up"
+        if (!my_conf.activated) {
+            my_conf.activated = 1;
+            // This badge was just turned on under its own power for the first time!
+            s_activated = 1;
+        }
+        my_conf.active = 1;
     }
 
     uint8_t current_button = 0;

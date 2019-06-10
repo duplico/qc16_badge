@@ -16,6 +16,9 @@
 
 typedef struct {
     uint16_t badge_id;
+    uint8_t active;
+    uint8_t activated;
+    uint8_t initialized;
 } cbadge_conf_t;
 
 #define LEDA_PORT_OUT P2OUT

@@ -149,8 +149,10 @@ static const char signature[] =
 
 void serial_task_fn(UArg a0, UArg a1) {
     serial_header_t header_out;
+    volatile serial_header_t header_in;
     uint8_t alternate_pins = 0;
-    char input;
+    volatile uint8_t input[sizeof(serial_header_t)+1];
+    volatile int_fast32_t result;
     char syncword = SERIAL_PHY_SYNC_WORD;
     UART_Handle uart;
     UART_Params uart_params;
@@ -161,7 +163,7 @@ void serial_task_fn(UArg a0, UArg a1) {
     uart_params.writeDataMode = UART_DATA_BINARY;
     uart_params.readEcho = UART_ECHO_OFF;
     uart_params.readReturnMode = UART_RETURN_FULL;
-    uart_params.readTimeout = 1000; // TODO
+    uart_params.readTimeout = 100000; // TODO
     uart = UART_open(QC16_UART0_BASE, &uart_params);
 
     if (uart == NULL) {
@@ -180,12 +182,16 @@ void serial_task_fn(UArg a0, UArg a1) {
         UART_write(uart, &syncword, 1);
         UART_write(uart, (uint8_t *)(&header_out), sizeof(serial_header_t));
 
+        input[0] = 0x00;
         // Now, try to read something. This "blocks", meaning it pends on a
         //  semaphore, so it's OK to just wait on this.
-//        UART_read(uart, &input, 1);
+        result = UART_read(uart, &input, 1); //sizeof(serial_header_t)+1);
+        if (result == 1 && input[0] == SERIAL_PHY_SYNC_WORD) {
+            result = UART_read(uart, (uint8_t *) &header_in, sizeof(serial_header_t)); //sizeof(serial_header_t)+1);
+            Task_sleep(100000); // TODO
+        }
 //        UART_close(uart);
 //        alternate_pins = !alternate_pins;
-        Task_sleep(10000);
     }
 }
 

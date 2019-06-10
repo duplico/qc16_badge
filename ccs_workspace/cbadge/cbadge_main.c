@@ -12,18 +12,20 @@ volatile uint8_t f_serial = 0x00;
 volatile uint8_t f_time_loop = 0x00;
 
 // TODO: initialize
+#pragma PERSISTENT(my_conf)
 cbadge_conf_t my_conf;
+#pragma PERSISTENT(my_conf_backup)
 cbadge_conf_t my_conf_backup;
 
 /// Initialize clock signals and the three system clocks.
 /**
- ** Currently, we're just keeping the defaults, but this is where any
- ** such initialization should be done if needed.
+ ** We'll take the DCO to 8 MHz, and divide it by 8 for MCLK.
  **
  ** Our available clock sources are:
  **  VLO:     10kHz very low power low-freq
  **  REFO:    32.768kHz (typ) reference oscillator
  **  DCO:     Digitally controlled oscillator (1MHz default)
+ **           Specifically, 1048576 Hz typical.
  **
  ** At startup, our clocks are as follows:
  **  MCLK:  Sourced by the DCO
@@ -34,6 +36,7 @@ cbadge_conf_t my_conf_backup;
  **         (the only available internal source)
  */
 void init_clocks() {
+    // Use the defaults.
 }
 
 /// Apply the initial configuration of the GPIO and peripheral pins.
@@ -67,6 +70,7 @@ void init_io() {
     P2DIR = 0b10000001;
     P2SEL0 = 0x00;
     P2SEL1 = 0x00;
+    P2OUT = 0x00;
 }
 
 /// Perform basic initialization of the cbadge.
@@ -84,7 +88,7 @@ void init() {
     SFRIE1 |= WDTIE;
     __bis_SR_register(GIE);
 
-    button_calibrate();
+//    button_calibrate();
 }
 
 int main( void )
@@ -102,12 +106,40 @@ int main( void )
         // TODO: Set this badge as "powered-up"
     }
 
+    uint8_t current_button = 0;
+
+    f_time_loop = 1;
+
     while (1) {
-        // TODO: this is a mess:
         if (f_time_loop) {
-            button_poll();
-            // We DON'T clear f_time_loop here, because there's another section
-            //  towards the bottom of our main loop that will clear it for us.
+            // Every time loop, we measure ONE of the buttons.
+
+            // But, receiving serial messages plays havoc with our readings.
+            //  So, if the serial PHY is active, we need to avoid scanning
+            //  buttons.
+
+            if (serial_phy_state == SERIAL_PHY_STATE_IDLE) {
+                if (current_button >= 0xf0) {
+                    // We're coming off a HOLD, so our timer readings
+                    //  are going to be invalid. So, let's restart our
+                    //  scanning process, and not poll a button
+                    //  this loop.
+                    current_button = current_button & 0x0f;
+                } else {
+                    // It's ok to poll a button.
+                    button_poll_new(current_button);
+                    current_button += 1;
+                    if (current_button == 3)
+                        current_button = 0;
+                }
+                button_measure_start(current_button);
+            } else {
+                current_button |= 0xf0;
+            }
+
+            // Delay another 1.9 ms:
+            WDTCTL = WDT_ADLY_1_9;
+            f_time_loop = 0;
         }
 
         // TODO: If we're connected to a qbadge, and a button is pressed,
@@ -136,10 +168,6 @@ int main( void )
 
         if (f_serial == SERIAL_RX_DONE) {
             // We got a message!
-            LEDA_PORT_OUT ^= LEDA_PIN;
-            LEDB_PORT_OUT ^= LEDB_PIN;
-            LEDC_PORT_OUT ^= LEDC_PIN;
-
             serial_handle_rx();
 
             f_serial = 0;
@@ -149,16 +177,16 @@ int main( void )
         //       serial HELO messages...
 
         if (f_serial == SERIAL_TX_DONE) {
+            if (serial_header_out.opcode == SERIAL_OPCODE_ACK) {
+                // We are now connected.
+                LEDA_PORT_OUT ^= LEDA_PIN;
+                LEDB_PORT_OUT ^= LEDB_PIN;
+                LEDC_PORT_OUT ^= LEDC_PIN;
+            }
+
             f_serial = 0;
         }
 
-
-        if (f_time_loop) {
-            f_time_loop = 0;
-        }
-
-        // Delay 16 ms:
-        WDTCTL = WDT_ADLY_16;
         __bis_SR_register(LPM3_bits);
     }
 }
@@ -168,10 +196,9 @@ __interrupt void watchdog_timer(void)
 {
     if (serial_active_ticks && serial_phy_state) {
         serial_active_ticks--;
-    } else if (serial_phy_state){
-        // timeout.
-        // TODO:
-//        serial_phy_state = SERIAL_PHY_STATE_IDLE;
+        if (!serial_active_ticks) {
+            serial_phy_state = SERIAL_PHY_STATE_IDLE;
+        }
     }
     f_time_loop = 1;
     __bic_SR_register_on_exit(LPM3_bits);

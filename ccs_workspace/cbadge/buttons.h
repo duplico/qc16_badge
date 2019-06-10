@@ -12,5 +12,7 @@ extern char key_pressed;
 
 void button_poll();
 void button_calibrate();
+void button_poll_new(uint8_t button_id);
+void button_measure_start(uint8_t button_id);
 
 #endif /* BUTTONS_H_ */

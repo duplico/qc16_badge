@@ -23,6 +23,8 @@
 
 extern volatile uint8_t serial_phy_state;
 extern volatile uint8_t serial_active_ticks;
+extern volatile serial_header_t serial_header_in;
+extern serial_header_t serial_header_out;
 
 void serial_handle_rx();
 void init_serial();

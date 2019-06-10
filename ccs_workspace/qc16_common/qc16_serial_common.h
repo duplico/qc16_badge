@@ -1,6 +1,8 @@
 #ifndef QC16_SERIAL_COMMON_H_
 #define QC16_SERIAL_COMMON_H_
 
+#include <stdint.h>
+
 typedef struct {
     __packed uint8_t opcode;
     __packed uint8_t payload_len;
@@ -8,6 +10,8 @@ typedef struct {
     uint16_t to_id;
     uint16_t crc16;
 } serial_header_t;
+
+#define QC16_CRC_SEED 0xB68F
 
 #define SERIAL_PHY_SYNC_WORD 0xAC
 

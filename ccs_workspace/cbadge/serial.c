@@ -18,6 +18,7 @@ volatile uint8_t serial_buffer[SERIAL_BUFFER_LEN] = {0,};
 volatile uint8_t serial_phy_state = 0;
 volatile uint8_t serial_phy_index = 0;
 volatile uint8_t serial_active_ticks = 0;
+volatile uint16_t serial_running_crc = 0;
 
 void serial_send_start() {
     // TODO: assert serial_phy_state == SERIAL_PHY_STATE_IDLE
@@ -88,6 +89,8 @@ __interrupt void serial_isr() {
         case SERIAL_PHY_STATE_RX_HEADER:
             // TODO: Confirm that this deserializes properly between platforms:
             ((uint8_t *) (&serial_header_in))[serial_phy_index] = UCA0RXBUF;
+            // TODO: how much of the header do we crc on???
+            serial_running_crc = crc_build(((uint8_t *) (&serial_header_in))[serial_phy_index], !serial_phy_index);
             serial_phy_index++;
             if (serial_phy_index == sizeof(serial_header_in)) {
                 // Header is complete.
@@ -111,6 +114,7 @@ __interrupt void serial_isr() {
             break;
         case SERIAL_PHY_STATE_RX_PAYLOAD:
             serial_buffer[serial_phy_index] = UCA0RXBUF;
+            serial_running_crc = crc_build(serial_buffer[serial_phy_index], 0);
             serial_phy_index++;
             if (serial_phy_index == serial_header_in.payload_len) {
                 serial_phy_state = SERIAL_PHY_STATE_IDLE;

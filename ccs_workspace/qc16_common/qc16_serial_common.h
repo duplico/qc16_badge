@@ -23,4 +23,7 @@ typedef struct {
 
 #define SERIAL_ID_ANY 0xffff
 
+uint16_t crc16_buf(volatile uint8_t *sbuf, uint8_t len);
+uint16_t crc_build(uint8_t data, uint8_t start_over);
+
 #endif /* QC16_SERIAL_COMMON_H_ */

@@ -16,3 +16,5 @@ encoding//MultiMode_FlashOnly/objects.mk=UTF-8
 encoding//MultiMode_FlashOnly/queercon/subdir_rules.mk=UTF-8
 encoding//MultiMode_FlashOnly/queercon/subdir_vars.mk=UTF-8
 encoding//MultiMode_FlashOnly/sources.mk=UTF-8
+encoding//MultiMode_FlashOnly/subdir_rules.mk=UTF-8
+encoding//MultiMode_FlashOnly/subdir_vars.mk=UTF-8

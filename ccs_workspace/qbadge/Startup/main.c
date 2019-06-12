@@ -6,6 +6,8 @@
 #include <ti/drivers/NVS.h>
 #include <ti/drivers/I2C.h>
 #include <ti/drivers/ADC.h>
+#include <ti/drivers/UART.h>
+#include <ti/drivers/uart/UARTCC26XX.h>
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/Task.h>
@@ -161,15 +163,21 @@ void serial_task_fn(UArg a0, UArg a1) {
     uart_params.baudRate = 9600;
     uart_params.readDataMode = UART_DATA_BINARY;
     uart_params.writeDataMode = UART_DATA_BINARY;
+    uart_params.readMode = UART_MODE_BLOCKING;
+    uart_params.writeMode = UART_MODE_BLOCKING;
     uart_params.readEcho = UART_ECHO_OFF;
     uart_params.readReturnMode = UART_RETURN_FULL;
     uart_params.readTimeout = 100000; // TODO
+    uart_params.parityType = UART_PAR_EVEN;
+    uart_params.stopBits = UART_STOP_TWO;
     uart = UART_open(QC16_UART0_BASE, &uart_params);
 
     if (uart == NULL) {
         // UART_open() failed
         while (1); // TODO
     }
+
+    UART_control(uart, UARTCC26XX_CMD_RETURN_PARTIAL_DISABLE, NULL);
 
     while (1) {
         header_out.from_id = 1;

@@ -177,7 +177,7 @@ void serial_task_fn(UArg a0, UArg a1) {
         while (1); // TODO
     }
 
-    UART_control(uart, UARTCC26XX_CMD_RETURN_PARTIAL_DISABLE, NULL);
+//    UART_control(uart, UARTCC26XX_CMD_RETURN_PARTIAL_DISABLE, NULL);
 
     while (1) {
         header_out.from_id = 1;

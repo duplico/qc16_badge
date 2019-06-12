@@ -107,6 +107,8 @@ void init() {
 //    button_calibrate();
 }
 
+#define PWM_CYCLES 6
+
 int main( void )
 {
     init();
@@ -134,9 +136,9 @@ int main( void )
     f_time_loop = 1;
 
     uint8_t pwm_level_curr = 0;
-    uint8_t pwm_level_a = 10;
-    uint8_t pwm_level_b = 4;
-    uint8_t pwm_level_c = 1;
+    uint8_t pwm_level_a = 0;
+    uint8_t pwm_level_b = 0;
+    uint8_t pwm_level_c = 0;
 
     while (1) {
         if (f_time_loop) {
@@ -167,7 +169,7 @@ int main( void )
 
             pwm_level_curr++;
 
-            if (pwm_level_curr == 10)
+            if (pwm_level_curr == PWM_CYCLES)
                 pwm_level_curr = 0;
 
             if (pwm_level_a > pwm_level_curr)
@@ -194,15 +196,21 @@ int main( void )
         // TODO: If we're connected to a qbadge, and a button is pressed,
         //       send something about it.
         if (s_button & BUTTON_PRESS_J1) {
-            LEDA_PORT_OUT ^= LEDA_PIN;
+            pwm_level_a++;
+            if (pwm_level_a == PWM_CYCLES)
+                pwm_level_a = 0;
             s_button &= ~BUTTON_PRESS_J1;
         }
         if (s_button & BUTTON_PRESS_J2) {
-            LEDB_PORT_OUT ^= LEDB_PIN;
+            pwm_level_b++;
+            if (pwm_level_b == PWM_CYCLES)
+                pwm_level_b = 0;
             s_button &= ~BUTTON_PRESS_J2;
         }
         if (s_button & BUTTON_PRESS_J3) {
-            LEDC_PORT_OUT ^= LEDC_PIN;
+            pwm_level_c++;
+            if (pwm_level_c == PWM_CYCLES)
+                pwm_level_c = 0;
             s_button &= ~BUTTON_PRESS_J3;
         }
         if (s_button & BUTTON_RELEASE_J1) {

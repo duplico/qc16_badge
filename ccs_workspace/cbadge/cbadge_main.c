@@ -133,6 +133,11 @@ int main( void )
 
     f_time_loop = 1;
 
+    uint8_t pwm_level_curr = 0;
+    uint8_t pwm_level_a = 10;
+    uint8_t pwm_level_b = 4;
+    uint8_t pwm_level_c = 1;
+
     while (1) {
         if (f_time_loop) {
             // Every time loop, we measure ONE of the buttons.
@@ -160,8 +165,29 @@ int main( void )
                 current_button |= 0xf0;
             }
 
+            pwm_level_curr++;
+
+            if (pwm_level_curr == 10)
+                pwm_level_curr = 0;
+
+            if (pwm_level_a > pwm_level_curr)
+                LEDA_PORT_OUT |= LEDA_PIN;
+            else
+                LEDA_PORT_OUT &= ~LEDA_PIN;
+
+            if (pwm_level_b > pwm_level_curr)
+                LEDB_PORT_OUT |= LEDB_PIN;
+            else
+                LEDB_PORT_OUT &= ~LEDB_PIN;
+
+            if (pwm_level_c > pwm_level_curr)
+                LEDC_PORT_OUT |= LEDC_PIN;
+            else
+                LEDC_PORT_OUT &= ~LEDC_PIN;
+
             // Delay another 1.9 ms:
             WDTCTL = WDT_ADLY_1_9;
+
             f_time_loop = 0;
         }
 

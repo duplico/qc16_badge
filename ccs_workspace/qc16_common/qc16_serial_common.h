@@ -8,8 +8,12 @@ typedef struct {
     __packed uint8_t payload_len;
     uint16_t from_id;
     uint16_t to_id;
-    uint16_t crc16;
+    uint16_t crc16_payload;
+    uint16_t crc16_header;
 } serial_header_t;
+
+#define PTX_TIME_MS 2000
+#define PRX_TIME_MS  200
 
 #define QC16_CRC_SEED 0xB68F
 

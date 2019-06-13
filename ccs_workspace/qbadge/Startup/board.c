@@ -496,8 +496,8 @@ const UARTCC26XX_HWAttrsV2 uartCC26XXHWAttrs[QC16_UARTCOUNT] = {
         .rxPin          = QC16_UART_RX_BASE,
         .ctsPin         = PIN_UNASSIGNED,
         .rtsPin         = PIN_UNASSIGNED,
-        .ringBufPtr     = uartCC26XXRingBuffer[QC16_UART0_BASE],
-        .ringBufSize    = sizeof(uartCC26XXRingBuffer[QC16_UART0_BASE]),
+        .ringBufPtr     = uartCC26XXRingBuffer[QC16_UART_PRX],
+        .ringBufSize    = sizeof(uartCC26XXRingBuffer[QC16_UART_PRX]),
         .txIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_7_8,
         .rxIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_4_8,
         .errorFxn       = NULL
@@ -512,8 +512,8 @@ const UARTCC26XX_HWAttrsV2 uartCC26XXHWAttrs[QC16_UARTCOUNT] = {
         .rxPin          = QC16_UART_TX_BASE, // Note reversed direction.
         .ctsPin         = PIN_UNASSIGNED,
         .rtsPin         = PIN_UNASSIGNED,
-        .ringBufPtr     = uartCC26XXRingBuffer[QC16_UART0_ALT],
-        .ringBufSize    = sizeof(uartCC26XXRingBuffer[QC16_UART0_ALT]),
+        .ringBufPtr     = uartCC26XXRingBuffer[QC16_UART_PTX],
+        .ringBufSize    = sizeof(uartCC26XXRingBuffer[QC16_UART_PTX]),
         .txIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_1_8,
         .rxIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_4_8,
         .errorFxn       = NULL
@@ -523,13 +523,13 @@ const UARTCC26XX_HWAttrsV2 uartCC26XXHWAttrs[QC16_UARTCOUNT] = {
 const UART_Config UART_config[QC16_UARTCOUNT] = {
     {
         .fxnTablePtr = &UARTCC26XX_fxnTable,
-        .object      = &uartCC26XXObjects[QC16_UART0_BASE],
-        .hwAttrs     = &uartCC26XXHWAttrs[QC16_UART0_BASE]
+        .object      = &uartCC26XXObjects[QC16_UART_PRX],
+        .hwAttrs     = &uartCC26XXHWAttrs[QC16_UART_PRX]
     },
     {
         .fxnTablePtr = &UARTCC26XX_fxnTable,
-        .object      = &uartCC26XXObjects[QC16_UART0_ALT],
-        .hwAttrs     = &uartCC26XXHWAttrs[QC16_UART0_ALT]
+        .object      = &uartCC26XXObjects[QC16_UART_PTX],
+        .hwAttrs     = &uartCC26XXHWAttrs[QC16_UART_PTX]
     },
 };
 

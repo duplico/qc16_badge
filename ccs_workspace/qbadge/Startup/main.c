@@ -254,7 +254,6 @@ int main()
 //    clockParams.startFlag = TRUE;
 //    adc_clock_h = Clock_create(led_brightness_task_fn, 2, &clockParams, &eb);
 
-
     BIOS_start();     /* enable interrupts and start SYS/BIOS */
 
     return 0;

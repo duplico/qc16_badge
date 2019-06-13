@@ -227,9 +227,6 @@ int main( void )
         if (f_serial == SERIAL_RX_DONE) {
             // We got a message!
             serial_handle_rx();
-            pwm_level_a = !pwm_level_a;
-            pwm_level_b = !pwm_level_b;
-            pwm_level_c = !pwm_level_c;
 
             f_serial = 0;
         }
@@ -240,6 +237,9 @@ int main( void )
         if (f_serial == SERIAL_TX_DONE) {
             if (serial_header_out.opcode == SERIAL_OPCODE_ACK) {
                 // We are now connected.
+                pwm_level_a = !pwm_level_a;
+                pwm_level_b = !pwm_level_b;
+                pwm_level_c = !pwm_level_c;
             }
 
             f_serial = 0;

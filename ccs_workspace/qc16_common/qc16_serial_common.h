@@ -12,8 +12,8 @@ typedef struct {
     uint16_t crc16_header;
 } serial_header_t;
 
-#define PTX_TIME_MS 2000
-#define PRX_TIME_MS  200
+#define PTX_TIME_MS 1000
+#define PRX_TIME_MS 1000
 
 #define QC16_CRC_SEED 0xB68F
 
@@ -26,6 +26,10 @@ typedef struct {
 #define SERIAL_OPCODE_BTN_J3    0x05
 
 #define SERIAL_ID_ANY 0xffff
+
+#define SERIAL_MODE_NC_PRX 0
+#define SERIAL_MODE_NC_PTX 1
+#define SERIAL_MODE_C_IDLE 2
 
 uint16_t crc16_buf(volatile uint8_t *sbuf, uint8_t len);
 uint16_t crc_build(uint8_t data, uint8_t start_over);

@@ -486,7 +486,7 @@ UARTCC26XX_Object uartCC26XXObjects[QC16_UARTCOUNT];
 uint8_t uartCC26XXRingBuffer[QC16_UARTCOUNT][32];
 
 const UARTCC26XX_HWAttrsV2 uartCC26XXHWAttrs[QC16_UARTCOUNT] = {
-    {
+    { // PRX
         .baseAddr       = UART0_BASE,
         .powerMngrId    = PowerCC26XX_PERIPH_UART0,
         .intNum         = INT_UART0_COMB,
@@ -502,7 +502,7 @@ const UARTCC26XX_HWAttrsV2 uartCC26XXHWAttrs[QC16_UARTCOUNT] = {
         .rxIntFifoThr   = UARTCC26XX_FIFO_THRESHOLD_4_8,
         .errorFxn       = NULL
     },
-    {
+    { // PTX
         .baseAddr       = UART0_BASE,
         .powerMngrId    = PowerCC26XX_PERIPH_UART0,
         .intNum         = INT_UART0_COMB,

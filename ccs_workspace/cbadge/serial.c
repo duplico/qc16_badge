@@ -47,8 +47,9 @@ void serial_handle_rx() {
 }
 
 void init_serial() {
-    // We'll start with the ALTERNATE config.
-    SYSCFG3 |= USCIARMP_1;
+    // Our initial config is in PRX mode. This is how we want to stay,
+    //  unless we are ACTIVE. If we're active (TODO), we should
+    //  occasionally use `SYSCFG3 |= USCIARMP_1` to swap to PTX.
 
     // TODO: If we source the UART from ACLK we can get better sleep mode.
     // Pause the UART peripheral:

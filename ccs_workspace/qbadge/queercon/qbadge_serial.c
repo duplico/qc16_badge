@@ -21,6 +21,12 @@
 #define SERIAL_STACKSIZE 1024
 Task_Struct serial_task;
 char serial_task_stack[SERIAL_STACKSIZE];
+UART_Handle uart;
+UART_Params uart_params;
+
+uint8_t serial_mode;
+uint32_t serial_next_timeout;
+Clock_Handle serial_timeout_clock_h;
 
 void serial_send_helo(UART_Handle uart) {
     serial_header_t header_out;
@@ -50,23 +56,13 @@ void serial_send_ack(UART_Handle uart) {
     UART_write(uart, (uint8_t *)(&header_out), sizeof(serial_header_t));
 }
 
-UART_Handle uart;
-UART_Params uart_params;
-
-#define SERIAL_MODE_NC_PRX 0
-#define SERIAL_MODE_NC_PTX 1
-#define SERIAL_MODE_C_IDLE 2
-
-uint8_t serial_mode;
-uint32_t serial_next_timeout;
-Clock_Handle serial_timeout_clock_h;
 
 void serial_clock_swi(UArg a0) {
 
 }
 
 uint8_t validate_header(serial_header_t *header) {
-    return 1;
+    return 1; // TODO
 }
 
 void serial_rx_done(serial_header_t *header, uint8_t *payload) {

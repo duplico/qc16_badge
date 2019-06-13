@@ -28,6 +28,7 @@
 #include <third_party/spiffs/SPIFFSNVS.h>
 #include <third_party/spiffs/spiffs.h>
 
+#include "queercon/qbadge_serial.h"
 #include "ui.h"
 
 // TODO:
@@ -48,10 +49,6 @@ SPIFFSNVS_Data spiffsnvs;
 #define ADC_STACKSIZE 512
 Task_Struct adc_task;
 char adc_task_stack[ADC_STACKSIZE];
-
-#define SERIAL_STACKSIZE 512
-Task_Struct serial_task;
-char serial_task_stack[SERIAL_STACKSIZE];
 
 /* Buffer placed in RAM to hold bytes read from non-volatile storage. */
 static char buffer[64];
@@ -147,63 +144,6 @@ static const char signature[] =
 
 ////////////////////////////////////
 
-#include <qc16_serial_common.h>
-
-void serial_task_fn(UArg a0, UArg a1) {
-    serial_header_t header_out;
-    volatile serial_header_t header_in;
-    uint8_t alternate_pins = 0;
-    volatile uint8_t input[sizeof(serial_header_t)+1];
-    volatile int_fast32_t result;
-    char syncword = SERIAL_PHY_SYNC_WORD;
-    UART_Handle uart;
-    UART_Params uart_params;
-
-    UART_Params_init(&uart_params);
-    uart_params.baudRate = 9600;
-    uart_params.readDataMode = UART_DATA_BINARY;
-    uart_params.writeDataMode = UART_DATA_BINARY;
-    uart_params.readMode = UART_MODE_BLOCKING;
-    uart_params.writeMode = UART_MODE_BLOCKING;
-    uart_params.readEcho = UART_ECHO_OFF;
-    uart_params.readReturnMode = UART_RETURN_FULL;
-    uart_params.readTimeout = 100000; // TODO
-    uart_params.parityType = UART_PAR_EVEN;
-    uart_params.stopBits = UART_STOP_TWO;
-    uart = UART_open(QC16_UART0_BASE, &uart_params);
-
-    if (uart == NULL) {
-        // UART_open() failed
-        while (1); // TODO
-    }
-
-//    UART_control(uart, UARTCC26XX_CMD_RETURN_PARTIAL_DISABLE, NULL);
-
-    while (1) {
-        header_out.from_id = 1;
-        header_out.opcode = SERIAL_OPCODE_HELO;
-        header_out.payload_len = 0;
-        header_out.to_id = SERIAL_ID_ANY;
-        header_out.crc16 = 0xffff; // TODO
-
-        // Send a beacon, then listen for a while.
-        UART_write(uart, &syncword, 1);
-        UART_write(uart, (uint8_t *)(&header_out), sizeof(serial_header_t));
-
-        input[0] = 0x00;
-        // Now, try to read something. This "blocks", meaning it pends on a
-        //  semaphore, so it's OK to just wait on this.
-        result = UART_read(uart, &input, 1); //sizeof(serial_header_t)+1);
-        if (result == 1 && input[0] == SERIAL_PHY_SYNC_WORD) {
-            result = UART_read(uart, (uint8_t *) &header_in, sizeof(serial_header_t)); //sizeof(serial_header_t)+1);
-            Task_sleep(100000); // TODO
-        }
-//        UART_close(uart);
-//        alternate_pins = !alternate_pins;
-    }
-}
-
-
 #define LED_BRIGHTNESS_INTERVAL 12500
 uint_fast16_t vbat_out_uvolts = 0;
 
@@ -294,6 +234,7 @@ int main()
     UBLEBcastScan_createTask();
     // Create the UI tasks:
     ui_init();
+    serial_init();
 
     // Set up the ADC reader task:
     Task_Params taskParams;
@@ -303,12 +244,6 @@ int main()
     taskParams.stackSize = ADC_STACKSIZE;
     taskParams.priority = 1;
     Task_construct(&adc_task, led_brightness_task_fn, &taskParams, NULL);
-
-    Task_Params_init(&taskParams);
-    taskParams.stack = serial_task_stack;
-    taskParams.stackSize = SERIAL_STACKSIZE;
-    taskParams.priority = 1;
-    Task_construct(&serial_task, serial_task_fn, &taskParams, NULL);
 
 //    Clock_Params clockParams;
 //    Error_Block eb;

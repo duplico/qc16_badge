@@ -61,8 +61,8 @@ extern const PIN_Config qc16_pin_init_table[];
 #define QC16_GPIO_SPIF_CSN      GPIOCC26XX_DIO_06
 
 // PIN - digital I/O
-#define QC16_PIN_JACK_FC1       PINCC26XX_DIO0
-#define QC16_PIN_JACK_FC2       PINCC26XX_DIO3
+#define QC16_PIN_JACK_FC1       PINCC26XX_DIO0 // B2B DIO1
+#define QC16_PIN_JACK_FC2       PINCC26XX_DIO3 // B2B DIO2
 #define QC16_PIN_KP_COL_1       PINCC26XX_DIO8
 #define QC16_PIN_KP_COL_2       PINCC26XX_DIO9
 #define QC16_PIN_KP_COL_3       PINCC26XX_DIO10
@@ -253,8 +253,8 @@ typedef enum QC16_SPIName {
  *  @brief  Enum of UARTs
  */
 typedef enum QC16_UARTName {
-    QC16_UART0_BASE = 0,
-    QC16_UART0_ALT,
+    QC16_UART_PRX = 0,
+    QC16_UART_PTX,
 
     QC16_UARTCOUNT
 } QC16_UARTName;

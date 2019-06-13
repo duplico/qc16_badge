@@ -54,13 +54,14 @@ void init_io() {
 
     // GPIO:
     // P1.0     LED A       (SEL 00; DIR 1)
-    // P1.1     B2B ABS     (SEL 00; DIR 0) (pull-down)
-    // P1.2     RX (alt)    (SEL 01; DIR 0)
-    // P1.3     TX (alt)    (SEL 01; DIR 1)
-    // P1.4     B2B DIO2    (SEL 00; DIR 1)
+    // P1.1     B2B ABS     (SEL 00; DIR 0) (pull-down) (DIO1)
+    // P1.2     RX (PTX)    (SEL 01; DIR 0)
+    // P1.3     TX (PTX)    (SEL 01; DIR 1)
+    // P1.4     B2B RTS     (SEL 00; DIR 1 OUT 0) (DIO2)
     // P1.5     B1          (SEL 00; DIR 0)
-    // P1.6     RX (base)   (SEL 01; DIR 0)
-    // P1.7     TX (base)   (SEL 01; DIR 1)
+    // P1.6     RX (PRX)   (SEL 01; DIR 0)
+    // P1.7     TX (PRX)   (SEL 01; DIR 1)
+    // (PRX is the default config)
     P1DIR = 0b10001011;
     P1SEL0 = 0b11001100; // LSB
     P1SEL1 = 0b00000000; // MSB
@@ -226,6 +227,9 @@ int main( void )
         if (f_serial == SERIAL_RX_DONE) {
             // We got a message!
             serial_handle_rx();
+            pwm_level_a = !pwm_level_a;
+            pwm_level_b = !pwm_level_b;
+            pwm_level_c = !pwm_level_c;
 
             f_serial = 0;
         }
@@ -236,9 +240,6 @@ int main( void )
         if (f_serial == SERIAL_TX_DONE) {
             if (serial_header_out.opcode == SERIAL_OPCODE_ACK) {
                 // We are now connected.
-                LEDA_PORT_OUT ^= LEDA_PIN;
-                LEDB_PORT_OUT ^= LEDB_PIN;
-                LEDC_PORT_OUT ^= LEDC_PIN;
             }
 
             f_serial = 0;

@@ -71,6 +71,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
     case SERIAL_MODE_NC_PRX:
         // We are expecting a HELO.
         if (header->opcode == SERIAL_OPCODE_HELO) {
+            // TODO: set DIO2 high; set DIO1(ABS) to input w/ pulldown
             // Send an ACK, set connected.
             serial_send_ack(uart);
             serial_mode = SERIAL_MODE_C_IDLE;
@@ -82,6 +83,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
     case SERIAL_MODE_NC_PTX:
         // We are expecting an ACK.
         if (header->opcode == SERIAL_OPCODE_ACK) {
+            // TODO: set DIO1(ABS) high; set DIO2 to input w/ pulldown
             serial_mode = SERIAL_MODE_C_IDLE;
             // Cancel next timeout.
             serial_next_timeout = 0;

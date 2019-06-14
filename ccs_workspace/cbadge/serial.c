@@ -60,9 +60,13 @@ void init_serial() {
     UCA0CTLW0 |= UCSSEL__SMCLK + UCPEN_1 + UCPAR__EVEN + UCSPB_1;
     // Configure the baud rate to 9600.
     //  (See page 589 in the family user's guide, SLAU445I)
-    UCA0BR0 = 6; // 1048576/9600/16
+//    UCA0BR0 = 6; // 1048576/9600/16
+//    UCA0BR1 = 0x00;
+//    UCA0MCTLW = 0x2200 | UCOS16 | UCBRF_13;
+    // The below is for 1 MHz:
+    UCA0BR0 = 6;
     UCA0BR1 = 0x00;
-    UCA0MCTLW = 0x2200 | UCOS16 | UCBRF_13;
+    UCA0MCTLW = 0x2000 | UCOS16 | UCBRF_8;
 
     // Activate the UART:
     UCA0CTLW0 &= ~UCSWRST;

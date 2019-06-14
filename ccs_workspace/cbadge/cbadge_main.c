@@ -40,7 +40,31 @@ cbadge_conf_t my_conf = {
  **         (the only available internal source)
  */
 void init_clocks() {
-    // Use the defaults.
+    // DCO  (Digitally-controlled oscillator)
+    //  Let's bring this up to 8 MHz or so.
+
+    __bis_SR_register(SCG0);                // disable FLL
+    CSCTL3 |= SELREF__XT1CLK;               // Set XT1CLK as FLL reference source
+    CSCTL0 = 0;                             // clear DCO and MOD registers
+    CSCTL1 &= ~(DCORSEL_7);                 // Clear DCO frequency select bits first
+    CSCTL1 |= DCORSEL_3;                    // Set DCO = 8MHz
+    CSCTL2 = FLLD_0 + 243;                  // DCODIV = /1
+//    CSCTL2 = FLLD_3 + 243;                  // DCODIV = /8
+    __delay_cycles(3);
+    __bic_SR_register(SCG0);                // enable FLL
+    while(CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1)); // Poll until FLL is locked
+
+    // SYSTEM CLOCKS
+    // =============
+
+    // MCLK (1 MHz)
+    //  All sources but MODOSC are available at up to /128
+    //  Set to DCO/8 = 1 MHz
+
+    // SMCLK (1 MHz)
+    //  Derived from MCLK with divider up to /8
+    //  Set to MCLK/1, which we'll keep.
+    CSCTL5 |= DIVM_3 | DIVS_0;
 }
 
 /// Apply the initial configuration of the GPIO and peripheral pins.

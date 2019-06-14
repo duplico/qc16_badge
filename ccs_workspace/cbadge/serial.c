@@ -20,6 +20,8 @@ volatile uint8_t serial_phy_index = 0;
 volatile uint8_t serial_active_ticks = 0;
 volatile uint16_t serial_running_crc = 0;
 
+uint8_t serial_ll_state;
+
 void serial_send_start() {
     // TODO: assert serial_phy_state == SERIAL_PHY_STATE_IDLE
     serial_phy_state = SERIAL_PHY_STATE_IDLE;
@@ -50,12 +52,12 @@ void init_serial() {
     // Our initial config is in PRX mode. This is how we want to stay,
     //  unless we are ACTIVE. If we're active (TODO), we should
     //  occasionally use `SYSCFG3 |= USCIARMP_1` to swap to PTX.
+    serial_ll_state = SERIAL_MODE_NC_PRX;
 
     // TODO: If we source the UART from ACLK we can get better sleep mode.
     // Pause the UART peripheral:
     UCA0CTLW0 |= UCSWRST;
     // Source the baud rate generation from SMCLK (~1 MHz)
-    //  Note: it's actually 1048576 Hz typical.
     // 8E2 (Enable parity, even parity, 2 stop bits)
     UCA0CTLW0 |= UCSSEL__SMCLK + UCPEN_1 + UCPAR__EVEN + UCSPB_1;
     // Configure the baud rate to 9600.

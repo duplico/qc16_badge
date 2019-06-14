@@ -23,7 +23,7 @@ cbadge_conf_t my_conf = {
 
 /// Initialize clock signals and the three system clocks.
 /**
- ** We'll take the DCO to 8 MHz, and divide it by 8 for MCLK.
+ ** We'll take the DCO to 8 MHz, and divide it by 2 for MCLK.
  **
  ** Our available clock sources are:
  **  VLO:     10kHz very low power low-freq
@@ -48,8 +48,8 @@ void init_clocks() {
     CSCTL0 = 0;                             // clear DCO and MOD registers
     CSCTL1 &= ~(DCORSEL_7);                 // Clear DCO frequency select bits first
     CSCTL1 |= DCORSEL_3;                    // Set DCO = 8MHz
+    // CSCTL feedback loop:
     CSCTL2 = FLLD_0 + 243;                  // DCODIV = /1
-//    CSCTL2 = FLLD_3 + 243;                  // DCODIV = /8
     __delay_cycles(3);
     __bic_SR_register(SCG0);                // enable FLL
     while(CSCTL7 & (FLLUNLOCK0 | FLLUNLOCK1)); // Poll until FLL is locked
@@ -59,12 +59,13 @@ void init_clocks() {
 
     // MCLK (1 MHz)
     //  All sources but MODOSC are available at up to /128
-    //  Set to DCO/8 = 1 MHz
+    //  Set to DCO/2 = 4 MHz
+    CSCTL5 |= DIVM__2;
 
     // SMCLK (1 MHz)
     //  Derived from MCLK with divider up to /8
-    //  Set to MCLK/1, which we'll keep.
-    CSCTL5 |= DIVM_3 | DIVS_0;
+    //  Set to MCLK/4 = 1 MHz
+    CSCTL5 |= DIVS__4;
 }
 
 /// Apply the initial configuration of the GPIO and peripheral pins.

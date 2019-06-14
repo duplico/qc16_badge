@@ -62,8 +62,7 @@ void button_poll(uint8_t button_id) {
     //  copying it into TB0CCR1.
     TB0CCTL1 ^= CCIS0;
     meas_cnt[button_id] = TB0CCR1;
-    // Hold the WDT.
-    WDTCTL = WDTPW + WDTHOLD;
+
     // Turn off captouch:
     CAPTIOCTL = 0;
 

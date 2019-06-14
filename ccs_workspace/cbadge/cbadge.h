@@ -9,11 +9,9 @@
 #define CBADGE_H_
 
 #define TICK_WDT_BITS WDT_MDLY_0_5
-#define TICKS_PER_TIME_LOOP 4
-#define TIME_LOOP_INTERVAL_US 2000
+#define TICKS_PER_MS 2
 
-#define BUTTON_LEVEL_PER_US 1
-#define KEY_LVL (TIME_LOOP_INTERVAL_US / BUTTON_LEVEL_PER_US)
+#define KEY_LVL (1000 * TICKS_PER_MS) // Should be about 1000 per ms
 
 #define SERIAL_BUFFER_LEN 32
 // Currently ticks are about 2ms:

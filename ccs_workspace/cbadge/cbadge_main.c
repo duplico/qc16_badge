@@ -10,7 +10,8 @@
 uint8_t s_activated = 0x00;
 uint8_t s_button = 0x00;
 volatile uint8_t f_serial = 0x00;
-volatile uint8_t f_time_loop = 0x00;
+volatile uint8_t f_button_poll = 0x00;
+volatile uint8_t f_pwm_loop = 0x00;
 // TODO: rename this:
 uint8_t s_connected = 0;
 
@@ -119,7 +120,7 @@ void init_conf() {
 /// Perform basic initialization of the cbadge.
 void init() {
     // Stop the watchdog timer.
-    WDTCTL = WDTPW | WDTHOLD;
+    WDTCTL = WDTPW | WDTCNTCL;
 
     // Set up the clock system:
     init_clocks();
@@ -161,15 +162,40 @@ int main( void )
 
     uint8_t current_button = 0;
 
-    f_time_loop = 1;
+    f_button_poll = 1;
 
     uint8_t pwm_level_curr = 0;
-    uint8_t pwm_level_a = 0;
-    uint8_t pwm_level_b = 0;
-    uint8_t pwm_level_c = 0;
+    uint8_t pwm_level_a = 1;
+    uint8_t pwm_level_b = 3;
+    uint8_t pwm_level_c = 5;
+    WDTCTL = TICK_WDT_BITS;
 
     while (1) {
-        if (f_time_loop) {
+        if (f_pwm_loop) {
+            pwm_level_curr++;
+
+            if (pwm_level_curr == PWM_CYCLES)
+                pwm_level_curr = 0;
+
+            if (pwm_level_a > pwm_level_curr)
+                LEDA_PORT_OUT |= LEDA_PIN;
+            else
+                LEDA_PORT_OUT &= ~LEDA_PIN;
+
+            if (pwm_level_b > pwm_level_curr)
+                LEDB_PORT_OUT |= LEDB_PIN;
+            else
+                LEDB_PORT_OUT &= ~LEDB_PIN;
+
+            if (pwm_level_c > pwm_level_curr)
+                LEDC_PORT_OUT |= LEDC_PIN;
+            else
+                LEDC_PORT_OUT &= ~LEDC_PIN;
+
+            f_pwm_loop = 0;
+        }
+
+        if (f_button_poll) {
             // Every time loop, we measure ONE of the buttons.
 
             // But, receiving serial messages plays havoc with our readings.
@@ -195,29 +221,7 @@ int main( void )
                 current_button |= 0xf0;
             }
 
-            pwm_level_curr++;
-
-            if (pwm_level_curr == PWM_CYCLES)
-                pwm_level_curr = 0;
-
-            if (pwm_level_a > pwm_level_curr)
-                LEDA_PORT_OUT |= LEDA_PIN;
-            else
-                LEDA_PORT_OUT &= ~LEDA_PIN;
-
-            if (pwm_level_b > pwm_level_curr)
-                LEDB_PORT_OUT |= LEDB_PIN;
-            else
-                LEDB_PORT_OUT &= ~LEDB_PIN;
-
-            if (pwm_level_c > pwm_level_curr)
-                LEDC_PORT_OUT |= LEDC_PIN;
-            else
-                LEDC_PORT_OUT &= ~LEDC_PIN;
-
-            WDTCTL = TICK_WDT_BITS;
-
-            f_time_loop = 0;
+            f_button_poll = 0;
         }
 
         // TODO: If we're connected to a qbadge, and a button is pressed,
@@ -286,7 +290,9 @@ volatile uint8_t ticks=0;
 __interrupt void watchdog_timer(void)
 {
     // TODO: use a define for this
-    if (++ticks == 4) {
+    ticks++;
+
+    if (ticks == 2*TICKS_PER_MS) {
         ticks = 0;
 
         // TODO: should this really be every 1 ms instead?
@@ -296,7 +302,8 @@ __interrupt void watchdog_timer(void)
                 serial_phy_state = SERIAL_PHY_STATE_IDLE;
             }
         }
-        f_time_loop = 1;
-        __bic_SR_register_on_exit(LPM3_bits);
+        f_button_poll = 1;
     }
+    f_pwm_loop = 1;
+    __bic_SR_register_on_exit(LPM3_bits);
 }

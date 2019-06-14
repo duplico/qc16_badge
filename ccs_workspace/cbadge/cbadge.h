@@ -8,9 +8,13 @@
 #ifndef CBADGE_H_
 #define CBADGE_H_
 
-#define TIME_LOOP_INTERVAL_US
+#define TICK_WDT_BITS WDT_MDLY_0_5
+#define TICKS_PER_TIME_LOOP 4
+#define TIME_LOOP_INTERVAL_US 2000
 
-#define KEY_LVL 2000
+#define BUTTON_LEVEL_PER_US 1
+#define KEY_LVL (TIME_LOOP_INTERVAL_US / BUTTON_LEVEL_PER_US)
+
 #define SERIAL_BUFFER_LEN 32
 // Currently ticks are about 2ms:
 // And, at 9600 baud a header takes about 7ms to send.

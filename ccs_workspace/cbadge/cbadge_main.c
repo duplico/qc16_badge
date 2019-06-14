@@ -215,8 +215,7 @@ int main( void )
             else
                 LEDC_PORT_OUT &= ~LEDC_PIN;
 
-            // Delay another 1.9 ms:
-            WDTCTL = WDT_ADLY_1_9;
+            WDTCTL = TICK_WDT_BITS;
 
             f_time_loop = 0;
         }
@@ -281,15 +280,23 @@ int main( void )
     }
 }
 
+volatile uint8_t ticks=0;
+
 #pragma vector=WDT_VECTOR
 __interrupt void watchdog_timer(void)
 {
-    if (serial_active_ticks && serial_phy_state) {
-        serial_active_ticks--;
-        if (!serial_active_ticks) {
-            serial_phy_state = SERIAL_PHY_STATE_IDLE;
+    // TODO: use a define for this
+    if (++ticks == 4) {
+        ticks = 0;
+
+        // TODO: should this really be every 1 ms instead?
+        if (serial_active_ticks && serial_phy_state) {
+            serial_active_ticks--;
+            if (!serial_active_ticks) {
+                serial_phy_state = SERIAL_PHY_STATE_IDLE;
+            }
         }
+        f_time_loop = 1;
+        __bic_SR_register_on_exit(LPM3_bits);
     }
-    f_time_loop = 1;
-    __bic_SR_register_on_exit(LPM3_bits);
 }

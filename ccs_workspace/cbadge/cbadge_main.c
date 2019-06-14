@@ -7,6 +7,10 @@
 #include "serial.h"
 #include "buttons.h"
 
+// TODO:
+#define PWM_LEVELS 4
+#define PWM_CYCLES (1 << PWM_LEVELS)
+
 uint8_t s_activated = 0x00;
 uint8_t s_button = 0x00;
 volatile uint8_t f_serial = 0x00;
@@ -136,8 +140,6 @@ void init() {
 //    button_calibrate();
 }
 
-#define PWM_CYCLES 6
-
 int main( void )
 {
     init();
@@ -165,32 +167,40 @@ int main( void )
     f_button_poll = 1;
 
     uint8_t pwm_level_curr = 0;
-    uint8_t pwm_level_a = 1;
-    uint8_t pwm_level_b = 3;
-    uint8_t pwm_level_c = 5;
+    uint8_t pwm_level_a = 0;
+    uint8_t pwm_level_b = 1;
+    uint8_t pwm_level_c = 2;
     WDTCTL = TICK_WDT_BITS;
 
     while (1) {
         if (f_pwm_loop) {
             pwm_level_curr++;
 
-            if (pwm_level_curr == PWM_CYCLES)
-                pwm_level_curr = 0;
+            // pwm_level_curr counts to 16 -> 0b10000
+            // each pwm_level can go to 3
+            // 0 -> 0b0001 -> off
+            // 1 -> 0b0010 ->
+            // 2 -> 0b0100
+            // 3 -> 0b1000
 
-            if (pwm_level_a > pwm_level_curr)
+
+            if ((1 << pwm_level_a) > pwm_level_curr)
                 LEDA_PORT_OUT |= LEDA_PIN;
             else
                 LEDA_PORT_OUT &= ~LEDA_PIN;
 
-            if (pwm_level_b > pwm_level_curr)
+            if ((1 << pwm_level_b) > pwm_level_curr)
                 LEDB_PORT_OUT |= LEDB_PIN;
             else
                 LEDB_PORT_OUT &= ~LEDB_PIN;
 
-            if (pwm_level_c > pwm_level_curr)
+            if ((1 << pwm_level_c) > pwm_level_curr)
                 LEDC_PORT_OUT |= LEDC_PIN;
             else
                 LEDC_PORT_OUT &= ~LEDC_PIN;
+
+            if (pwm_level_curr > PWM_CYCLES)
+                pwm_level_curr = 0;
 
             f_pwm_loop = 0;
         }
@@ -228,19 +238,19 @@ int main( void )
         //       send something about it.
         if (s_button & BUTTON_PRESS_J1) {
             pwm_level_a++;
-            if (pwm_level_a == PWM_CYCLES)
+            if (pwm_level_a == PWM_LEVELS)
                 pwm_level_a = 0;
             s_button &= ~BUTTON_PRESS_J1;
         }
         if (s_button & BUTTON_PRESS_J2) {
             pwm_level_b++;
-            if (pwm_level_b == PWM_CYCLES)
+            if (pwm_level_b == PWM_LEVELS)
                 pwm_level_b = 0;
             s_button &= ~BUTTON_PRESS_J2;
         }
         if (s_button & BUTTON_PRESS_J3) {
             pwm_level_c++;
-            if (pwm_level_c == PWM_CYCLES)
+            if (pwm_level_c == PWM_LEVELS)
                 pwm_level_c = 0;
             s_button &= ~BUTTON_PRESS_J3;
         }

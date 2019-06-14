@@ -8,6 +8,8 @@
 #ifndef CBADGE_H_
 #define CBADGE_H_
 
+#define TIME_LOOP_INTERVAL_US
+
 #define KEY_LVL 2000
 #define SERIAL_BUFFER_LEN 32
 // Currently ticks are about 2ms:
@@ -41,5 +43,6 @@ typedef struct {
 extern cbadge_conf_t my_conf;
 extern uint8_t s_button;
 volatile extern uint8_t f_serial;
+extern uint8_t s_connected;
 
 #endif /* CBADGE_H_ */

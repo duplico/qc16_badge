@@ -11,6 +11,8 @@ uint8_t s_activated = 0x00;
 uint8_t s_button = 0x00;
 volatile uint8_t f_serial = 0x00;
 volatile uint8_t f_time_loop = 0x00;
+// TODO: rename this:
+uint8_t s_connected = 0;
 
 // TODO: initialize
 #pragma PERSISTENT(my_conf)
@@ -251,7 +253,7 @@ int main( void )
 
         if (f_serial == SERIAL_RX_DONE) {
             // We got a message!
-            serial_handle_rx();
+            serial_phy_handle_rx();
 
             f_serial = 0;
         }
@@ -261,13 +263,18 @@ int main( void )
 
         if (f_serial == SERIAL_TX_DONE) {
             if (serial_header_out.opcode == SERIAL_OPCODE_ACK) {
-                // We are now connected.
-                pwm_level_a = !pwm_level_a;
-                pwm_level_b = !pwm_level_b;
-                pwm_level_c = !pwm_level_c;
             }
 
             f_serial = 0;
+        }
+
+        if (s_connected) {
+            // We are now connected.
+            pwm_level_a = !pwm_level_a;
+            pwm_level_b = !pwm_level_b;
+            pwm_level_c = !pwm_level_c;
+
+            s_connected = 0;
         }
 
         __bis_SR_register(LPM3_bits);

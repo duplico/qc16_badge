@@ -21,6 +21,8 @@ volatile uint8_t serial_active_ticks = 0;
 volatile uint16_t serial_running_crc = 0;
 
 uint8_t serial_ll_state;
+// TODO: rename this:
+uint16_t serial_ll_timeout_time;
 
 void serial_send_start() {
     // TODO: assert serial_phy_state == SERIAL_PHY_STATE_IDLE
@@ -29,23 +31,71 @@ void serial_send_start() {
     // The interrupts will take it from here.
 }
 
-void serial_handle_rx() {
-    // We just got a complete serial message
-    //  (header and, possibly, payload).
-    switch(serial_header_in.opcode) {
-    case SERIAL_OPCODE_HELO:
-        // Need to send an ACK.
-        serial_header_out.from_id = my_conf.badge_id;
-        serial_header_out.opcode = SERIAL_OPCODE_ACK;
-        serial_header_out.payload_len = 0;
-        serial_header_out.to_id = SERIAL_ID_ANY;
-        serial_send_start();
-        // Once that completes, we'll be connected.
+#define SERIAL_ENTER_PTX SYSCFG3 |= USCIARMP_1
+#define SERIAL_ENTER_PRX SYSCFG3 &= ~USCIARMP_1
+
+void serial_ll_timeout() {
+    // TODO: Call this ever.
+    switch(serial_ll_state) {
+    case SERIAL_MODE_NC_PRX:
+        if (!my_conf.active) {
+            break; // If we're not active, we never leave PRX.
+            // TODO: Adjust timeout.
+        }
+        SERIAL_ENTER_PTX;
+
+        serial_ll_state = SERIAL_MODE_NC_PTX;
+        serial_ll_timeout_time = PTX_TIME_MS;
+
+        // TODO: Send a HELO.
         break;
-    case SERIAL_OPCODE_ACK:
-        // Connection done, what's next?
+    case SERIAL_MODE_NC_PTX:
+        SERIAL_ENTER_PRX;
+
+        serial_ll_state = SERIAL_MODE_NC_PRX;
+        serial_ll_timeout_time = PRX_TIME_MS;
+        break;
+//    default:
+        // TODO
+    }
+}
+
+void serial_ll_handle_rx() {
+    switch(serial_ll_state) {
+    case SERIAL_MODE_NC_PRX:
+        // Expecting a HELO.
+        if (serial_header_in.opcode == SERIAL_OPCODE_HELO) {
+            // Need to send an ACK.
+            serial_header_out.from_id = my_conf.badge_id;
+            serial_header_out.opcode = SERIAL_OPCODE_ACK;
+            serial_header_out.payload_len = 0;
+            serial_header_out.to_id = SERIAL_ID_ANY;
+            // TODO: set DIO2 high; set DIO1(ABS) to input w/ pulldown
+            serial_send_start();
+            // Once that completes, we'll be connected.
+            serial_ll_state = SERIAL_MODE_C_IDLE;
+            s_connected = 1;
+        }
+        break;
+    case SERIAL_MODE_NC_PTX:
+        // We sent a HELO when we entered this state, so we need an ACK.
+        if (serial_header_in.opcode == SERIAL_OPCODE_ACK) {
+            // TODO: set DIO1(ABS) high; set DIO2 to input w/ pulldown
+            serial_ll_state = SERIAL_MODE_C_IDLE;
+            s_connected = 1;
+        }
+        break;
+    case SERIAL_MODE_C_IDLE:
+        // TODO: handle these things.
         break;
     }
+}
+
+void serial_phy_handle_rx() {
+    // We just got a complete serial message
+    //  (header and, possibly, payload).
+    // TODO: validate and such.
+    serial_ll_handle_rx();
 }
 
 void init_serial() {

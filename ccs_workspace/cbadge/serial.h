@@ -26,7 +26,7 @@ extern volatile uint8_t serial_active_ticks;
 extern volatile serial_header_t serial_header_in;
 extern serial_header_t serial_header_out;
 
-void serial_handle_rx();
+void serial_phy_handle_rx();
 void init_serial();
 
 #endif /* SERIAL_H_ */

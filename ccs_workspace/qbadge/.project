@@ -27,7 +27,7 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>qc16_serial_common.c</name>
+			<name>queercon/qc16_serial_common.c</name>
 			<type>1</type>
 			<locationURI>WORKSPACE_LOC/qc16_common/qc16_serial_common.c</locationURI>
 		</link>

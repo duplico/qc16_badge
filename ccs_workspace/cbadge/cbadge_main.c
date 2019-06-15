@@ -7,22 +7,23 @@
 
 #include "buttons.h"
 
-// TODO:
-#define PWM_LEVELS 4
-#define PWM_CYCLES (1 << (PWM_LEVELS-1))
+volatile uint8_t main_loop_ticks_curr=0;
+volatile uint8_t button_poll_this_ms = 0;
 
-volatile uint8_t ticks=0;
-volatile uint8_t poll_this_ms = 0;
-
+/// Signal indicating that the badge is self-powered for the first time.
 uint8_t s_activated = 0x00;
+/// Signal for all captouch button events.
 uint8_t s_button = 0x00;
-volatile uint8_t f_serial = 0x00;
+// TODO: Create some defines for the values of this: \/
+/// Signal for the serial link-layer.
+uint8_t s_serial_ll = 0;
+/// Interrupt flag for the serial PHY
+volatile uint8_t f_serial_phy = 0x00;
+/// Interrupt flag indicating it's time to poll a captouch button.
 volatile uint8_t f_button_poll = 0x00;
+/// Interrupt flag indicating it's time to do another PWM time step.
 volatile uint8_t f_pwm_loop = 0x00;
-// TODO: rename this:
-uint8_t s_connected = 0;
 
-// TODO: initialize
 #pragma PERSISTENT(my_conf)
 cbadge_conf_t my_conf = {
     .activated=0,
@@ -117,7 +118,7 @@ void init_io() {
 void init_conf() {
     if (!my_conf.initialized) {
         // this is first boot.
-        // TODO:
+        // TODO: Initialize properly.
         my_conf.initialized=1;
         my_conf.badge_id=1001;
         my_conf.activated=0;
@@ -135,8 +136,9 @@ void init() {
     init_io();
     init_serial();
     init_conf();
-    // Note: Serial alternative switching is controlled by TBRMP in SYSCFG3
 
+    // Set up the WDT to do our time loop.
+    WDTCTL = TICK_WDT_BITS;
     // Enable interrupt for the WDT:
     SFRIE1 |= WDTIE;
     __bis_SR_register(GIE);
@@ -146,33 +148,12 @@ int main( void )
 {
     init();
 
-    // Read P1.1 to determine whether we're free-standing, or
-    //  if we're connected to a badge that's powering us. If it's LOW,
-    //  then this badge is active WITHOUT another badge powering us.
-    //  How cool! Switch that pin to an output to signal that
-    //  this badge is now active.
-    if (!(P1IN & BIT1)) {
-        // We are under our own power.
-        // Assert the Active Badge Signal (ABS, P1.1).
-        P1DIR |= BIT1;
-        P1OUT |= BIT1;
-        if (!my_conf.activated) {
-            my_conf.activated = 1;
-            // This badge was just turned on under its own power for the first time!
-            s_activated = 1;
-        }
-        my_conf.active = 1;
-    }
-
     uint8_t current_button = 0;
-
-    f_button_poll = 1;
 
     uint8_t pwm_level_curr = 0;
     uint8_t pwm_level_a = 0;
     uint8_t pwm_level_b = 1;
     uint8_t pwm_level_c = 2;
-    WDTCTL = TICK_WDT_BITS; // TODO: relocate now that it's unbroken.
 
     while (1) {
         if (f_pwm_loop) {
@@ -258,30 +239,24 @@ int main( void )
             s_button &= ~BUTTON_RELEASE_J3;
         }
 
-        if (f_serial == SERIAL_RX_DONE) {
+        if (f_serial_phy == SERIAL_RX_DONE) {
             // We got a message!
             serial_phy_handle_rx();
 
-            f_serial = 0;
+            f_serial_phy = 0;
         }
 
-        // TODO: If we're an ACTIVE BADGE, we should be sending our own
-        //       serial HELO messages...
-
-        if (f_serial == SERIAL_TX_DONE) {
-            if (serial_header_out.opcode == SERIAL_OPCODE_ACK) {
-            }
-
-            f_serial = 0;
+        if (f_serial_phy == SERIAL_TX_DONE) {
+            f_serial_phy = 0;
         }
 
-        if (s_connected) {
+        if (s_serial_ll) {
             // We are now connected.
             pwm_level_a = !pwm_level_a;
             pwm_level_b = !pwm_level_b;
             pwm_level_c = !pwm_level_c;
 
-            s_connected = 0;
+            s_serial_ll = 0;
         }
 
         __bis_SR_register(LPM3_bits);
@@ -291,10 +266,10 @@ int main( void )
 #pragma vector=WDT_VECTOR
 __interrupt void watchdog_timer(void)
 {
-    ticks++;
+    main_loop_ticks_curr++;
 
-    if (ticks == TICKS_PER_MS) {
-        ticks = 0;
+    if (main_loop_ticks_curr == TICKS_PER_MS) {
+        main_loop_ticks_curr = 0;
 
         if (serial_active_ms && serial_phy_state) {
             serial_active_ms--;
@@ -304,9 +279,9 @@ __interrupt void watchdog_timer(void)
         }
 
         // We poll the buttons every 2 ms.
-        if (poll_this_ms)
+        if (button_poll_this_ms)
             f_button_poll = 1;
-        poll_this_ms = !poll_this_ms;
+        button_poll_this_ms = !button_poll_this_ms;
     }
     f_pwm_loop = 1;
     __bic_SR_register_on_exit(LPM3_bits);

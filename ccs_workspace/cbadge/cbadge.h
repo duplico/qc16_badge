@@ -8,8 +8,13 @@
 #ifndef CBADGE_H_
 #define CBADGE_H_
 
+// TODO: Organize this file.
+
 #define TICK_WDT_BITS WDT_MDLY_0_5
 #define TICKS_PER_MS 2
+
+#define PWM_LEVELS 4
+#define PWM_CYCLES (1 << (PWM_LEVELS-1))
 
 #define KEY_LVL (1000 * TICKS_PER_MS) // Should be about 1000 per ms
 
@@ -51,7 +56,8 @@ typedef struct {
 
 extern cbadge_conf_t my_conf;
 extern uint8_t s_button;
-volatile extern uint8_t f_serial;
-extern uint8_t s_connected;
+extern uint8_t s_activated;
+volatile extern uint8_t f_serial_phy;
+extern uint8_t s_serial_ll;
 
 #endif /* CBADGE_H_ */

@@ -11,6 +11,9 @@
 #define PWM_LEVELS 4
 #define PWM_CYCLES (1 << (PWM_LEVELS-1))
 
+volatile uint8_t ticks=0;
+volatile uint8_t poll_this_ms = 0;
+
 uint8_t s_activated = 0x00;
 uint8_t s_button = 0x00;
 volatile uint8_t f_serial = 0x00;
@@ -31,6 +34,7 @@ cbadge_conf_t my_conf = {
 /// Initialize clock signals and the three system clocks.
 /**
  ** We'll take the DCO to 8 MHz, and divide it by 2 for MCLK.
+ ** Then we'll divide MCLK by 4 to get 1 MHz SMCLK.
  **
  ** Our available clock sources are:
  **  VLO:     10kHz very low power low-freq
@@ -136,8 +140,6 @@ void init() {
     // Enable interrupt for the WDT:
     SFRIE1 |= WDTIE;
     __bis_SR_register(GIE);
-
-//    button_calibrate();
 }
 
 int main( void )
@@ -285,9 +287,6 @@ int main( void )
         __bis_SR_register(LPM3_bits);
     }
 }
-
-volatile uint8_t ticks=0;
-volatile uint8_t poll_this_ms = 0;
 
 #pragma vector=WDT_VECTOR
 __interrupt void watchdog_timer(void)

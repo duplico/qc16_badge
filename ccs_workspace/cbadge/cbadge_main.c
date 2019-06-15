@@ -9,7 +9,7 @@
 
 // TODO:
 #define PWM_LEVELS 4
-#define PWM_CYCLES (1 << PWM_LEVELS)
+#define PWM_CYCLES (1 << (PWM_LEVELS-1))
 
 uint8_t s_activated = 0x00;
 uint8_t s_button = 0x00;
@@ -89,7 +89,7 @@ void init_io() {
     // P1.1     B2B ABS     (SEL 00; DIR 0) (pull-down) (DIO1)
     // P1.2     RX (PTX)    (SEL 01; DIR 0)
     // P1.3     TX (PTX)    (SEL 01; DIR 1)
-    // P1.4     B2B RTS     (SEL 00; DIR 1 OUT 0) (DIO2)
+    // P1.4     B2B RTR     (SEL 00; DIR 1 OUT 0) (DIO2)
     // P1.5     B1          (SEL 00; DIR 0)
     // P1.6     RX (PRX)   (SEL 01; DIR 0)
     // P1.7     TX (PRX)   (SEL 01; DIR 1)
@@ -170,19 +170,11 @@ int main( void )
     uint8_t pwm_level_a = 0;
     uint8_t pwm_level_b = 1;
     uint8_t pwm_level_c = 2;
-    WDTCTL = TICK_WDT_BITS;
+    WDTCTL = TICK_WDT_BITS; // TODO: relocate now that it's unbroken.
 
     while (1) {
         if (f_pwm_loop) {
             pwm_level_curr++;
-
-            // pwm_level_curr counts to 16 -> 0b10000
-            // each pwm_level can go to 3
-            // 0 -> 0b0001 -> off
-            // 1 -> 0b0010 ->
-            // 2 -> 0b0100
-            // 3 -> 0b1000
-
 
             if ((1 << pwm_level_a) > pwm_level_curr)
                 LEDA_PORT_OUT |= LEDA_PIN;
@@ -295,24 +287,27 @@ int main( void )
 }
 
 volatile uint8_t ticks=0;
+volatile uint8_t poll_this_ms = 0;
 
 #pragma vector=WDT_VECTOR
 __interrupt void watchdog_timer(void)
 {
-    // TODO: use a define for this
     ticks++;
 
-    if (ticks == 2*TICKS_PER_MS) {
+    if (ticks == TICKS_PER_MS) {
         ticks = 0;
 
-        // TODO: should this really be every 1 ms instead?
-        if (serial_active_ticks && serial_phy_state) {
-            serial_active_ticks--;
-            if (!serial_active_ticks) {
+        if (serial_active_ms && serial_phy_state) {
+            serial_active_ms--;
+            if (!serial_active_ms) {
                 serial_phy_state = SERIAL_PHY_STATE_IDLE;
             }
         }
-        f_button_poll = 1;
+
+        // We poll the buttons every 2 ms.
+        if (poll_this_ms)
+            f_button_poll = 1;
+        poll_this_ms = !poll_this_ms;
     }
     f_pwm_loop = 1;
     __bic_SR_register_on_exit(LPM3_bits);

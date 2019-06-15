@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-#include <msp430.h>
+#include <msp430fr2111.h>
 
 #include "cbadge.h"
 

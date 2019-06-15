@@ -6,10 +6,10 @@
  */
 #include <stdint.h>
 
-#include <msp430.h> // TODO: device specific
+#include <msp430fr2111.h> // TODO: device specific
 
 #include <cbadge.h>
-#include "serial.h"
+#include <cbadge_serial.h>
 
 volatile serial_header_t serial_header_in = {0,};
 serial_header_t serial_header_out = {0,};

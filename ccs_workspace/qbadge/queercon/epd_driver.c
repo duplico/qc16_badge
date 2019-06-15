@@ -19,31 +19,17 @@
 #include "epd_driver.h"
 #include "epd_phy.h"
 
-//*****************************************************************************
-//
-// Global Variables
-//
-//*****************************************************************************
-
 uint8_t epd_upside_down = 1;
 
-//*****************************************************************************
-//
-// Suggested functions to help facilitate writing the required functions below
-//
-//*****************************************************************************
+#define REVERSE_BYTE(b) (uint8_t)(((b * 0x0802LU & 0x22110LU) | (b * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16)
 
-/**
- * Initial initialization (lol) of the display. Call this only once.
- */
+///Initial initialization (lol) of the display. Call this only once.
 void init_epd()
 {
     // TODO: This should probably move to a "UI" section.
     epd_phy_init();
 }
 
-// TODO: Move
-#define REVERSE_BYTE(b) (uint8_t)(((b * 0x0802LU & 0x22110LU) | (b * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16)
 
 void epd_flip() {
     epd_upside_down = !epd_upside_down;
@@ -91,11 +77,17 @@ static void epd_grPixelDraw(const Graphics_Display * pvDisplayData,
      */
     uint16_t mapped_x;
     uint16_t mapped_y;
-    if (!epd_upside_down) {
-        // Right-side-up
+
+    if (pvDisplayData->width < pvDisplayData->heigth) {
+        // We're dealing with the PORTRAIT context
+        mapped_x = MAPPED_X_PORTRAIT(lX, lY);
+        mapped_y = MAPPED_Y_PORTRAIT(lX, lY);
+    } else if (!epd_upside_down) {
+        // Right-side-up LANDSCAPE
         mapped_x = MAPPED_X(lX, lY);
         mapped_y = MAPPED_Y(lX, lY);
     } else {
+        // Flipped LANDSCAPE
         mapped_x = MAPPED_X_ROTATED(lX, lY);
         mapped_y = MAPPED_Y_ROTATED(lX, lY);
     }
@@ -342,15 +334,18 @@ const Graphics_Display_Functions epd_grDisplayFunctions =
 };
 
 /// The driver definition for grlib.
-Graphics_Display epd_grGraphicsDisplay = {
+Graphics_Display epd_gr_display_landscape = {
     .size = sizeof(Graphics_Display),
     .displayData = epd_display_buffer,
-#if defined(LANDSCAPE) || defined(LANDSCAPE_FLIP)
     .width = LCD_Y_SIZE,
-    .heigth = LCD_X_SIZE,
-#else
+    .heigth = LCD_X_SIZE, // heigth??? lol.
+    .pFxns = &epd_grDisplayFunctions
+};
+
+Graphics_Display epd_gr_display_portrait = {
+    .size = sizeof(Graphics_Display),
+    .displayData = epd_display_buffer,
     .width = LCD_X_SIZE,
     .heigth = LCD_Y_SIZE, // heigth??? lol.
-#endif
     .pFxns = &epd_grDisplayFunctions
 };

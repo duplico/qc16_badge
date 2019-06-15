@@ -69,6 +69,8 @@
 #define MAPPED_Y(x, y) (x)
 #define MAPPED_X_ROTATED(x, y) (y)
 #define MAPPED_Y_ROTATED(x, y) (LCD_Y_SIZE - (x) - 1)
+#define MAPPED_X_PORTRAIT(x, y) (LCD_X_SIZE - (x) - 1)
+#define MAPPED_Y_PORTRAIT(x, y) (LCD_Y_SIZE - (y) - 1)
 #endif
 #ifdef PORTRAIT
 #define MAPPED_X(x, y) (x)
@@ -89,7 +91,8 @@
 #define DPYCOLORTRANSLATE(c) (c ? 1 : 0)
 
 void init_epd();
-extern Graphics_Display epd_grGraphicsDisplay;
+extern Graphics_Display epd_gr_display_landscape;
+extern Graphics_Display epd_gr_display_portrait;
 extern const Graphics_Display_Functions epd_grDisplayFunctions;
 void epd_flip();
 extern uint8_t epd_do_partial;

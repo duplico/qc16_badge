@@ -21,9 +21,10 @@
 #define UI_EVENT_KB_PRESS Event_Id_30
 #define UI_EVENT_KB_RELEASE Event_Id_29
 // and the rest from the bottom:
+#define UI_EVENT_GO_IDLE Event_Id_01
 #define UI_EVENT_REFRESH Event_Id_00
 
-#define UI_EVENT_ALL (UI_EVENT_KB_FLIP | UI_EVENT_KB_PRESS | UI_EVENT_REFRESH)
+#define UI_EVENT_ALL (UI_EVENT_KB_FLIP | UI_EVENT_KB_PRESS | UI_EVENT_REFRESH | UI_EVENT_ALL)
 
 #define BTN_ROW_1 0x10
 #define BTN_ROW_2 0x20
@@ -40,10 +41,10 @@
 #define BTN_DOWN (BTN_ROW_1 | BTN_COL_2)
 #define BTN_LEFT (BTN_ROW_1 | BTN_COL_3)
 #define BTN_RIGHT (BTN_ROW_1 | BTN_COL_4)
-#define BTN_F1 (BTN_ROW_2 | BTN_COL_1)
-#define BTN_F2 (BTN_ROW_2 | BTN_COL_2)
-#define BTN_F3 (BTN_ROW_2 | BTN_COL_3)
-#define BTN_F4 (BTN_ROW_2 | BTN_COL_4)
+#define BTN_F1_LOCK (BTN_ROW_2 | BTN_COL_1)
+#define BTN_F2_COIN (BTN_ROW_2 | BTN_COL_3)
+#define BTN_F3_CAMERA (BTN_ROW_2 | BTN_COL_4)
+#define BTN_F4_PICKER (BTN_ROW_2 | BTN_COL_5)
 #define BTN_RED (BTN_ROW_3 | BTN_COL_1)
 #define BTN_ORG (BTN_ROW_3 | BTN_COL_2)
 #define BTN_YEL (BTN_ROW_3 | BTN_COL_3)

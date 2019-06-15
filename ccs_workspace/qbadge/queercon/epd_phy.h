@@ -13,8 +13,6 @@
 #define EPD_WIDTH  128
 #define EPD_HEIGHT 296
 
-// TODO: Move to board.h?
-
 // EPD2IN9 commands
 #define DRIVER_OUTPUT_CONTROL                       0x01
 #define BOOSTER_SOFT_START_CONTROL                  0x0C

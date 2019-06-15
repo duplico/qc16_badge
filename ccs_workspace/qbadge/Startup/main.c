@@ -28,13 +28,11 @@
 #include <third_party/spiffs/SPIFFSNVS.h>
 #include <third_party/spiffs/spiffs.h>
 
+#include "qbadge.h"
+
 #include "queercon/qbadge_serial.h"
 #include "ui.h"
 
-// TODO:
-#define SPIFFS_LOGICAL_BLOCK_SIZE    (4096)
-#define SPIFFS_LOGICAL_PAGE_SIZE     (256)
-#define SPIFFS_FILE_DESCRIPTOR_SIZE  (44)
 
 uint8_t spiffsWorkBuffer[SPIFFS_LOGICAL_PAGE_SIZE * 2];
 uint8_t spiffsFileDescriptorCache[SPIFFS_FILE_DESCRIPTOR_SIZE * 4];
@@ -147,9 +145,7 @@ static const char signature[] =
 #define LED_BRIGHTNESS_INTERVAL 12500
 uint_fast16_t vbat_out_uvolts = 0;
 
-// TODO: Should we be using ADCBuf so this can be asynchronous? (and run in a clock)
-//  Because... the ADC module blocks. Womp.
-// TODO: Consider moving into application loop
+// TODO: Switch to using ADCBuf, and run using a clock.
 void led_brightness_task_fn(UArg a0, UArg a1)
 {
     ADC_Handle light_adc_h, vbat_adc_h;

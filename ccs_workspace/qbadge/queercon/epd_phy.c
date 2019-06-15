@@ -36,7 +36,6 @@ void epd_phy_spi_cmd(uint8_t cmd) {
     // Set CS low
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_CSN, 0);
     // Transmit
-    // TODO: everything explodes here:
     SPI_transfer(epd_spi_h, &transaction);
     // Set CS high
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_CSN, 1);
@@ -64,11 +63,11 @@ static void epd_phy_reset() {
     // TODO: timing
     // Reset display driver IC (Pulse EPAPER_RESN low for ?????)
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_RESN, 1);
-    Task_sleep(100000); // Sleep system ticks (not sure how long these are)
+    Task_sleep(100); // Sleep system ticks (not sure how long these are)
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_RESN, 0);
-    Task_sleep(100000); // Sleep system ticks (not sure how long these are)
+    Task_sleep(100); // Sleep system ticks (not sure how long these are)
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_RESN, 1);
-    Task_sleep(100000); // Sleep system ticks (not sure how long these are)
+    Task_sleep(100); // Sleep system ticks (not sure how long these are)
 }
 
 /// Wait for the busy signal to end.
@@ -218,7 +217,6 @@ void epd_phy_begin(uint8_t partial_update) {
 }
 
 void epd_phy_flush_buffer() {
-    // TODO: Decide when to use 1 vs 0.
     epd_phy_begin(epd_do_partial);
     epd_do_partial = 0;
     uint16_t Width, Height;

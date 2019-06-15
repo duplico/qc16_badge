@@ -4,10 +4,9 @@
  *  Created on: Jun 3, 2019
  *      Author: george
  */
+#include <qbadge.h>
 #include <stdint.h>
 #include <stdio.h>
-
-#include "qc16.h"
 
 #include <xdc/runtime/Error.h>
 

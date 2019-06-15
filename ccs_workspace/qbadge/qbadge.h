@@ -5,11 +5,13 @@
  *      Author: george
  */
 
-#ifndef QC16_H_
-#define QC16_H_
+#ifndef QBADGE_H_
+#define QBADGE_H_
 
 #include <stdint.h>
 
+
+
 extern uint_fast16_t vbat_out_uvolts;
 
-#endif /* QC16_H_ */
+#endif /* QBADGE_H_ */

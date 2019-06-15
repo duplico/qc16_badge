@@ -9,6 +9,7 @@
 #include <xdc/runtime/Error.h>
 #include <ti/drivers/UART.h>
 #include <ti/drivers/uart/UARTCC26XX.h>
+#include <ti/drivers/PIN.h>
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/Task.h>
@@ -24,9 +25,37 @@ char serial_task_stack[SERIAL_STACKSIZE];
 UART_Handle uart;
 UART_Params uart_params;
 
+PIN_Handle serial_pin_h;
+PIN_State serial_pin_state;
+
 uint8_t serial_mode;
 uint32_t serial_next_timeout;
 Clock_Handle serial_timeout_clock_h;
+
+// TODO:
+const PIN_Config serial_gpio_startup[] = {
+    QC16_PIN_SERIAL_DIO1_ABS | PIN_INPUT_EN | PIN_PULLDOWN,
+    QC16_PIN_SERIAL_DIO2_RTR | PIN_INPUT_EN | PIN_PULLDOWN,
+    PIN_TERMINATE
+};
+
+const PIN_Config serial_gpio_active[] = {
+    QC16_PIN_SERIAL_DIO1_ABS | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH,
+    QC16_PIN_SERIAL_DIO2_RTR | PIN_INPUT_EN | PIN_PULLDOWN,
+    PIN_TERMINATE
+};
+
+const PIN_Config serial_gpio_prx_connected[] = {
+    QC16_PIN_SERIAL_DIO1_ABS | PIN_INPUT_EN | PIN_PULLDOWN,
+    QC16_PIN_SERIAL_DIO2_RTR | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH,
+    PIN_TERMINATE
+};
+
+const PIN_Config serial_gpio_ptx_connected[] = {
+    QC16_PIN_SERIAL_DIO1_ABS | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH,
+    QC16_PIN_SERIAL_DIO2_RTR | PIN_INPUT_EN | PIN_PULLDOWN,
+    PIN_TERMINATE
+};
 
 void serial_send_helo(UART_Handle uart) {
     serial_header_t header_out;
@@ -72,6 +101,8 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         // We are expecting a HELO.
         if (header->opcode == SERIAL_OPCODE_HELO) {
             // TODO: set DIO2 high; set DIO1(ABS) to input w/ pulldown
+            PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_prx_connected[0]);
+            PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_prx_connected[1]);
             // Send an ACK, set connected.
             serial_send_ack(uart);
             serial_mode = SERIAL_MODE_C_IDLE;
@@ -83,7 +114,10 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
     case SERIAL_MODE_NC_PTX:
         // We are expecting an ACK.
         if (header->opcode == SERIAL_OPCODE_ACK) {
-            // TODO: set DIO1(ABS) high; set DIO2 to input w/ pulldown
+            // DIO1(ABS) output high:
+            // DIO2(RTR) input with pull-down:
+            PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_ptx_connected[0]);
+            PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_ptx_connected[1]);
             serial_mode = SERIAL_MODE_C_IDLE;
             // Cancel next timeout.
             serial_next_timeout = 0;
@@ -199,4 +233,14 @@ void serial_init() {
     uart = UART_open(QC16_UART_PRX, &uart_params);
 
     serial_mode = SERIAL_MODE_NC_PRX;
+    serial_pin_h = PIN_open(&serial_pin_state, serial_gpio_startup);
+
+    if (PIN_getInputValue(QC16_PIN_SERIAL_DIO1_ABS)) {
+        // If this is high, someone else is powering us.
+        // TODO.
+    } else {
+        // If it's low, we're under our own power.
+        PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_active[0]);
+        PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_active[1]);
+    }
 }

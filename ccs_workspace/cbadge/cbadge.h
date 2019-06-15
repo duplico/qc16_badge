@@ -25,6 +25,13 @@ typedef struct {
     uint8_t initialized;
 } cbadge_conf_t;
 
+#define SERIAL_DIO_OUT P1OUT
+#define SERIAL_DIO_IN P1IN
+#define SERIAL_DIO_REN P1REN
+#define SERIAL_DIO_DIR P1DIR
+#define SERIAL_DIO1_ABS BIT1
+#define SERIAL_DIO2_RTR BIT4
+
 #define LEDA_PORT_OUT P2OUT
 #define LEDA_PIN BIT7
 #define LEDB_PORT_OUT P2OUT

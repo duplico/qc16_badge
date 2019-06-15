@@ -22,7 +22,7 @@
 #define SERIAL_PHY_STATE_TX_PAYLOAD 18
 
 extern volatile uint8_t serial_phy_state;
-extern volatile uint8_t serial_active_ticks;
+extern volatile uint8_t serial_active_ms;
 extern volatile serial_header_t serial_header_in;
 extern serial_header_t serial_header_out;
 

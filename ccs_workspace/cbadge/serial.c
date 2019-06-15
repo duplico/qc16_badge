@@ -17,7 +17,8 @@ volatile uint8_t *serial_header_buf;
 volatile uint8_t serial_buffer[SERIAL_BUFFER_LEN] = {0,};
 volatile uint8_t serial_phy_state = 0;
 volatile uint8_t serial_phy_index = 0;
-volatile uint8_t serial_active_ticks = 0;
+// TODO: rename this
+volatile uint8_t serial_active_ms = 0;
 volatile uint16_t serial_running_crc = 0;
 
 uint8_t serial_ll_state;
@@ -60,6 +61,12 @@ void serial_ll_timeout() {
     }
 }
 
+/// Call this every 1 ms
+void serial_ll_ms_tick() {
+
+    // TODO: Check GPIO
+}
+
 void serial_ll_handle_rx() {
     switch(serial_ll_state) {
     case SERIAL_MODE_NC_PRX:
@@ -70,7 +77,13 @@ void serial_ll_handle_rx() {
             serial_header_out.opcode = SERIAL_OPCODE_ACK;
             serial_header_out.payload_len = 0;
             serial_header_out.to_id = SERIAL_ID_ANY;
-            // TODO: set DIO2 high; set DIO1(ABS) to input w/ pulldown
+            // DIO2: Output HIGH.
+            SERIAL_DIO_DIR |= SERIAL_DIO2_RTR;
+            SERIAL_DIO_OUT |= SERIAL_DIO2_RTR;
+            // DIO1: Input w/ pulldown
+            SERIAL_DIO_DIR &= ~SERIAL_DIO1_ABS;
+            SERIAL_DIO_REN |= SERIAL_DIO1_ABS;
+            SERIAL_DIO_OUT &= ~SERIAL_DIO1_ABS;
             serial_send_start();
             // Once that completes, we'll be connected.
             serial_ll_state = SERIAL_MODE_C_IDLE;
@@ -80,7 +93,13 @@ void serial_ll_handle_rx() {
     case SERIAL_MODE_NC_PTX:
         // We sent a HELO when we entered this state, so we need an ACK.
         if (serial_header_in.opcode == SERIAL_OPCODE_ACK) {
-            // TODO: set DIO1(ABS) high; set DIO2 to input w/ pulldown
+            // DIO1: Output HIGH.
+            SERIAL_DIO_DIR |= SERIAL_DIO1_ABS;
+            SERIAL_DIO_OUT |= SERIAL_DIO1_ABS;
+            // DIO2: Input w/ pulldown
+            SERIAL_DIO_DIR &= ~SERIAL_DIO2_RTR;
+            SERIAL_DIO_REN |= SERIAL_DIO2_RTR;
+            SERIAL_DIO_OUT &= ~SERIAL_DIO2_RTR;
             serial_ll_state = SERIAL_MODE_C_IDLE;
             s_connected = 1;
         }
@@ -95,6 +114,9 @@ void serial_phy_handle_rx() {
     // We just got a complete serial message
     //  (header and, possibly, payload).
     // TODO: validate and such.
+    // So, clear out our timeout:
+    serial_active_ms = SERIAL_TIMEOUT_TICKS;
+    // Handle the message at the link-layer.
     serial_ll_handle_rx();
 }
 
@@ -141,7 +163,6 @@ __interrupt void serial_isr() {
             if (UCA0RXBUF == SERIAL_PHY_SYNC_WORD) {
                 serial_phy_state = SERIAL_PHY_STATE_RX_HEADER;
                 serial_phy_index = 0;
-                serial_active_ticks = SERIAL_TIMEOUT_TICKS;
             }
             break;
         case SERIAL_PHY_STATE_RX_HEADER:

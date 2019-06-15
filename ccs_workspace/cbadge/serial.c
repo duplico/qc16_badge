@@ -77,6 +77,7 @@ void serial_ll_handle_rx() {
             serial_header_out.opcode = SERIAL_OPCODE_ACK;
             serial_header_out.payload_len = 0;
             serial_header_out.to_id = SERIAL_ID_ANY;
+            serial_header_out.crc16_header = crc16_buf((uint8_t *) &serial_header_out, sizeof(serial_header_t) - sizeof(serial_header_out.crc16_header));
             // DIO2: Output HIGH.
             SERIAL_DIO_DIR |= SERIAL_DIO2_RTR;
             SERIAL_DIO_OUT |= SERIAL_DIO2_RTR;
@@ -166,10 +167,7 @@ __interrupt void serial_isr() {
             }
             break;
         case SERIAL_PHY_STATE_RX_HEADER:
-            // TODO: Confirm that this deserializes properly between platforms:
             ((uint8_t *) (&serial_header_in))[serial_phy_index] = UCA0RXBUF;
-            // TODO: how much of the header do we crc on???
-            serial_running_crc = crc_build(((uint8_t *) (&serial_header_in))[serial_phy_index], !serial_phy_index);
             serial_phy_index++;
             if (serial_phy_index == sizeof(serial_header_in)) {
                 // Header is complete.
@@ -193,7 +191,6 @@ __interrupt void serial_isr() {
             break;
         case SERIAL_PHY_STATE_RX_PAYLOAD:
             serial_buffer[serial_phy_index] = UCA0RXBUF;
-            serial_running_crc = crc_build(serial_buffer[serial_phy_index], 0);
             serial_phy_index++;
             if (serial_phy_index == serial_header_in.payload_len) {
                 serial_phy_state = SERIAL_PHY_STATE_IDLE;

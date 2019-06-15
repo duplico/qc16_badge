@@ -5,8 +5,8 @@
  *      Author: george
  */
 
-#ifndef SERIAL_H_
-#define SERIAL_H_
+#ifndef CBADGE_SERIAL_H_
+#define CBADGE_SERIAL_H_
 
 #include <stdint.h>
 
@@ -29,4 +29,4 @@ extern serial_header_t serial_header_out;
 void serial_phy_handle_rx();
 void init_serial();
 
-#endif /* SERIAL_H_ */
+#endif /* CBADGE_SERIAL_H_ */

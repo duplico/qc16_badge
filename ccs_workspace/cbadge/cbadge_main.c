@@ -1,10 +1,10 @@
 #include <stdint.h>
 
-#include <msp430fr2100.h>
+#include <msp430fr2111.h>
 
 #include <cbadge.h>
+#include <cbadge_serial.h>
 
-#include "serial.h"
 #include "buttons.h"
 
 // TODO:

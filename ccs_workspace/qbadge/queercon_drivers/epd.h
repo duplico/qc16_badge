@@ -5,12 +5,12 @@
  *      Author: george
  */
 
-#ifndef QUEERCON_EPD_DRIVER_H_
-#define QUEERCON_EPD_DRIVER_H_
+#ifndef QUEERCON_DRIVERS_EPD_H_
+#define QUEERCON_DRIVERS_EPD_H_
 
 #include <ti/grlib/grlib.h>
 
-#include "epd_phy.h"
+#include "../queercon_drivers/epd_phy.h"
 
 //*****************************************************************************
 // Number of pixels on LCD X-axis
@@ -96,4 +96,4 @@ extern Graphics_Display epd_gr_display_portrait;
 extern const Graphics_Display_Functions epd_grDisplayFunctions;
 void epd_flip();
 extern uint8_t epd_do_partial;
-#endif /* QUEERCON_EPD_DRIVER_H_ */
+#endif /* QUEERCON_DRIVERS_EPD_H_ */

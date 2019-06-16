@@ -5,6 +5,8 @@
  *      Author: george
  */
 #include <qbadge.h>
+#include <queercon_drivers/epd.h>
+#include <queercon_drivers/ht16d35b.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -16,9 +18,6 @@
 #include <ti/sysbios/knl/Task.h>
 #include <ti/sysbios/knl/Event.h>
 #include <ti/drivers/PIN.h>
-
-#include <queercon/epd_driver.h>
-#include "queercon/ht16d35b.h"
 
 #include "ui.h"
 #include "board.h"

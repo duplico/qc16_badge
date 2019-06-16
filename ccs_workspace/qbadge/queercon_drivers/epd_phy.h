@@ -5,8 +5,8 @@
  *      Author: george
  */
 
-#ifndef QUEERCON_EPD_PHY_H_
-#define QUEERCON_EPD_PHY_H_
+#ifndef QUEERCON_DRIVERS_EPD_PHY_H_
+#define QUEERCON_DRIVERS_EPD_PHY_H_
 
 #include <stdint.h>
 
@@ -58,4 +58,4 @@ void epd_phy_flush_buffer();
 /// Initialize the physical/low-level layer of the e-paper.
 void epd_phy_init();
 
-#endif /* QUEERCON_EPD_PHY_H_ */
+#endif /* QUEERCON_DRIVERS_EPD_PHY_H_ */

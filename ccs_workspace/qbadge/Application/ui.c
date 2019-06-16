@@ -79,7 +79,7 @@ void kb_clock_swi(UArg a0) {
 
         if (PIN_getInputValue(pin_to_read)) {
             // high => pressed
-            if (button_press & 0xF0) {
+            if (button_press & BTN_ROW_MASK) {
                 // another row already pressed, kb is mashed.
                 // give up. a mashed keyboard helps nobody.
                 kb_mashed = 1;
@@ -99,7 +99,7 @@ void kb_clock_swi(UArg a0) {
                 PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_1 + c - 1, 1);
                 if (PIN_getInputValue(pin_to_read)) {
                     // If the relevant row reads high, this col,row is pressed.
-                    if (button_press & 0x0F) {
+                    if (button_press & BTN_COL_MASK) {
                         // if multiple columns are pressed already, then
                         // we have a mashing situation on our hands.
                         kb_mashed = 1;
@@ -425,6 +425,15 @@ const tImage  picker1BPP_UNCOMP=
 //////////////////
 
 
+UInt pop_events(UInt *events_ptr, UInt events_to_check) {
+    UInt in_events;
+
+    in_events = (*events_ptr) & events_to_check;
+    (*events_ptr) &= ~events_to_check;
+    return in_events;
+}
+
+
 // The screensaver stackup:
 // 7 blocks of 18 px high
 // 170 px high photo section
@@ -507,7 +516,23 @@ void ui_transition(uint8_t destination) {
     Event_post(ui_event_h, UI_EVENT_REFRESH);
 }
 
+uint8_t ui_colorpicker_cursor_pos = 0;
+uint8_t ui_colorpicker_cursor_anim = 0;
+
 void ui_colorpicking_wireframe() {
+    Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
+    Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
+
+    Graphics_Rectangle rect = {
+        .xMin = 0,
+        .yMin = UI_PICKER_TOP,
+        .xMax = EPD_WIDTH-1,
+        .yMax = EPD_HEIGHT-2
+    };
+
+    // Clear the color picker menu area
+    Graphics_fillRectangle(&ui_gr_context_portrait, &rect);
+
     Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
     Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
 
@@ -524,17 +549,25 @@ void ui_colorpicking_wireframe() {
         Graphics_drawLineV(&ui_gr_context_portrait, i, EPD_HEIGHT-16, EPD_HEIGHT-48);
         Graphics_drawLine(&ui_gr_context_portrait, i+10, EPD_HEIGHT-16, (int32_t)((25.6*(i-1))/21), EPD_HEIGHT-1);
     }
+
+    // TODO: Maybe arrows up here instead
+    // TODO: defines for these ASAP.
+    rect = (Graphics_Rectangle){10,UI_PICKER_TOP+4, EPD_WIDTH-11,UI_PICKER_TOP+4+64};
+
+    if (ui_colorpicker_cursor_anim) {
+        Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
+    } else {
+        // Draw an arrow over the relevant color:
+        uint8_t arrow_x = (21*ui_colorpicker_cursor_pos);
+        Graphics_drawLine(&ui_gr_context_portrait, arrow_x, EPD_HEIGHT-64, arrow_x+10, EPD_HEIGHT-48);
+        Graphics_drawLine(&ui_gr_context_portrait, arrow_x+21, EPD_HEIGHT-64, arrow_x+11, EPD_HEIGHT-48);
+    }
 }
 
 void ui_colorpicking_load() {
     ui_colorpicking = 1;
 
-    Graphics_Rectangle rect = {
-        .xMin = 0,
-        .yMin = UI_PICKER_TOP,
-        .xMax = EPD_WIDTH-1,
-        .yMax = EPD_HEIGHT-2
-    };
+    Graphics_Rectangle rect;
 
     Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
     Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
@@ -543,9 +576,6 @@ void ui_colorpicking_load() {
     for (int16_t i=0; i<UI_PICKER_TOP*2; i+=2) {
         Graphics_drawLine(&ui_gr_context_portrait, 0, i, i, 0);
     }
-
-    // Clear the color picker menu area
-    Graphics_fillRectangle(&ui_gr_context_portrait, &rect);
 
     // Clear the color picker "tab" area
     rect = (Graphics_Rectangle){48,UI_PICKER_TOP-32,
@@ -559,21 +589,77 @@ void ui_colorpicking_load() {
     Graphics_drawImage(&ui_gr_context_portrait, &picker1BPP_UNCOMP, 48, UI_PICKER_TOP-32);
     Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
 
-    // Draw the wireframe of the color picker menus.
-    ui_colorpicking_wireframe();
-
-    epd_do_partial = 1;
-    Graphics_flushBuffer(&ui_gr_context_landscape);
-}
-
-void ui_colorpicking_do(UInt events) {
-
+    // This will draw everything else:
+    Event_post(ui_event_h, UI_EVENT_REFRESH);
 }
 
 void ui_colorpicking_unload() {
     ui_colorpicking = 0;
     Event_post(ui_event_h, UI_EVENT_REFRESH);
     epd_do_partial = 1;
+}
+
+void ui_colorpicking_do(UInt events) {
+    if (pop_events(&events, UI_EVENT_REFRESH)) {
+        ui_colorpicking_wireframe();
+        epd_do_partial = 1;
+        Graphics_flushBuffer(&ui_gr_context_landscape);
+    }
+
+    if (pop_events(&events, UI_EVENT_KB_PRESS)) {
+        switch(kb_active_key_masked) {
+        case BTN_BACK:
+            ui_colorpicking_unload();
+            break;
+        case BTN_RED:
+            break;
+        case BTN_ORG:
+            break;
+        case BTN_YEL:
+            break;
+        case BTN_GRN:
+            break;
+        case BTN_BLU:
+            break;
+        case BTN_PUR:
+            break;
+        case BTN_F1_LOCK:
+            break;
+        case BTN_F2_COIN:
+            break;
+        case BTN_F3_CAMERA:
+            break;
+        case BTN_UP: // This is "right"
+            if (ui_colorpicker_cursor_pos == 5)
+                ui_colorpicker_cursor_pos = 0;
+            else
+                ui_colorpicker_cursor_pos++;
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
+            break;
+        case BTN_DOWN: // "left"
+            if (ui_colorpicker_cursor_pos == 0)
+                ui_colorpicker_cursor_pos = 5;
+            else
+                ui_colorpicker_cursor_pos--;
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
+            break;
+        case BTN_LEFT: // "up"
+            if (!ui_colorpicker_cursor_anim) {
+                ui_colorpicker_cursor_anim = 1;
+                Event_post(ui_event_h, UI_EVENT_REFRESH);
+            }
+            break;
+        case BTN_RIGHT: // "down"
+            if (ui_colorpicker_cursor_anim) {
+                ui_colorpicker_cursor_anim = 0;
+                Event_post(ui_event_h, UI_EVENT_REFRESH);
+            }
+            break;
+        case BTN_OK:
+            break;
+
+        }
+    }
 }
 
 void ui_textentry_load() {
@@ -586,14 +672,6 @@ void ui_textentry_do(UInt events) {
 
 void ui_textentry_unload() {
 
-}
-
-UInt pop_events(UInt *events_ptr, UInt events_to_check) {
-    UInt in_events;
-
-    in_events = (*events_ptr) & events_to_check;
-    (*events_ptr) &= ~events_to_check;
-    return in_events;
 }
 
 void ui_screensaver_do(UInt events) {
@@ -616,6 +694,8 @@ void ui_task_fn(UArg a0, UArg a1) {
 
     while (1) {
         events = Event_pend(ui_event_h, Event_Id_NONE, ~Event_Id_NONE,  UI_AUTOREFRESH_TIMEOUT);
+
+        // TODO: reorder the buttons based on the current screen configuration.
 
         if (!events) {
             // This is a timeout.

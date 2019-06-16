@@ -515,6 +515,15 @@ void ui_colorpicking_wireframe() {
     Graphics_drawLineH(&ui_gr_context_portrait, 0, EPD_WIDTH-1, UI_PICKER_TOP+1);
     Graphics_drawLineH(&ui_gr_context_portrait, 0, EPD_WIDTH-1, UI_PICKER_TOP+2);
     Graphics_drawLineH(&ui_gr_context_portrait, 0, EPD_WIDTH-1, UI_PICKER_TOP+3);
+
+    // We've got a basically 170-px high frame to work with here.
+
+    Graphics_drawLineH(&ui_gr_context_portrait, 1, EPD_WIDTH-1, EPD_HEIGHT-48);
+    Graphics_drawLineH(&ui_gr_context_portrait, 1, EPD_WIDTH-1, EPD_HEIGHT-16);
+    for (uint8_t i=1; i<128; i+=21) {
+        Graphics_drawLineV(&ui_gr_context_portrait, i, EPD_HEIGHT-16, EPD_HEIGHT-48);
+        Graphics_drawLine(&ui_gr_context_portrait, i+10, EPD_HEIGHT-16, (int32_t)((25.6*(i-1))/21), EPD_HEIGHT-1);
+    }
 }
 
 void ui_colorpicking_load() {
@@ -530,12 +539,15 @@ void ui_colorpicking_load() {
     Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
     Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
 
+    // Fade out the background.
     for (int16_t i=0; i<UI_PICKER_TOP*2; i+=2) {
         Graphics_drawLine(&ui_gr_context_portrait, 0, i, i, 0);
     }
 
+    // Clear the color picker menu area
     Graphics_fillRectangle(&ui_gr_context_portrait, &rect);
 
+    // Clear the color picker "tab" area
     rect = (Graphics_Rectangle){48,UI_PICKER_TOP-32,
                                 80,UI_PICKER_TOP};
     Graphics_fillRectangle(&ui_gr_context_portrait, &rect);
@@ -543,9 +555,11 @@ void ui_colorpicking_load() {
     Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
     Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
 
+    // Draw the color picker "tab" and the color picker icon.
     Graphics_drawImage(&ui_gr_context_portrait, &picker1BPP_UNCOMP, 48, UI_PICKER_TOP-32);
     Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
 
+    // Draw the wireframe of the color picker menus.
     ui_colorpicking_wireframe();
 
     epd_do_partial = 1;

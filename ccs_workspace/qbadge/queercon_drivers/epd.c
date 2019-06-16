@@ -16,8 +16,8 @@
 #include <ti/sysbios/knl/Task.h>
 
 #include <board.h>
-#include "epd_driver.h"
-#include "epd_phy.h"
+#include <queercon_drivers/epd.h>
+#include <queercon_drivers/epd_phy.h>
 
 uint8_t epd_upside_down = 1;
 

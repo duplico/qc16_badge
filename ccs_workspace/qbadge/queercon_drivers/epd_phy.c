@@ -14,7 +14,7 @@
 #include <ti/sysbios/knl/Task.h>
 
 #include <board.h>
-#include "epd_phy.h"
+#include <queercon_drivers/epd_phy.h>
 
 SPI_Handle epd_spi_h;
 PIN_Handle epd_pin_h;

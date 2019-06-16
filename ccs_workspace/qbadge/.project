@@ -27,12 +27,12 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>queercon/qc16_serial_common.c</name>
+			<name>queercon_drivers/qc16_serial_common.c</name>
 			<type>1</type>
 			<locationURI>WORKSPACE_LOC/qc16_common/qc16_serial_common.c</locationURI>
 		</link>
 		<link>
-			<name>queercon/qc16_serial_common.h</name>
+			<name>queercon_drivers/qc16_serial_common.h</name>
 			<type>1</type>
 			<locationURI>WORKSPACE_LOC/qc16_common/qc16_serial_common.h</locationURI>
 		</link>

@@ -15,9 +15,8 @@
 #include <ti/sysbios/knl/Task.h>
 
 #include "board.h"
-#include "queercon/qbadge_serial.h"
-
 #include <qc16_serial_common.h>
+#include <queercon_drivers/qbadge_serial.h>
 
 #define SERIAL_STACKSIZE 1024
 Task_Struct serial_task;

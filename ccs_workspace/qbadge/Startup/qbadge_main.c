@@ -24,14 +24,14 @@
 /* Header files required to enable instruction fetch cache */
 #include <inc/hw_memmap.h>
 #include <driverlib/vims.h>
+#include <queercon_drivers/qbadge_serial.h>
 
 #include <third_party/spiffs/SPIFFSNVS.h>
 #include <third_party/spiffs/spiffs.h>
 
 #include "qbadge.h"
 
-#include "queercon/qbadge_serial.h"
-#include "ui.h"
+#include "ui/ui.h"
 
 
 uint8_t spiffsWorkBuffer[SPIFFS_LOGICAL_PAGE_SIZE * 2];

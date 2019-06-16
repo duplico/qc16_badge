@@ -16,7 +16,7 @@
 
 #include <board.h>
 
-#include "ht16d35b.h"
+#include <queercon_drivers/ht16d35b.h>
 
 // Configuration:
 

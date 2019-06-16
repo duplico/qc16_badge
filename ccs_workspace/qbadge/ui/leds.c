@@ -12,8 +12,14 @@
 
 #include <stdint.h>
 
+#include "ui/leds.h"
 
-uint8_t led_anim_type;
+led_tail_anim_t led_tail_anim_current;
 
-uint8_t led_anim_colors[6];
+void leds_init() {
+    // TODO: load current tail animation
+}
 
+void led_tail_timestep() {
+
+}

@@ -13,7 +13,7 @@
 #include <ti/sysbios/knl/Event.h>
 
 // TODO: Move to global config
-#define UI_CLOCK_MS 5 // config
+#define UI_CLOCK_MS 15 // config
 #define UI_CLOCK_TICKS (UI_CLOCK_MS * 100) // derived
 
 // let's start KB events from the top
@@ -26,17 +26,24 @@
 
 #define UI_EVENT_ALL (UI_EVENT_KB_FLIP | UI_EVENT_KB_PRESS | UI_EVENT_REFRESH | UI_EVENT_ALL)
 
-#define BTN_ROW_1 0x10
-#define BTN_ROW_2 0x20
-#define BTN_ROW_3 0x30
-#define BTN_ROW_4 0x40
-#define BTN_COL_1 0x01
-#define BTN_COL_2 0x02
-#define BTN_COL_3 0x03
-#define BTN_COL_4 0x04
-#define BTN_COL_5 0x05
+#define BTN_STAT_MASK   0300
+#define BTN_RC_MASK     0077
+#define BTN_ROW_MASK    0070
+#define BTN_COL_MASK    0007
+#define BTN_PRESSED     0100
+#define BTN_ROW_1       0010
+#define BTN_ROW_2       0020
+#define BTN_ROW_3       0030
+#define BTN_ROW_4       0040
+#define BTN_COL_1       0001
+#define BTN_COL_2       0002
+#define BTN_COL_3       0003
+#define BTN_COL_4       0004
+#define BTN_COL_5       0005
 
-#define BTN_NONE 0x00
+#define kb_active_key_masked (kb_active_key & BTN_RC_MASK)
+
+#define BTN_NONE 0000
 #define BTN_UP (BTN_ROW_1 | BTN_COL_1)
 #define BTN_DOWN (BTN_ROW_1 | BTN_COL_2)
 #define BTN_LEFT (BTN_ROW_1 | BTN_COL_3)

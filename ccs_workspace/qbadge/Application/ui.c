@@ -83,10 +83,9 @@ void kb_clock_swi(UArg a0) {
                 // another row already pressed, kb is mashed.
                 // give up. a mashed keyboard helps nobody.
                 kb_mashed = 1;
-                // TODO: return?
                 break;
             }
-            button_press = r << 4; // row is the upper nibble.
+            button_press = r << 3; // row is the upper nibble.
 
             // Now, figure out which column it is. Set all columns low:
             PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_1, 0);
@@ -112,35 +111,24 @@ void kb_clock_swi(UArg a0) {
         }
     }
 
-    // If the high nibble AND low nibble aren't BOTH populated with a value,
+    // If the row bits and col bits aren't BOTH populated with a value,
     //  then we got a malformed press (row without col, or col without row),
     //  and we should force it to be BTN_NONE.
-    if (!((button_press & 0x0f) && (button_press & 0xf0))) {
+    if (!((button_press & BTN_ROW_MASK) && (button_press & BTN_COL_MASK))) {
         button_press = BTN_NONE;
     }
-    //  If MULTIPLE, ignore due to mashing.
-    if (kb_mashed) {
-        // If the keypad is mashed, we don't want to do ANYTHING.
-        //  Specifically, we don't want to treat this as a press OR a release.
-        //  Instead, we'll just ignore any input that's mashed, and return to
-        //  normalcy once the keypad is unmashed.
-        // TODO: What happens if we press one key, mash, then release the
-        //  original key? We need to make sure that a release event, if we
-        //  are producing those, is correctly issued in addition to the
-        //  press event.
-    } else {
-        if (button_press && button_press == button_press_prev) {
-            // A button is pressed.
-            // TODO: this repeatedly fires
-            kb_active_key = button_press;
-            Event_post(ui_event_h, UI_EVENT_KB_PRESS);
-        } else if (kb_active_key && button_press == button_press_prev) {
-            // A button is released.
-            // TODO: signal a release
-            // No need to clear kb_active_key.
-        }
-        //  We should have two event signals: KB_PRESS, KB_RELEASE
-        //  And then we need to store, somewhere, which key is relevant.
+
+    // If there is currently an active key signaled, and EITHER
+    //  the keypad is mashed OR a key-release has been debounced,
+    //  then that's a release!
+    if ((kb_active_key & BTN_PRESSED)
+            && (kb_mashed || (!button_press && !button_press_prev))) {
+        kb_active_key &= ~BTN_PRESSED;
+        Event_post(ui_event_h, UI_EVENT_KB_RELEASE);
+    } else if (!(kb_active_key & BTN_PRESSED) && button_press && button_press == button_press_prev) {
+        // A button is pressed.
+        kb_active_key = button_press | BTN_PRESSED;
+        Event_post(ui_event_h, UI_EVENT_KB_PRESS);
     }
 }
 
@@ -382,7 +370,56 @@ const tImage  example_photo1BPP_UNCOMP=
     pixel_example_photo1BPP_UNCOMP,
 };
 
+static const unsigned char pixel_picker1BPP_UNCOMP[] =
+{
+0xff, 0xff, 0xff, 0xff,
+0xff, 0xf0, 0x0f, 0xff,
+0xff, 0xf0, 0x0f, 0xff,
+0xff, 0xf0, 0x0f, 0xff,
+0xff, 0xf0, 0x1f, 0xff,
+0xff, 0xf8, 0x1f, 0xff,
+0xff, 0xf8, 0x1f, 0xff,
+0xff, 0x38, 0x18, 0xff,
+0xfe, 0x1c, 0x38, 0x7f,
+0xfc, 0x1c, 0x38, 0x3f,
+0xfc, 0x0c, 0x30, 0x1f,
+0xf8, 0x0e, 0x70, 0x0f,
+0xf8, 0x0e, 0x78, 0x0f,
+0xf0, 0x1a, 0x48, 0x0f,
+0xf0, 0x33, 0xc4, 0x7f,
+0xff, 0xe1, 0x87, 0xe7,
+0xff, 0xe1, 0x83, 0x87,
+0xe0, 0x60, 0x02, 0x07,
+0xe0, 0x20, 0x02, 0x07,
+0xe0, 0x20, 0x02, 0x07,
+0xe0, 0x30, 0x06, 0x07,
+0xe0, 0x30, 0x0e, 0x07,
+0xf0, 0x38, 0x1f, 0x0f,
+0xf0, 0x6f, 0xf3, 0x8f,
+0xf8, 0xc3, 0xe0, 0xcf,
+0xfd, 0x81, 0x80, 0x7f,
+0xff, 0x01, 0x80, 0x3f,
+0xfe, 0x01, 0x80, 0x7f,
+0xff, 0x01, 0x80, 0xff,
+0xff, 0xc1, 0x81, 0xff,
+0xff, 0xf1, 0x87, 0xff,
+0xff, 0xff, 0xff, 0xff
+};
 
+static const unsigned long palette_picker1BPP_UNCOMP[]=
+{
+    0x000000,   0xffffff
+};
+
+const tImage  picker1BPP_UNCOMP=
+{
+    IMAGE_FMT_1BPP_UNCOMP,
+    32,
+    32,
+    2,
+    palette_picker1BPP_UNCOMP,
+    pixel_picker1BPP_UNCOMP,
+};
 
 
 //////////////////
@@ -470,6 +507,16 @@ void ui_transition(uint8_t destination) {
     Event_post(ui_event_h, UI_EVENT_REFRESH);
 }
 
+void ui_colorpicking_wireframe() {
+    Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
+    Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
+
+    Graphics_drawLineH(&ui_gr_context_portrait, 0, EPD_WIDTH-1, UI_PICKER_TOP);
+    Graphics_drawLineH(&ui_gr_context_portrait, 0, EPD_WIDTH-1, UI_PICKER_TOP+1);
+    Graphics_drawLineH(&ui_gr_context_portrait, 0, EPD_WIDTH-1, UI_PICKER_TOP+2);
+    Graphics_drawLineH(&ui_gr_context_portrait, 0, EPD_WIDTH-1, UI_PICKER_TOP+3);
+}
+
 void ui_colorpicking_load() {
     ui_colorpicking = 1;
 
@@ -480,19 +527,29 @@ void ui_colorpicking_load() {
         .yMax = EPD_HEIGHT-2
     };
 
+    Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
+    Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
+
+    for (int16_t i=0; i<UI_PICKER_TOP*2; i+=2) {
+        Graphics_drawLine(&ui_gr_context_portrait, 0, i, i, 0);
+    }
+
+    Graphics_fillRectangle(&ui_gr_context_portrait, &rect);
+
+    rect = (Graphics_Rectangle){48,UI_PICKER_TOP-32,
+                                80,UI_PICKER_TOP};
+    Graphics_fillRectangle(&ui_gr_context_portrait, &rect);
+
     Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
     Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
 
-    for (int16_t i=0; i<UI_PICKER_TOP*2; i+=3) {
-        Graphics_drawLine(&ui_gr_context_portrait, 0, i, i, 0);
-    }
-    Graphics_fillRectangle(&ui_gr_context_portrait, &rect);
+    Graphics_drawImage(&ui_gr_context_portrait, &picker1BPP_UNCOMP, 48, UI_PICKER_TOP-32);
+    Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
 
+    ui_colorpicking_wireframe();
 
     epd_do_partial = 1;
-    ht16d_all_one_color(128, 128, 128);
     Graphics_flushBuffer(&ui_gr_context_landscape);
-    ht16d_all_one_color(0,0,0);
 }
 
 void ui_colorpicking_do(UInt events) {
@@ -502,6 +559,7 @@ void ui_colorpicking_do(UInt events) {
 void ui_colorpicking_unload() {
     ui_colorpicking = 0;
     Event_post(ui_event_h, UI_EVENT_REFRESH);
+    epd_do_partial = 1;
 }
 
 void ui_textentry_load() {
@@ -561,7 +619,7 @@ void ui_task_fn(UArg a0, UArg a1) {
 
         // TODO: Should we prefer release?
         // NB: This order is very important:
-        if (kb_active_key == BTN_F4_PICKER
+        if (kb_active_key_masked == BTN_F4_PICKER
                 && pop_events(&events, UI_EVENT_KB_PRESS)) {
             if (ui_colorpicking) {
                 ui_colorpicking_unload();
@@ -570,7 +628,7 @@ void ui_task_fn(UArg a0, UArg a1) {
             }
         }
 
-        if (kb_active_key == BTN_ROT
+        if (kb_active_key_masked == BTN_ROT
                 && ui_current != UI_SCREEN_IDLE
                 && !ui_colorpicking
                 && pop_events(&events, UI_EVENT_KB_PRESS)) {
@@ -599,13 +657,13 @@ void ui_task_fn(UArg a0, UArg a1) {
 
     if (events & UI_EVENT_KB_PRESS) {
         // keyboard press.
-        if (kb_active_key == BTN_UP) {
+        if (kb_active_key_masked == BTN_UP) {
             if (light_brightness > 245) {
                 light_brightness = 255;
             } else {
                 light_brightness += 10;
             }
-        } else if (kb_active_key == BTN_DOWN) {
+        } else if (kb_active_key_masked == BTN_DOWN) {
             if (light_brightness < 10) {
                 light_brightness = 0;
             } else {

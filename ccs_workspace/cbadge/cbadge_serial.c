@@ -20,16 +20,12 @@ volatile uint8_t *serial_header_buf;
 volatile uint8_t serial_buffer[SERIAL_BUFFER_LEN] = {0,};
 volatile uint8_t serial_phy_state = 0;
 volatile uint8_t serial_phy_index = 0;
-// TODO: rename this
-volatile uint8_t serial_active_ms = 0;
-volatile uint16_t serial_running_crc = 0;
+volatile uint8_t serial_phy_timeout_counter = 0;
 
 uint8_t serial_ll_state;
-// TODO: rename this:
-uint16_t serial_ll_timeout_time;
+uint16_t serial_ll_timeout_ms;
 
 void serial_send_start() {
-    // TODO: assert serial_phy_state == SERIAL_PHY_STATE_IDLE
     serial_phy_state = SERIAL_PHY_STATE_IDLE;
     UCA0TXBUF = SERIAL_PHY_SYNC_WORD;
     // The interrupts will take it from here.
@@ -37,26 +33,29 @@ void serial_send_start() {
 
 
 void serial_ll_timeout() {
-    // TODO: Call this ever.
-    // TODO: Is this done? ---- Note: Serial alternative switching is controlled by TBRMP in SYSCFG3
     switch(serial_ll_state) {
     case SERIAL_LL_STATE_NC_PRX:
         if (!my_conf.active) {
+            serial_ll_timeout_ms = PRX_TIME_MS;
             break; // If we're not active, we never leave PRX.
-            // TODO: Adjust timeout.
         }
         SERIAL_ENTER_PTX;
 
         serial_ll_state = SERIAL_LL_STATE_NC_PTX;
-        serial_ll_timeout_time = PTX_TIME_MS;
+        serial_ll_timeout_ms = PTX_TIME_MS;
 
-        // TODO: Send a HELO.
+        serial_header_out.from_id = my_conf.badge_id;
+        serial_header_out.opcode = SERIAL_OPCODE_HELO;
+        serial_header_out.payload_len = 0;
+        serial_header_out.to_id = SERIAL_ID_ANY;
+        serial_header_out.crc16_header = crc16_buf((uint8_t *) &serial_header_out, sizeof(serial_header_t) - sizeof(serial_header_out.crc16_header));
+        serial_send_start();
         break;
     case SERIAL_LL_STATE_NC_PTX:
         SERIAL_ENTER_PRX;
 
         serial_ll_state = SERIAL_LL_STATE_NC_PRX;
-        serial_ll_timeout_time = PRX_TIME_MS;
+        serial_ll_timeout_ms = PRX_TIME_MS;
         break;
 //    default:
     }
@@ -64,8 +63,15 @@ void serial_ll_timeout() {
 
 /// Call this every 1 ms
 void serial_ll_ms_tick() {
+    serial_ll_timeout_ms--;
 
-    // TODO: Check GPIO
+    if (!serial_ll_timeout_ms) {
+        serial_ll_timeout();
+    }
+
+    if (serial_ll_state == SERIAL_LL_STATE_C_IDLE) {
+        // TODO: Check GPIO
+    }
 }
 
 void serial_ll_handle_rx() {
@@ -107,7 +113,6 @@ void serial_ll_handle_rx() {
         }
         break;
     case SERIAL_LL_STATE_C_IDLE:
-        // TODO: handle these things.
         break;
     }
 }
@@ -129,7 +134,7 @@ void serial_phy_handle_rx() {
     // Payload len has already been validated.
 
     // So, clear out our timeout:
-    serial_active_ms = SERIAL_TIMEOUT_TICKS;
+    serial_phy_timeout_counter = SERIAL_PHY_TIMEOUT_MS;
     // Handle the message at the link-layer.
     serial_ll_handle_rx();
 }
@@ -138,6 +143,7 @@ void init_serial() {
     // Our initial config is in PRX mode. We'll stay there,
     //  unless we're ACTIVE.
     serial_ll_state = SERIAL_LL_STATE_NC_PRX;
+    serial_ll_timeout_ms = PRX_TIME_MS;
 
     // Read P1.1 to determine whether we're free-standing, or
     //  if we're connected to a badge that's powering us. If it's LOW,

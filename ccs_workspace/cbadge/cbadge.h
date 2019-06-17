@@ -19,7 +19,7 @@
 #define SERIAL_BUFFER_LEN 32
 // Currently ticks are about 2ms:
 // And, at 9600 baud a header takes about 7ms to send.
-#define SERIAL_TIMEOUT_TICKS 10
+#define SERIAL_PHY_TIMEOUT_MS 10
 
 typedef struct {
     uint16_t badge_id;

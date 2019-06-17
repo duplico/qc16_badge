@@ -5,9 +5,6 @@
  *      Author: george
  */
 
-
-// TODO: UGH. This needs another thread.
-
 #include <stdint.h>
 
 #include <ti/sysbios/BIOS.h>
@@ -95,9 +92,6 @@ void led_task_fn(UArg a0, UArg a1) {
 }
 
 void led_init() {
-    // TODO: load current tail animation
-
-    // TODO: rename all the taskParams and such
     Task_Params taskParams;
     Task_Params_init(&taskParams);
     taskParams.stack = led_task_stack;

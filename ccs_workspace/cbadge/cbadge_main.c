@@ -22,6 +22,8 @@ volatile uint8_t f_serial_phy = 0x00;
 volatile uint8_t f_button_poll = 0x00;
 /// Interrupt flag indicating it's time to do another PWM time step.
 volatile uint8_t f_pwm_loop = 0x00;
+/// Interrupt flag indicating 1 ms has passed.
+volatile uint8_t f_ms = 0x00;
 
 #pragma PERSISTENT(my_conf)
 cbadge_conf_t my_conf = {
@@ -242,6 +244,12 @@ int main( void )
             f_serial_phy = 0;
         }
 
+        if (f_ms) {
+            serial_ll_ms_tick();
+
+            f_ms = 0;
+        }
+
         if (f_serial_phy == SERIAL_TX_DONE) {
             f_serial_phy = 0;
         }
@@ -267,9 +275,9 @@ __interrupt void watchdog_timer(void)
     if (main_loop_ticks_curr == TICKS_PER_MS) {
         main_loop_ticks_curr = 0;
 
-        if (serial_active_ms && serial_phy_state) {
-            serial_active_ms--;
-            if (!serial_active_ms) {
+        if (serial_phy_timeout_counter && serial_phy_state) {
+            serial_phy_timeout_counter--;
+            if (!serial_phy_timeout_counter) {
                 serial_phy_state = SERIAL_PHY_STATE_IDLE;
             }
         }
@@ -278,6 +286,7 @@ __interrupt void watchdog_timer(void)
         if (button_poll_this_ms)
             f_button_poll = 1;
         button_poll_this_ms = !button_poll_this_ms;
+        f_ms = 1;
     }
     f_pwm_loop = 1;
     __bic_SR_register_on_exit(LPM3_bits);

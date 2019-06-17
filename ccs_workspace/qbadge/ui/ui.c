@@ -505,7 +505,6 @@ void ui_transition(uint8_t destination) {
     if (ui_current == destination) {
         return; // Nothing to do.
     }
-    // TODO: unload the current whatever
 
     ui_current = destination;
     Event_post(ui_event_h, UI_EVENT_REFRESH);

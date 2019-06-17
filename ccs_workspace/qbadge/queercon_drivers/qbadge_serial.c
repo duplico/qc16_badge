@@ -62,7 +62,7 @@ void serial_send_helo(UART_Handle uart) {
     header_out.payload_len = 0;
     header_out.to_id = SERIAL_ID_ANY;
     header_out.crc16_payload = 0xabcd;
-    header_out.crc16_header = 0xabcd;
+    crc16_header_apply(&header_out);
     uint8_t syncword = SERIAL_PHY_SYNC_WORD;
 
     UART_write(uart, &syncword, 1);
@@ -76,7 +76,7 @@ void serial_send_ack(UART_Handle uart) {
     header_out.payload_len = 0;
     header_out.to_id = SERIAL_ID_ANY;
     header_out.crc16_payload = 0xabcd;
-    header_out.crc16_header = 0xabcd;
+    crc16_header_apply(&header_out);
     uint8_t syncword = SERIAL_PHY_SYNC_WORD;
 
     UART_write(uart, &syncword, 1);
@@ -86,10 +86,6 @@ void serial_send_ack(UART_Handle uart) {
 
 void serial_clock_swi(UArg a0) {
 
-}
-
-uint8_t validate_header(serial_header_t *header) {
-    return 1;
 }
 
 void serial_rx_done(serial_header_t *header, uint8_t *payload) {

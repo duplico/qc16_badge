@@ -5,7 +5,7 @@
 #include <ti/drivers/power/PowerCC26XX.h>
 #include <ti/drivers/NVS.h>
 #include <ti/drivers/I2C.h>
-#include <ti/drivers/ADC.h>
+#include <ti/drivers/ADCBuf.h>
 #include <ti/drivers/UART.h>
 #include <ti/drivers/uart/UARTCC26XX.h>
 #include <ti/sysbios/BIOS.h>
@@ -143,62 +143,75 @@ static const char signature[] =
 ////////////////////////////////////
 
 #define LED_BRIGHTNESS_INTERVAL 12500
-uint_fast16_t vbat_out_uvolts = 0;
+uint32_t vbat_out_uvolts = 0;
+uint16_t vbat_raw;
+uint16_t brightness_raw;
 
-// TODO: Switch to using ADCBuf, and run using a clock.
-void led_brightness_task_fn(UArg a0, UArg a1)
+ADCBuf_Handle adc_buf_h;
+ADCBuf_Conversion next_conversion;
+
+void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
+    void *completedADCBuffer, uint32_t completedChannel) {
+    ADCBuf_adjustRawValues(handle, completedADCBuffer, 1, completedChannel);
+
+    switch(completedChannel) {
+    case ADCBUF_CH_LIGHT:
+        // This is a light.
+//        target_brightness_level = 0;
+        ////            while (target_brightness_level < (LED_NUM_BRIGHTNESS_STEPS-1) &&
+        ////                    adc_value > BRIGHTNESS_STEPS[target_brightness_level][0]) {
+        ////                target_brightness_level++;
+        ////            }
+        ////
+        ////            if (led_global_brightness_level != target_brightness_level) {
+        ////                if (target_brightness_level>led_global_brightness_level)
+        ////                    led_global_brightness_level++;
+        ////                else
+        ////                    led_global_brightness_level--;
+        ////
+        //// TODO: The following is not to use:
+        ////                tlc_msg_fun_base[18] = (0b10000000 & tlc_msg_fun_base[18]) |
+        ////                        (0b01111111 & BRIGHTNESS_STEPS[led_global_brightness_level][1]);
+        ////                tlc_update_fun = 1;
+        ////
+        ////                if (led_global_brightness_level == LED_NUM_BRIGHTNESS_STEPS - 1)
+        ////                    its_bright();
+        break;
+    case ADCBUF_CH_VBAT:
+        ADCBuf_convertAdjustedToMicroVolts(handle, completedChannel, completedADCBuffer, &vbat_out_uvolts, conversion->samplesRequestedCount);
+        break;
+    }
+}
+
+void led_brightness_task_fn(UArg a0)
 {
-    ADC_Handle light_adc_h, vbat_adc_h;
-    ADC_Params adcp;
-    ADC_Params_init(&adcp);
-    light_adc_h = ADC_open(QC16_ADC_LIGHT, &adcp);
+    static QC16_ADCBuf0ChannelName curr_channel = ADCBUF_CH_VBAT;
+    volatile int_fast16_t res;
 
-    ADC_Params_init(&adcp);
-    vbat_adc_h = ADC_open(QC16_ADC_VBAT, &adcp);
+    if (curr_channel == ADCBUF_CH_LIGHT) {
+        next_conversion.arg = NULL;
+        next_conversion.sampleBufferTwo = NULL;
+        next_conversion.adcChannel = ADCBUF_CH_LIGHT;
+        next_conversion.sampleBuffer = &brightness_raw;
+        next_conversion.samplesRequestedCount = 1;
+        curr_channel = ADCBUF_CH_VBAT;
+    } else {
+        next_conversion.arg = NULL;
+        next_conversion.sampleBufferTwo = NULL;
+        next_conversion.adcChannel = ADCBUF_CH_VBAT;
+        next_conversion.sampleBuffer = &vbat_raw;
+        next_conversion.samplesRequestedCount = 1;
+        curr_channel = ADCBUF_CH_LIGHT;
+    }
 
-    int_fast16_t res;
-    uint_fast16_t adc_value = 0;
+    res = ADCBuf_convert(adc_buf_h, &next_conversion, 1);
 
-    uint_fast8_t target_brightness_level;
-    do {
-        res = ADC_convert(light_adc_h, (uint16_t*) &adc_value);
-        if (res == ADC_STATUS_SUCCESS) {
-            // Do stuff with the ADC status value.
-            target_brightness_level = 0;
-//            while (target_brightness_level < (LED_NUM_BRIGHTNESS_STEPS-1) &&
-//                    adc_value > BRIGHTNESS_STEPS[target_brightness_level][0]) {
-//                target_brightness_level++;
-//            }
-//
-//            if (led_global_brightness_level != target_brightness_level) {
-//                if (target_brightness_level>led_global_brightness_level)
-//                    led_global_brightness_level++;
-//                else
-//                    led_global_brightness_level--;
-//
-// TODO: The following is not to use:
-//                tlc_msg_fun_base[18] = (0b10000000 & tlc_msg_fun_base[18]) |
-//                        (0b01111111 & BRIGHTNESS_STEPS[led_global_brightness_level][1]);
-//                tlc_update_fun = 1;
-//
-//                if (led_global_brightness_level == LED_NUM_BRIGHTNESS_STEPS - 1)
-//                    its_bright();
+    if (AONBatMonNewTempMeasureReady()) {
+        if (AONBatMonTemperatureGetDegC() < 6) { // deg C (-256..255)
+            //                its_cold();
+            // TODO: do we care about temp?
         }
-
-        res = ADC_convert(vbat_adc_h, (uint16_t*) &adc_value);
-        if (res == ADC_STATUS_SUCCESS) {
-            vbat_out_uvolts = ADC_convertToMicroVolts(vbat_adc_h, adc_value);
-        }
-
-        if (AONBatMonNewTempMeasureReady()) {
-            if (AONBatMonTemperatureGetDegC() < 6) { // deg C (-256..255)
-                //                its_cold();
-                // TODO: do we care about temp?
-            }
-        }
-
-        Task_sleep(LED_BRIGHTNESS_INTERVAL);
-    } while (1);
+    }
 }
 
 Clock_Handle adc_clock_h;
@@ -213,7 +226,7 @@ int main()
     }
     SPI_init();
     I2C_init();
-    ADC_init();
+    ADCBuf_init();
     UART_init();
 #ifdef CACHE_AS_RAM
     // retain cache during standby
@@ -232,23 +245,27 @@ int main()
     ui_init();
     serial_init();
 
-    // Set up the ADC reader task:
-    Task_Params taskParams;
+    // Set up the ADC reader clock & buffer
+    Clock_Params clockParams;
+    Error_Block eb;
+    Error_init(&eb);
 
-    Task_Params_init(&taskParams);
-    taskParams.stack = adc_task_stack;
-    taskParams.stackSize = ADC_STACKSIZE;
-    taskParams.priority = 1;
-    Task_construct(&adc_task, led_brightness_task_fn, &taskParams, NULL);
 
-//    Clock_Params clockParams;
-//    Error_Block eb;
-//    Error_init(&eb);
-//
-//    Clock_Params_init(&clockParams);
-//    clockParams.period = LED_BRIGHTNESS_INTERVAL;
-//    clockParams.startFlag = TRUE;
-//    adc_clock_h = Clock_create(led_brightness_task_fn, 2, &clockParams, &eb);
+    ADCBuf_Params adc_buf_params;
+
+    ADCBuf_Params_init(&adc_buf_params);
+    adc_buf_params.returnMode = ADCBuf_RETURN_MODE_CALLBACK;
+    adc_buf_params.blockingTimeout = NULL;
+    adc_buf_params.callbackFxn = adc_cb;
+    adc_buf_params.recurrenceMode = ADCBuf_RECURRENCE_MODE_ONE_SHOT;
+    adc_buf_params.samplingFrequency = 200;
+
+    adc_buf_h = ADCBuf_open(QC16_ADCBUF0, &adc_buf_params);
+
+    Clock_Params_init(&clockParams);
+    clockParams.period = LED_BRIGHTNESS_INTERVAL;
+    clockParams.startFlag = TRUE;
+    adc_clock_h = Clock_create(led_brightness_task_fn, 2, &clockParams, &eb);
 
     BIOS_start();     /* enable interrupts and start SYS/BIOS */
 

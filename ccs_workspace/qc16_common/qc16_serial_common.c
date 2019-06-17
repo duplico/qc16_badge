@@ -29,3 +29,15 @@ uint16_t crc_build(uint8_t data, uint8_t start_over) {
     crc^=((crc & 0xff) << 4) << 1;
     return crc;
 }
+
+void crc16_header_apply(serial_header_t *header) {
+    header->crc16_header = crc16_buf((uint8_t *) header, sizeof(serial_header_t) - sizeof(header->crc16_header));
+}
+
+uint8_t validate_header(serial_header_t *header) {
+    if (crc16_buf((uint8_t *) header, sizeof(serial_header_t) - sizeof(header->crc16_header)) != header->crc16_header) {
+        // Bad header CRC.
+        return 0;
+    }
+    return 1;
+}

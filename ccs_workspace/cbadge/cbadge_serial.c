@@ -26,11 +26,11 @@ uint8_t serial_ll_state;
 uint16_t serial_ll_timeout_ms;
 
 void serial_send_start() {
+    crc16_header_apply(&serial_header_out);
     serial_phy_state = SERIAL_PHY_STATE_IDLE;
     UCA0TXBUF = SERIAL_PHY_SYNC_WORD;
     // The interrupts will take it from here.
 }
-
 
 void serial_ll_timeout() {
     switch(serial_ll_state) {
@@ -48,7 +48,6 @@ void serial_ll_timeout() {
         serial_header_out.opcode = SERIAL_OPCODE_HELO;
         serial_header_out.payload_len = 0;
         serial_header_out.to_id = SERIAL_ID_ANY;
-        serial_header_out.crc16_header = crc16_buf((uint8_t *) &serial_header_out, sizeof(serial_header_t) - sizeof(serial_header_out.crc16_header));
         serial_send_start();
         break;
     case SERIAL_LL_STATE_NC_PTX:
@@ -84,7 +83,6 @@ void serial_ll_handle_rx() {
             serial_header_out.opcode = SERIAL_OPCODE_ACK;
             serial_header_out.payload_len = 0;
             serial_header_out.to_id = SERIAL_ID_ANY;
-            serial_header_out.crc16_header = crc16_buf((uint8_t *) &serial_header_out, sizeof(serial_header_t) - sizeof(serial_header_out.crc16_header));
             // DIO2: Output HIGH.
             SERIAL_DIO_DIR |= SERIAL_DIO2_RTR;
             SERIAL_DIO_OUT |= SERIAL_DIO2_RTR;

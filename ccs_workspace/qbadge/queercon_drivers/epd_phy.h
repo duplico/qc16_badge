@@ -38,7 +38,6 @@
 
 extern uint8_t epd_display_buffer[(EPD_HEIGHT * EPD_WIDTH + 7) / 8];
 
-// TODO: Refactor these out of here: (make them static)
 void epd_phy_spi_cmd(uint8_t cmd);
 void epd_phy_spi_data(uint8_t dat);
 

@@ -42,7 +42,7 @@ rgbdelta_t led_tail_step[6];
 #define LED_STACKSIZE 1024
 Task_Struct led_task;
 uint8_t led_task_stack[LED_STACKSIZE];
-Event_Handle led_events_h;
+Event_Handle led_event_h;
 
 rgbcolor16_t led_rainbow_colors[6] = {
     {255<<7, 0, 0},  // Red
@@ -61,7 +61,7 @@ void led_flush() {
 
 void led_show_curr_colors() {
     ht16d_put_colors(6, 6, led_tail_anim_current.colors);
-    Event_post(led_events_h, LED_EVENT_FLUSH);
+    Event_post(led_event_h, LED_EVENT_FLUSH);
 }
 
 // Call this from a task context when it's time to do a thing.
@@ -71,9 +71,13 @@ void led_tail_timestep() {
 
 void led_task_fn(UArg a0, UArg a1) {
     UInt events;
-    led_events_h = Event_create(NULL, NULL);
+    led_event_h = Event_create(NULL, NULL);
+
+    ht16d_init();
+    ht16d_all_one_color(0,0,0);
+
     while (1) {
-        events = Event_pend(led_events_h, Event_Id_NONE, ~Event_Id_NONE,  BIOS_WAIT_FOREVER);
+        events = Event_pend(led_event_h, Event_Id_NONE, ~Event_Id_NONE,  BIOS_WAIT_FOREVER);
 
         if (events & LED_EVENT_SHOW_UPCONF) {
             led_show_curr_colors();
@@ -81,7 +85,7 @@ void led_task_fn(UArg a0, UArg a1) {
 
         if (events & LED_EVENT_HIDE_UPCONF) {
             ht16d_put_color(6, 6, &led_off);
-            Event_post(led_events_h, LED_EVENT_FLUSH);
+            Event_post(led_event_h, LED_EVENT_FLUSH);
         }
 
         if (events & LED_EVENT_FLUSH) {

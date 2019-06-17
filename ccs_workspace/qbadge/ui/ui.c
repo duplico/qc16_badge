@@ -545,8 +545,6 @@ void ui_colorpicking_wireframe() {
         Graphics_drawLine(&ui_gr_context_portrait, i+10, EPD_HEIGHT-16, (int32_t)((25.6*(i-1))/21), EPD_HEIGHT-1);
     }
 
-    // TODO: Maybe arrows up here instead
-    // TODO: defines for these ASAP.
     rect = (Graphics_Rectangle){10,UI_PICKER_TOP+4, EPD_WIDTH-11,UI_PICKER_TOP+4+64};
 
     if (ui_colorpicker_cursor_anim) {
@@ -586,14 +584,12 @@ void ui_colorpicking_load() {
 
     // This will draw everything else:
     Event_post(ui_event_h, UI_EVENT_REFRESH);
-    // TODO: Make these match each other (event vs events)
-    Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
+    Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
 }
 
 void ui_colorpicking_unload() {
-    // TODO: Deactivate the front lights.
     ui_colorpicking = 0;
-    Event_post(led_events_h, LED_EVENT_HIDE_UPCONF);
+    Event_post(led_event_h, LED_EVENT_HIDE_UPCONF);
     Event_post(ui_event_h, UI_EVENT_REFRESH);
     epd_do_partial = 1;
 
@@ -613,27 +609,27 @@ void ui_colorpicking_do(UInt events) {
             break;
         case BTN_RED:
             memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[0], sizeof(rgbcolor16_t));
-            Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
+            Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
             break;
         case BTN_ORG:
             memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[1], sizeof(rgbcolor16_t));
-            Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
+            Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
             break;
         case BTN_YEL:
             memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[2], sizeof(rgbcolor16_t));
-            Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
+            Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
             break;
         case BTN_GRN:
             memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[3], sizeof(rgbcolor16_t));
-            Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
+            Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
             break;
         case BTN_BLU:
             memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[4], sizeof(rgbcolor16_t));
-            Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
+            Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
             break;
         case BTN_PUR:
             memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[5], sizeof(rgbcolor16_t));
-            Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
+            Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
             break;
         case BTN_F1_LOCK:
             ht16d_all_one_color(255, 0, 0);
@@ -695,36 +691,27 @@ void ui_screensaver_do(UInt events) {
 
 void ui_task_fn(UArg a0, UArg a1) {
     UInt events;
-    uint8_t light_brightness = 0;
-
-    // TODO: move these:
-    init_epd();
-    ht16d_init_io();
-    ht16d_init();
-    ht16d_all_one_color(light_brightness,light_brightness,light_brightness);
 
     ui_transition(UI_SCREEN_IDLE);
 
     while (1) {
         events = Event_pend(ui_event_h, Event_Id_NONE, ~Event_Id_NONE,  UI_AUTOREFRESH_TIMEOUT);
 
-        // TODO: reorder the buttons based on the current screen configuration.
-
         if (!events) {
             // This is a timeout.
             if (ui_colorpicking) {
                 ui_colorpicking_unload();
             } else if (ui_textentry) {
-                // TODO: Do we actually want textentry to idle out?
                 ui_textentry_unload();
             } else {
-                // TODO: We need to make sure to avoid race conditions here.
                 ui_transition(UI_SCREEN_IDLE);
             }
+            // If we're doing a timeout, it's because nobody is paying
+            //  attention. Therefore, it's likely safe to do a full refresh.
+            epd_do_partial = 0;
             continue;
         }
 
-        // TODO: Should we prefer release?
         // NB: This order is very important:
         if (kb_active_key_masked == BTN_F4_PICKER
                 && pop_events(&events, UI_EVENT_KB_PRESS)) {
@@ -742,7 +729,6 @@ void ui_task_fn(UArg a0, UArg a1) {
             // The rotate button is pressed, and we're NOT in one of the
             //  portrait modes:
             epd_flip();
-            // TODO: Should we ignore keypresses while the screen is updating?
             Graphics_flushBuffer(&ui_gr_context_landscape);
         }
 
@@ -766,7 +752,6 @@ void ui_task_fn(UArg a0, UArg a1) {
 void ui_init() {
     // IO init:
 
-    // TODO: consider enabling hysteresis?
     // The ROW SCAN sets ROWS as INPUTS, with PULL DOWNS
     //              and, COLS as OUTPUTS, HIGH.
 
@@ -780,7 +765,6 @@ void ui_init() {
     clockParams.startFlag = TRUE;
     kb_debounce_clock_h = Clock_create(kb_clock_swi, 2, &clockParams, &eb);
 
-    // TODO: rename all the taskParams and such
     Task_Params taskParams;
     Task_Params_init(&taskParams);
     taskParams.stack = ui_task_stack;

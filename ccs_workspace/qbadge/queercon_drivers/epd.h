@@ -10,6 +10,7 @@
 
 #include <ti/grlib/grlib.h>
 
+#include "qbadge_serial.h"
 #include "../queercon_drivers/epd_phy.h"
 
 //*****************************************************************************
@@ -21,22 +22,7 @@
 #define BPP 1
 
 // Define LCD Screen Orientation Here
-//#define PORTRAIT
-//#define PORTRAIT_FLIP
 #define LANDSCAPE
-//#define LANDSCAPE_FLIP
-
-// TODO: Move to qc16.h once created:
-
-#define BIT0 0b00000001
-#define BIT1 0b00000010
-#define BIT2 0b00000100
-#define BIT3 0b00001000
-#define BIT4 0b00010000
-#define BIT5 0b00100000
-#define BIT6 0b01000000
-#define BIT7 0b10000000
-
 
 //*****************************************************************************
 //
@@ -90,7 +76,7 @@
 /// \return Returns BLACK if the input is black; WHITE otherwise.
 #define DPYCOLORTRANSLATE(c) (c ? 1 : 0)
 
-void init_epd();
+void epd_init();
 extern Graphics_Display epd_gr_display_landscape;
 extern Graphics_Display epd_gr_display_portrait;
 extern const Graphics_Display_Functions epd_grDisplayFunctions;

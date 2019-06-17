@@ -92,14 +92,13 @@ extern const PIN_Config qc16_pin_init_table[];
 #define QC16_SPIF_MISO             IOID_7
 #define QC16_SPIF_MOSI             IOID_5
 #define QC16_SPI0_CLK              IOID_4
-#define QC16_SPI0_CSN              PIN_UNASSIGNED // Actually 6, dunno if we're going to get to use it. // TODO: line length
+#define QC16_SPI0_CSN              PIN_UNASSIGNED // Actually 6
 
 
 /* UART Board */
 #define QC16_UART_RX_BASE               IOID_2
 #define QC16_UART_TX_BASE               IOID_1
 
-// TODO: Is the following needed?
 /* PWM Outputs */
 #define QC16_PWMPIN0               PIN_UNASSIGNED
 #define QC16_PWMPIN1               PIN_UNASSIGNED
@@ -126,8 +125,6 @@ typedef enum QC16_ADCBufName {
 
     QC16_ADCBUFCOUNT
 } QC16_ADCBufName;
-
-// TODO: Rename these:
 
 /*!
  *  @def    QC16_ADCBuf0SourceName

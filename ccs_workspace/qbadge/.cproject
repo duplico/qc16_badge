@@ -160,7 +160,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="Startup/launchpad/board.c|TOOLS/src|TOOLS/cc26xx_app.cmd|Startup/launchpad" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="TOOLS/src|TOOLS/cc26xx_app.cmd" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 						<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name="TOOLS/src/sysbios"/>
 					</sourceEntries>
 				</configuration>

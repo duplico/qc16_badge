@@ -132,9 +132,7 @@ const uint_least8_t ADC_count = QC16_ADCCOUNT;
 #include <ti/drivers/PIN.h>
 #include <ti/drivers/pin/PINCC26XX.h>
 
-// TODO: Configure all GPIO here:
 const PIN_Config qc16_pin_init_table[] = {
-//    QC16_GPIO_SPIF_CSN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,  /* External flash chip select */ // TODO: Remove
     QC16_PIN_EPAPER_CSN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
     QC16_PIN_EPAPER_DC | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
     QC16_PIN_EPAPER_RESN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
@@ -258,7 +256,6 @@ const uint_least8_t I2C_count = QC16_I2CCOUNT;
 
 #ifndef Board_EXCLUDE_NVS_INTERNAL_FLASH
 
-// TODO: Delete or exclude.
 
 /*
  * Reserve flash sectors for NVS driver use by placing an uninitialized byte
@@ -347,7 +344,6 @@ const PowerCC26XX_Config PowerCC26XX_config = {
     .policyFxn          = &PowerCC26XX_standbyPolicy,
     .enablePolicy       = true,
 #ifdef USE_RCOSC
-    // TODO: define USE_RCOSC
     .calibrateFxn       = &PowerCC26XX_calibrate,
     .calibrateRCOSC_LF  = true,
     .calibrateRCOSC_HF  = true,
@@ -482,7 +478,6 @@ const uint_least8_t SPI_count = QC16_SPICOUNT;
 
 UARTCC26XX_Object uartCC26XXObjects[QC16_UARTCOUNT];
 
-// TODO: probably only need one?
 uint8_t uartCC26XXRingBuffer[QC16_UARTCOUNT][32];
 
 const UARTCC26XX_HWAttrsV2 uartCC26XXHWAttrs[QC16_UARTCOUNT] = {

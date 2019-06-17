@@ -20,10 +20,9 @@
 #define SERIAL_ID_ANY 0xffff
 
 // Serial LL (link-layer) state machine states:
-// TODO: rename to SERIAL_LL_...
-#define SERIAL_MODE_NC_PRX 0
-#define SERIAL_MODE_NC_PTX 1
-#define SERIAL_MODE_C_IDLE 2
+#define SERIAL_LL_STATE_NC_PRX 0
+#define SERIAL_LL_STATE_NC_PTX 1
+#define SERIAL_LL_STATE_C_IDLE 2
 
 // Shared struct and functions:
 

@@ -23,14 +23,6 @@ uint8_t epd_upside_down = 1;
 
 #define REVERSE_BYTE(b) (uint8_t)(((b * 0x0802LU & 0x22110LU) | (b * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16)
 
-///Initial initialization (lol) of the display. Call this only once.
-void init_epd()
-{
-    // TODO: This should probably move to a "UI" section.
-    epd_phy_init();
-}
-
-
 void epd_flip() {
     epd_upside_down = !epd_upside_down;
     uint8_t reverse_temp;
@@ -98,15 +90,12 @@ static void epd_grPixelDraw(const Graphics_Display * pvDisplayData,
     //  X coordinate, as needed.
     uint8_t val = BIT7 >> (mapped_x % 8);
 
-    // TODO:
     volatile uint16_t buffer_addr;
     buffer_addr = ((LCD_X_SIZE/8) * mapped_y) + (mapped_x / 8);
 
     if (ulValue) {
-        //        GRAM_BUFFER(mapped_y, mapped_x) |= val;
         epd_display_buffer[buffer_addr] |= val;
     } else {
-        //        GRAM_BUFFER(mapped_y, mapped_x) &= ~val;
         epd_display_buffer[buffer_addr] &= ~val;
     }
 }
@@ -294,7 +283,6 @@ static uint32_t epd_grColorTranslate(const Graphics_Display *pvDisplayData,
 //
 //*****************************************************************************
 static void epd_grFlush(const Graphics_Display *pvDisplayData) {
-    // TODO: Determine whether to clear and replace, or do a selective update.
     epd_phy_flush_buffer();
 }
 

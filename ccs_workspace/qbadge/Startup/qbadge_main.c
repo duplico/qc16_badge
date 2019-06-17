@@ -33,6 +33,7 @@
 
 #include "ui/ui.h"
 #include "ui/leds.h"
+#include "queercon_drivers/epd_phy.h"
 
 
 uint8_t spiffsWorkBuffer[SPIFFS_LOGICAL_PAGE_SIZE * 2];
@@ -42,8 +43,6 @@ spiffs           fs;
 spiffs_config    fsConfig;
 SPIFFSNVS_Data spiffsnvs;
 
-// TODO:
-//
 
 #define ADC_STACKSIZE 512
 Task_Struct adc_task;
@@ -158,25 +157,6 @@ void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     switch(completedChannel) {
     case ADCBUF_CH_LIGHT:
         // This is a light.
-//        target_brightness_level = 0;
-        ////            while (target_brightness_level < (LED_NUM_BRIGHTNESS_STEPS-1) &&
-        ////                    adc_value > BRIGHTNESS_STEPS[target_brightness_level][0]) {
-        ////                target_brightness_level++;
-        ////            }
-        ////
-        ////            if (led_global_brightness_level != target_brightness_level) {
-        ////                if (target_brightness_level>led_global_brightness_level)
-        ////                    led_global_brightness_level++;
-        ////                else
-        ////                    led_global_brightness_level--;
-        ////
-        //// TODO: The following is not to use:
-        ////                tlc_msg_fun_base[18] = (0b10000000 & tlc_msg_fun_base[18]) |
-        ////                        (0b01111111 & BRIGHTNESS_STEPS[led_global_brightness_level][1]);
-        ////                tlc_update_fun = 1;
-        ////
-        ////                if (led_global_brightness_level == LED_NUM_BRIGHTNESS_STEPS - 1)
-        ////                    its_bright();
         break;
     case ADCBUF_CH_VBAT:
         ADCBuf_convertAdjustedToMicroVolts(handle, completedChannel, completedADCBuffer, &vbat_out_uvolts, conversion->samplesRequestedCount);
@@ -184,7 +164,7 @@ void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     }
 }
 
-void led_brightness_task_fn(UArg a0)
+void adc_timer_fn(UArg a0)
 {
     static QC16_ADCBuf0ChannelName curr_channel = ADCBUF_CH_VBAT;
     volatile int_fast16_t res;
@@ -209,8 +189,6 @@ void led_brightness_task_fn(UArg a0)
 
     if (AONBatMonNewTempMeasureReady()) {
         if (AONBatMonTemperatureGetDegC() < 6) { // deg C (-256..255)
-            //                its_cold();
-            // TODO: do we care about temp?
         }
     }
 }
@@ -221,8 +199,6 @@ int main()
 {
     Power_init();
     if (PIN_init(qc16_pin_init_table) != PIN_SUCCESS) {
-        /* Error with PIN_init */
-        // TODO
         while (1);
     }
     SPI_init();
@@ -247,13 +223,13 @@ int main()
     ui_init();
     serial_init();
     led_init();
+    epd_phy_init();
 
     // Set up the ADC reader clock & buffer
     Clock_Params clockParams;
     Error_Block eb;
     Error_init(&eb);
 
-    // TODO: Determine what module the ADC reader lives in:
     ADCBuf_Params adc_buf_params;
 
     ADCBuf_Params_init(&adc_buf_params);
@@ -268,7 +244,7 @@ int main()
     Clock_Params_init(&clockParams);
     clockParams.period = LED_BRIGHTNESS_INTERVAL;
     clockParams.startFlag = TRUE;
-    adc_clock_h = Clock_create(led_brightness_task_fn, 2, &clockParams, &eb);
+    adc_clock_h = Clock_create(adc_timer_fn, 2, &clockParams, &eb);
 
 
     BIOS_start();     /* enable interrupts and start SYS/BIOS */

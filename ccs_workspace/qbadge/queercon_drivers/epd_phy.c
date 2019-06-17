@@ -58,16 +58,31 @@ void epd_phy_spi_data(uint8_t dat) {
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_CSN, 1);
 }
 
+void epd_phy_spi_data_buf(uint8_t *dat, uint16_t len) {
+    SPI_Transaction transaction;
+    transaction.count = len;
+    transaction.txBuf = (void *) dat;
+    transaction.rxBuf = NULL;
+    // Set DC high for DATA
+    PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_DC, 1);
+    // Set CS low
+    PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_CSN, 0);
+    // Transmit
+    SPI_transfer(epd_spi_h, &transaction);
+    // Set CS high
+    PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_CSN, 1);
+}
+
 /// Do a hardware reset of the display, using the RESN line.
 static void epd_phy_reset() {
     // TODO: timing
     // Reset display driver IC (Pulse EPAPER_RESN low for ?????)
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_RESN, 1);
-    Task_sleep(100); // Sleep system ticks (not sure how long these are)
+    Task_sleep(10); // Sleep system ticks (not sure how long these are)
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_RESN, 0);
-    Task_sleep(100); // Sleep system ticks (not sure how long these are)
+    Task_sleep(10); // Sleep system ticks (not sure how long these are)
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_RESN, 1);
-    Task_sleep(100); // Sleep system ticks (not sure how long these are)
+    Task_sleep(10); // Sleep system ticks (not sure how long these are)
 }
 
 /// Wait for the busy signal to end.
@@ -224,16 +239,18 @@ void epd_phy_flush_buffer() {
     Height = EPD_HEIGHT;
 
     uint32_t Addr = 0;
-    // UDOUBLE Offset = ImageName;
     epd_phy_set_window(0, 0, EPD_WIDTH, EPD_HEIGHT);
+
+    // TODO: This loop is DISASTROUSLY inefficient.
+    //       The whole storage and transmission method should be rewritten.
     for (uint16_t j = 0; j < Height; j++) {
         epd_phy_set_cursor(0, j);
         epd_phy_spi_cmd(WRITE_RAM);
-        // TODO: Just do a full spi write here, and yield.
         for (uint16_t i = 0; i < Width; i++) {
             Addr = i + j * Width;
             epd_phy_spi_data(epd_display_buffer[Addr]);
         }
+        Task_yield();
     }
     epd_phy_activate();
     epd_phy_deepsleep();

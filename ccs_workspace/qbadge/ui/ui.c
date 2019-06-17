@@ -593,8 +593,10 @@ void ui_colorpicking_load() {
 void ui_colorpicking_unload() {
     // TODO: Deactivate the front lights.
     ui_colorpicking = 0;
+    Event_post(led_events_h, LED_EVENT_HIDE_UPCONF);
     Event_post(ui_event_h, UI_EVENT_REFRESH);
     epd_do_partial = 1;
+
 }
 
 void ui_colorpicking_do(UInt events) {
@@ -634,6 +636,7 @@ void ui_colorpicking_do(UInt events) {
             Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
             break;
         case BTN_F1_LOCK:
+            ht16d_all_one_color(255, 0, 0);
             break;
         case BTN_F2_COIN:
             break;

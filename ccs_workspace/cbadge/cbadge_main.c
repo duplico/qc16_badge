@@ -14,7 +14,6 @@ volatile uint8_t button_poll_this_ms = 0;
 uint8_t s_activated = 0x00;
 /// Signal for all captouch button events.
 uint8_t s_button = 0x00;
-// TODO: Create some defines for the values of this: \/
 /// Signal for the serial link-layer.
 uint8_t s_serial_ll = 0;
 /// Interrupt flag for the serial PHY
@@ -118,7 +117,6 @@ void init_io() {
 void init_conf() {
     if (!my_conf.initialized) {
         // this is first boot.
-        // TODO: Initialize properly.
         my_conf.initialized=1;
         my_conf.badge_id=1001;
         my_conf.activated=0;
@@ -209,8 +207,6 @@ int main( void )
             f_button_poll = 0;
         }
 
-        // TODO: If we're connected to a qbadge, and a button is pressed,
-        //       send something about it.
         if (s_button & BUTTON_PRESS_J1) {
             pwm_level_a++;
             if (pwm_level_a == PWM_LEVELS)

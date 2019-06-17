@@ -33,7 +33,6 @@
 #define UBS_TASK_STACK_SIZE                   800
 #endif
 
-// TODO: This is dumb:
 // RTOS Event to queue application events
 #define UEB_QUEUE_EVT                         UTIL_QUEUE_EVENT_ID // Event_Id_30
 
@@ -207,8 +206,6 @@ static void UBLEBcastScan_taskFxn(UArg a0, UArg a1)
 
     for (;;)
     {
-        // TODO: Consider moving the main application logic loop into here.
-
         // Waits for an event to be posted associated with the calling thread.
         // Note that an event associated with a thread is posted when a
         // message is queued to the message receive queue of the thread
@@ -220,7 +217,7 @@ static void UBLEBcastScan_taskFxn(UArg a0, UArg a1)
             ubsEvt_t *pMsg;
 
             // malloc() is not thread safe. Must disable HWI.
-            keyHwi = Hwi_disable(); // TODO: Figure out what's going on here.
+            keyHwi = Hwi_disable();
             pMsg = (ubsEvt_t *) Util_dequeueMsg(appMsgQueue);
             Hwi_restore(keyHwi);
 
@@ -306,8 +303,6 @@ static void UBLEBcastScan_bcast_stateChangeCB(ugapBcastState_t newState)
  */
 static void UBLEBcastScan_bcast_advPrepareCB(void)
 {
-    // TODO: Prepare for a scan!
-    //       Assuming this is even needed.
 }
 
 /*********************************************************************
@@ -388,7 +383,6 @@ bool UBLEBcastScan_initBcast(void)
     /* Initilaize Micro GAP Broadcaster Role */
     if (SUCCESS == ugap_bcastInit(&bcastCBs))
     {
-        // TODO: Initialize the advertisement.
         uble_setParameter(UBLE_PARAM_ADVDATA, sizeof(advertData), advertData);
         return true;
     }
@@ -472,8 +466,6 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
     volatile static char  *devAddr;
     volatile static uint8  chan;
     volatile static uint32 timeStamp;
-    // TODO: Determine if we care about it (is it another QC badge?)
-    // TODO: Decode it.
 
     /* We have an advertisment packe:
      *

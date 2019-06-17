@@ -75,14 +75,11 @@ void epd_phy_spi_data_buf(uint8_t *dat, uint16_t len) {
 
 /// Do a hardware reset of the display, using the RESN line.
 static void epd_phy_reset() {
-    // TODO: timing
-    // Reset display driver IC (Pulse EPAPER_RESN low for ?????)
+    // Reset display driver IC (Pulse EPAPER_RESN low)
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_RESN, 1);
-    Task_sleep(10); // Sleep system ticks (not sure how long these are)
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_RESN, 0);
-    Task_sleep(10); // Sleep system ticks (not sure how long these are)
+    Task_sleep(1); // Sleep 1 system tick (0.01 ms)
     PIN_setOutputValue(epd_pin_h, QC16_PIN_EPAPER_RESN, 1);
-    Task_sleep(10); // Sleep system ticks (not sure how long these are)
 }
 
 /// Wait for the busy signal to end.
@@ -142,7 +139,6 @@ void epd_phy_deepsleep() {
 
 /// Initialize the GPIO and peripherals needed for the EPD.
 void epd_phy_init_gpio() {
-    // TODO: Eliminate this GpioInitTable
     PIN_State epaper_pin_state;
     PIN_Config BoardGpioInitTable[] = {
     QC16_PIN_EPAPER_CSN | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH | PIN_PUSHPULL | PIN_DRVSTR_MIN,
@@ -241,8 +237,6 @@ void epd_phy_flush_buffer() {
     uint32_t Addr = 0;
     epd_phy_set_window(0, 0, EPD_WIDTH, EPD_HEIGHT);
 
-    // TODO: This loop is DISASTROUSLY inefficient.
-    //       The whole storage and transmission method should be rewritten.
     for (uint16_t j = 0; j < Height; j++) {
         epd_phy_set_cursor(0, j);
         epd_phy_spi_cmd(WRITE_RAM);

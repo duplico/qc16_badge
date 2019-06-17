@@ -8,8 +8,6 @@
 #ifndef CBADGE_H_
 #define CBADGE_H_
 
-// TODO: Organize this file.
-
 #define TICK_WDT_BITS WDT_MDLY_0_5
 #define TICKS_PER_MS 2
 

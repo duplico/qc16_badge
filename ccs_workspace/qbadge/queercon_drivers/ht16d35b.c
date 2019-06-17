@@ -63,7 +63,6 @@
 /// Command to order a software reset of the HT16D35B.
 #define HTCMD_SW_RESET      0xCC
 
-// TODO: Define number of each type:
 /// 8-bit values for the RGB LEDs: Dustbuster side, top, frontlight, indicators
 /**
  ** This is a 29-element array of 3-tuples of RGB color (1 byte / 8 bits per
@@ -87,29 +86,10 @@ uint8_t ht16d_gs_values[HT16D_LED_COUNT][3] = {0,};
  */
 const uint8_t ht16d_col_mapping[HT16D_COM_COUNT][28][2] = {{{20, 0}, {20, 1}, {20, 2}, {23, 0}, {23, 1}, {23, 2}, {8, 2}, {8, 0}, {8, 1}, {11, 1}, {11, 0}, {11, 2}, {2, 2}, {2, 1}, {2, 0}, {5, 0}, {5, 1}, {5, 2}, {14, 0}, {14, 1}, {14, 2}, {0xff, 0xff}, {17, 0}, {17, 1}, {17, 2}, {24, 1}, {24, 0}, {24, 2}}, {{19, 0}, {19, 1}, {19, 2}, {22, 0}, {22, 1}, {22, 2}, {7, 2}, {7, 0}, {7, 1}, {10, 1}, {10, 0}, {10, 2}, {1, 2}, {1, 1}, {1, 0}, {4, 0}, {4, 1}, {4, 2}, {13, 0}, {13, 1}, {13, 2}, {0xff, 0xff}, {16, 0}, {16, 1}, {16, 2}, {25, 1}, {25, 0}, {25, 2}}, {{18, 0}, {18, 1}, {18, 2}, {21, 0}, {21, 1}, {21, 2}, {6, 2}, {6, 0}, {6, 1}, {9, 1}, {9, 0}, {9, 2}, {0, 2}, {0, 1}, {0, 0}, {3, 0}, {3, 1}, {3, 2}, {12, 0}, {12, 1}, {12, 2}, {0xff, 0xff}, {15, 0}, {15, 1}, {15, 2}, {26, 1}, {26, 0}, {26, 2}}, {{28, 0}, {28, 1}, {28, 2}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {0xff, 0xff}, {27, 1}, {27, 0}, {27, 2}}};
 
-/// The handle for our i2c transactions, initialized in ht16d_init_io. TODO: is this right?
 I2C_Handle ht16d_i2c_h;
-
-/// Initialize GPIO and I2C peripheral (but don't enable the eUSCI yet).
-void ht16d_init_io() {
-    // HT16D35B (LED Controller)
-    // SDA  DIO_29
-    // SCL  DIO_28
-
-    I2C_Params i2c_params;
-    I2C_Params_init(&i2c_params);
-    i2c_params.bitRate = I2C_400kHz;
-    i2c_params.transferMode = I2C_MODE_BLOCKING; // TODO: Rewrite to callback.
-
-    ht16d_i2c_h = I2C_open(QC16_I2C0, NULL);
-    if (ht16d_i2c_h == NULL) {
-        while (1); // TODO: spin forever if it broke.
-    }
-}
 
 /// Transmit a `len` byte array `txdat` to the HT16D35B.
 void ht16d_send_array(uint8_t txdat[], uint8_t len) {
-    // TODO: Change this to the callback mode, so we don't have to block.
     I2C_Transaction transaction;
     uint8_t status;
 
@@ -122,10 +102,8 @@ void ht16d_send_array(uint8_t txdat[], uint8_t len) {
 
     status = I2C_transfer(ht16d_i2c_h, &transaction);
     if (!status) {
-        while (1); // TODO: post
+        while (1);
     }
-    // Currently, this blocks until completion.
-    // TODO: Check status.
 }
 
 /// Transmit a single byte command to the HT16D35B.
@@ -148,7 +126,6 @@ void ht16d_read_reg(uint8_t reg[]) {
     uint8_t status;
 
     // We'll get a dummy byte, followed by 20 status bytes. I think.
-    // TODO: Change this to the callback mode, so we don't have to block.
 
     //transaction.arg // unused
     transaction.slaveAddress = HT16D_SLAVE_ADDR; // See note above.
@@ -161,8 +138,6 @@ void ht16d_read_reg(uint8_t reg[]) {
     if (!status) {
         while (1);
     }
-    // Currently, this blocks until completion.
-    // TODO: Check status.
 }
 
 /// Initialize the HT16D35B, and enable the peripheral for talking to it.
@@ -184,17 +159,21 @@ void ht16d_init() {
     //  COM and ROW high impedance
     //  LED display OFF.
 
-    // TODO: Is this right?
-    // The peripheral and handle is initialized in ht16d_init_io().
+    // Set up our I2C config:
 
-    // TODO:
-    // On the MSP430 implementation, there was a possible power-on
-    //  fault. In this fault, the bus would always read as busy
-    //  (MSP430: UCB0STATW & UCBBUSY was true)
-    //  and, in order to recover, we converted the clock line to
-    //  GPIO, and transmitted 11 ticks on the clock, in order to
-    //  flush the slave's I2C logic. It's TBD whether that will
-    //  be necessary here.
+    // HT16D35B (LED Controller)
+    // SDA  DIO_29
+    // SCL  DIO_28
+
+    I2C_Params i2c_params;
+    I2C_Params_init(&i2c_params);
+    i2c_params.bitRate = I2C_400kHz;
+    i2c_params.transferMode = I2C_MODE_BLOCKING;
+
+    ht16d_i2c_h = I2C_open(QC16_I2C0, NULL);
+    if (ht16d_i2c_h == NULL) {
+        while (1);
+    }
 
     // SW Reset (HTCMD_SW_RESET)
     ht16d_send_cmd_single(HTCMD_SW_RESET);
@@ -205,7 +184,7 @@ void ht16d_init() {
     ht16_d_send_cmd_dat(HTCMD_BWGRAY_SEL, HTCMD_BWGRAY_SEL_GRAYSCALE);
     // Set column pin control for in-use cols (HTCMD_COM_PIN_CTL)
     ht16_d_send_cmd_dat(HTCMD_COM_PIN_CTL, 0b0001111);
-    // Set constant current ratio (HTCMD_I_RATIO) // TODO: calibrate.
+    // Set constant current ratio (HTCMD_I_RATIO)
     ht16_d_send_cmd_dat(HTCMD_I_RATIO, 0b0111); // MINIMUM CURRENT. 0b000 is max.
     // Set columns to 3 (0--2), and HIGH SCAN mode (HTCMD_COM_NUM)
     ht16_d_send_cmd_dat(HTCMD_COM_NUM, 0x02);
@@ -257,7 +236,6 @@ void ht16d_send_gray() {
 
     uint8_t light_array[30] = {HTCMD_WRITE_DISPLAY, 0x00, 0};
 
-    // TODO
     for (uint8_t col=0; col<HT16D_COM_COUNT; col++) {
         light_array[1] = 0x20*col; // Select the RAM address.
         for (uint8_t row=0; row<28; row++) {

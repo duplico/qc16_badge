@@ -31,7 +31,6 @@ uint8_t serial_mode;
 uint32_t serial_next_timeout;
 Clock_Handle serial_timeout_clock_h;
 
-// TODO:
 const PIN_Config serial_gpio_startup[] = {
     QC16_PIN_SERIAL_DIO1_ABS | PIN_INPUT_EN | PIN_PULLDOWN,
     QC16_PIN_SERIAL_DIO2_RTR | PIN_INPUT_EN | PIN_PULLDOWN,
@@ -62,8 +61,8 @@ void serial_send_helo(UART_Handle uart) {
     header_out.opcode = SERIAL_OPCODE_HELO;
     header_out.payload_len = 0;
     header_out.to_id = SERIAL_ID_ANY;
-    header_out.crc16_payload = 0xabcd; // TODO
-    header_out.crc16_header = 0xabcd; // TODO
+    header_out.crc16_payload = 0xabcd;
+    header_out.crc16_header = 0xabcd;
     uint8_t syncword = SERIAL_PHY_SYNC_WORD;
 
     UART_write(uart, &syncword, 1);
@@ -76,8 +75,8 @@ void serial_send_ack(UART_Handle uart) {
     header_out.opcode = SERIAL_OPCODE_ACK;
     header_out.payload_len = 0;
     header_out.to_id = SERIAL_ID_ANY;
-    header_out.crc16_payload = 0xabcd; // TODO
-    header_out.crc16_header = 0xabcd; // TODO
+    header_out.crc16_payload = 0xabcd;
+    header_out.crc16_header = 0xabcd;
     uint8_t syncword = SERIAL_PHY_SYNC_WORD;
 
     UART_write(uart, &syncword, 1);
@@ -90,13 +89,13 @@ void serial_clock_swi(UArg a0) {
 }
 
 uint8_t validate_header(serial_header_t *header) {
-    return 1; // TODO
+    return 1;
 }
 
 void serial_rx_done(serial_header_t *header, uint8_t *payload) {
     // If this is called, it's already been validated.
     switch(serial_mode) {
-    case SERIAL_MODE_NC_PRX:
+    case SERIAL_LL_STATE_NC_PRX:
         // We are expecting a HELO.
         if (header->opcode == SERIAL_OPCODE_HELO) {
             // Set DIO2 high; set DIO1(ABS) to input w/ pulldown
@@ -104,55 +103,50 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_prx_connected[1]);
             // Send an ACK, set connected.
             serial_send_ack(uart);
-            serial_mode = SERIAL_MODE_C_IDLE;
+            serial_mode = SERIAL_LL_STATE_C_IDLE;
             // Cancel next timeout.
             serial_next_timeout = 0;
-            // TODO: set up DIO.
         }
         break;
-    case SERIAL_MODE_NC_PTX:
+    case SERIAL_LL_STATE_NC_PTX:
         // We are expecting an ACK.
         if (header->opcode == SERIAL_OPCODE_ACK) {
             // DIO1(ABS) output high:
             // DIO2 input with pull-down:
             PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_ptx_connected[0]);
             PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_ptx_connected[1]);
-            serial_mode = SERIAL_MODE_C_IDLE;
+            serial_mode = SERIAL_LL_STATE_C_IDLE;
             // Cancel next timeout.
             serial_next_timeout = 0;
-            // TODO: set up DIO.
         }
         break;
-    case SERIAL_MODE_C_IDLE:
-        // TODO: parse & signal
+    case SERIAL_LL_STATE_C_IDLE:
         break;
 //    default:
-        // TODO
     }
 }
 
 void serial_timeout() {
     switch(serial_mode) {
-    case SERIAL_MODE_NC_PRX:
+    case SERIAL_LL_STATE_NC_PRX:
         // Switch UART TX/RX and change timeout.
         UART_close(uart);
-        serial_mode = SERIAL_MODE_NC_PTX;
+        serial_mode = SERIAL_LL_STATE_NC_PTX;
         uart_params.readTimeout = PTX_TIME_MS * 100;
         serial_next_timeout = Clock_getTicks() + (PTX_TIME_MS * 100);
         uart = UART_open(QC16_UART_PTX, &uart_params);
         // Also, since this is now the TX mode, we need to send a HELO.
         serial_send_helo(uart);
         break;
-    case SERIAL_MODE_NC_PTX:
+    case SERIAL_LL_STATE_NC_PTX:
         // Switch UART TX/RX and change timeout.
         UART_close(uart);
-        serial_mode = SERIAL_MODE_NC_PRX;
+        serial_mode = SERIAL_LL_STATE_NC_PRX;
         uart_params.readTimeout = PRX_TIME_MS * 100;
         serial_next_timeout = Clock_getTicks() + (PRX_TIME_MS * 100);
         uart = UART_open(QC16_UART_PRX, &uart_params);
         break;
 //    default:
-        // TODO
     }
 }
 
@@ -164,7 +158,6 @@ void serial_task_fn(UArg a0, UArg a1) {
     uint8_t input[32];
     int_fast32_t result;
 
-    // TODO: This will overflow every ~5 days:
     serial_next_timeout = Clock_getTicks() + PRX_TIME_MS * 100;
 
     while (1) {
@@ -176,9 +169,7 @@ void serial_task_fn(UArg a0, UArg a1) {
                     && validate_header(&header_in)) {
                 if (header_in.payload_len) {
                     result = UART_read(uart, input, header_in.payload_len);
-                    // TODO: validate len will fit.
                     if (result == header_in.payload_len) {
-                        // TODO: validate the crc
                         // RXed good.
                         serial_rx_done(&header_in, input);
                     }
@@ -190,7 +181,6 @@ void serial_task_fn(UArg a0, UArg a1) {
         }
 
         // Just keep listening, unless we have a timeout.
-        // TODO: This will overflow every ~5 days: (lol @ battery lasting)
         if (serial_next_timeout && Clock_getTicks() >= serial_next_timeout) {
             serial_timeout();
         }
@@ -200,8 +190,6 @@ void serial_task_fn(UArg a0, UArg a1) {
 }
 
 void serial_init() {
-    // TODO: Read and set ABS
-
     UART_Params_init(&uart_params);
     uart_params.baudRate = 9600;
     uart_params.readDataMode = UART_DATA_BINARY;
@@ -231,12 +219,11 @@ void serial_init() {
     uart_params.readTimeout = PRX_TIME_MS * 100;
     uart = UART_open(QC16_UART_PRX, &uart_params);
 
-    serial_mode = SERIAL_MODE_NC_PRX;
+    serial_mode = SERIAL_LL_STATE_NC_PRX;
     serial_pin_h = PIN_open(&serial_pin_state, serial_gpio_startup);
 
     if (PIN_getInputValue(QC16_PIN_SERIAL_DIO1_ABS)) {
-        // If this is high, someone else is powering us.
-        // TODO.
+        // This is not actually possible without modifying the hardware.
     } else {
         // If it's low, we're under our own power.
         PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_active[0]);

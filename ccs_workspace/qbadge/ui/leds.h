@@ -36,7 +36,7 @@ typedef struct {
     int_fast16_t b;
 } rgbdelta_t;
 
-extern Event_Handle led_events_h;
+extern Event_Handle led_event_h;
 extern led_tail_anim_t led_tail_anim_current;
 extern rgbcolor16_t led_rainbow_colors[6];
 

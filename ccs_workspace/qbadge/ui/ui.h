@@ -12,8 +12,6 @@
 
 #include <ti/sysbios/knl/Event.h>
 
-// TODO: Move to global config
-#define UI_CLOCK_MS 15 // config
 #define UI_CLOCK_TICKS (UI_CLOCK_MS * 100) // derived
 
 // let's start KB events from the top

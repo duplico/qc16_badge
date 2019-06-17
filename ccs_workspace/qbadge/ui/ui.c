@@ -19,6 +19,7 @@
 #include <ti/sysbios/knl/Event.h>
 #include <ti/drivers/PIN.h>
 
+#include "leds.h"
 #include "ui.h"
 #include "board.h"
 
@@ -590,9 +591,12 @@ void ui_colorpicking_load() {
 
     // This will draw everything else:
     Event_post(ui_event_h, UI_EVENT_REFRESH);
+    // TODO: Make these match each other (event vs events)
+    Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
 }
 
 void ui_colorpicking_unload() {
+    // TODO: Deactivate the front lights.
     ui_colorpicking = 0;
     Event_post(ui_event_h, UI_EVENT_REFRESH);
     epd_do_partial = 1;
@@ -611,16 +615,28 @@ void ui_colorpicking_do(UInt events) {
             ui_colorpicking_unload();
             break;
         case BTN_RED:
+            memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[0], sizeof(rgbcolor16_t));
+            Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
             break;
         case BTN_ORG:
+            memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[1], sizeof(rgbcolor16_t));
+            Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
             break;
         case BTN_YEL:
+            memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[2], sizeof(rgbcolor16_t));
+            Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
             break;
         case BTN_GRN:
+            memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[3], sizeof(rgbcolor16_t));
+            Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
             break;
         case BTN_BLU:
+            memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[4], sizeof(rgbcolor16_t));
+            Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
             break;
         case BTN_PUR:
+            memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[5], sizeof(rgbcolor16_t));
+            Event_post(led_events_h, LED_EVENT_SHOW_UPCONF);
             break;
         case BTN_F1_LOCK:
             break;
@@ -747,25 +763,6 @@ void ui_task_fn(UArg a0, UArg a1) {
 
         }
     }
-
-    if (events & UI_EVENT_KB_PRESS) {
-        // keyboard press.
-        if (kb_active_key_masked == BTN_UP) {
-            if (light_brightness > 245) {
-                light_brightness = 255;
-            } else {
-                light_brightness += 10;
-            }
-        } else if (kb_active_key_masked == BTN_DOWN) {
-            if (light_brightness < 10) {
-                light_brightness = 0;
-            } else {
-                light_brightness -= 10;
-            }
-        }
-        ht16d_all_one_color(light_brightness,light_brightness,light_brightness);
-    }
-
 }
 
 void ui_init() {

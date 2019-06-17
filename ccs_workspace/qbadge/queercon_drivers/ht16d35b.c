@@ -288,6 +288,18 @@ void ht16d_put_colors(uint8_t id_start, uint8_t id_len, rgbcolor16_t* colors) {
     }
 }
 
+/// Set some of the colors, but don't send them to the LED controller.
+void ht16d_put_color(uint8_t id_start, uint8_t id_len, rgbcolor16_t* color) {
+    if (id_start >= HT16D_LED_COUNT || id_start+id_len > HT16D_LED_COUNT) {
+        return;
+    }
+    for (uint8_t i=0; i<id_len; i++) {
+        ht16d_gs_values[(id_start+i)][0] = (uint8_t)(color->r >> 7);
+        ht16d_gs_values[(id_start+i)][1] = (uint8_t)(color->g >> 7);
+        ht16d_gs_values[(id_start+i)][2] = (uint8_t)(color->b >> 7);
+    }
+}
+
 /// Set some of the colors, and immediately send them to the LED controller.
 void ht16d_set_colors(uint8_t id_start, uint8_t id_len, rgbcolor16_t* colors) {
     ht16d_put_colors(id_start, id_len, colors);
@@ -314,16 +326,4 @@ void ht16d_display_off() {
 }
 void ht16d_display_on() {
     ht16_d_send_cmd_dat(HTCMD_SYS_OSC_CTL, 0b11); // Activate osc & display.
-}
-
-// TODO:
-/// Set all colors in the ring to a single color, preserving the center-line.
-void ht16d_all_one_color_ring_only(uint8_t r, uint8_t g, uint8_t b) {
-
-    for (uint8_t i=0; i<18; i++) {
-        ht16d_gs_values[i][0] = r;
-        ht16d_gs_values[i][1] = g;
-        ht16d_gs_values[i][2] = b;
-    }
-    ht16d_send_gray();
 }

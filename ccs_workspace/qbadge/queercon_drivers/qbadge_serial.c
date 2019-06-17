@@ -99,7 +99,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
     case SERIAL_MODE_NC_PRX:
         // We are expecting a HELO.
         if (header->opcode == SERIAL_OPCODE_HELO) {
-            // TODO: set DIO2 high; set DIO1(ABS) to input w/ pulldown
+            // Set DIO2 high; set DIO1(ABS) to input w/ pulldown
             PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_prx_connected[0]);
             PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_prx_connected[1]);
             // Send an ACK, set connected.
@@ -114,7 +114,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         // We are expecting an ACK.
         if (header->opcode == SERIAL_OPCODE_ACK) {
             // DIO1(ABS) output high:
-            // DIO2(RTR) input with pull-down:
+            // DIO2 input with pull-down:
             PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_ptx_connected[0]);
             PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_ptx_connected[1]);
             serial_mode = SERIAL_MODE_C_IDLE;
@@ -160,9 +160,9 @@ void serial_task_fn(UArg a0, UArg a1) {
     // There are two serial modes:
     //  Primary RX - in which we listen for a HELO message, and
     //  Primary TX - in which we send a HELO and wait, very briefly, for ACK.
-    volatile serial_header_t header_in;
-    volatile uint8_t input[32];
-    volatile int_fast32_t result;
+    serial_header_t header_in;
+    uint8_t input[32];
+    int_fast32_t result;
 
     // TODO: This will overflow every ~5 days:
     serial_next_timeout = Clock_getTicks() + PRX_TIME_MS * 100;

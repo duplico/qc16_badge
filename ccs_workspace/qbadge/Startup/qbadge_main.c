@@ -32,6 +32,7 @@
 #include "qbadge.h"
 
 #include "ui/ui.h"
+#include "ui/leds.h"
 
 
 uint8_t spiffsWorkBuffer[SPIFFS_LOGICAL_PAGE_SIZE * 2];
@@ -228,6 +229,7 @@ int main()
     I2C_init();
     ADCBuf_init();
     UART_init();
+
 #ifdef CACHE_AS_RAM
     // retain cache during standby
     Power_setConstraint(PowerCC26XX_SB_VIMS_CACHE_RETAIN);
@@ -244,13 +246,14 @@ int main()
     // Create the UI tasks:
     ui_init();
     serial_init();
+    led_init();
 
     // Set up the ADC reader clock & buffer
     Clock_Params clockParams;
     Error_Block eb;
     Error_init(&eb);
 
-
+    // TODO: Determine what module the ADC reader lives in:
     ADCBuf_Params adc_buf_params;
 
     ADCBuf_Params_init(&adc_buf_params);
@@ -266,6 +269,7 @@ int main()
     clockParams.period = LED_BRIGHTNESS_INTERVAL;
     clockParams.startFlag = TRUE;
     adc_clock_h = Clock_create(led_brightness_task_fn, 2, &clockParams, &eb);
+
 
     BIOS_start();     /* enable interrupts and start SYS/BIOS */
 

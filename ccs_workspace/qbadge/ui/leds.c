@@ -17,7 +17,18 @@
 #include "queercon_drivers/ht16d35b.h"
 #include "ui/leds.h"
 
-led_tail_anim_t led_tail_anim_current;
+led_tail_anim_t led_tail_anim_current = {
+    .speed=1,
+    .type=LED_TAIL_ANIM_TYPE_SCROLL,
+    .colors= {
+              {0,0,0xffff},
+              {0,0,0xffff},
+              {0,0,0xffff},
+              {0,0,0xffff},
+              {0,0,0xffff},
+              {0,0,0xffff},
+    }
+};
 
 rgbcolor16_t led_tail_src[6];
 /// Current colors of the LED dustbuster

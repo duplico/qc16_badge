@@ -70,12 +70,7 @@ void kb_clock_swi(UArg a0) {
         // this is row r
         // row pin to read is r+QC16_PIN_KP_ROW_1-1
         PIN_Id pin_to_read;
-        if (r < 4) {
-            pin_to_read = QC16_PIN_KP_ROW_1 + r - 1;
-        } else {
-            // TODO: This will change for the black prototype & prod.
-            pin_to_read = QC16_PIN_KP_ROW_4;
-        }
+        pin_to_read = QC16_PIN_KP_ROW_1 + r - 1;
 
         if (PIN_getInputValue(pin_to_read)) {
             // high => pressed

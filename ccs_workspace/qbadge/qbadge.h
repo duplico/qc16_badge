@@ -10,6 +10,7 @@
 
 #include <stdint.h>
 
+#define UI_AUTOREFRESH_TIMEOUT 6000000
 #define UI_CLOCK_MS 15 // config
 
 #define SPIFFS_LOGICAL_BLOCK_SIZE    (4096)

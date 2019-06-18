@@ -12,7 +12,17 @@
 
 #include <ti/sysbios/knl/Event.h>
 
+#include <ti/grlib/grlib.h>
+
 #define UI_CLOCK_TICKS (UI_CLOCK_MS * 100) // derived
+
+// UI screens:
+#define UI_SCREEN_IDLE 0
+#define UI_SCREEN_MAINMENU 1
+#define UI_SCREEN_COLORPICKER 2
+#define UI_SCREEN_STORY1 101
+
+// Keyboard related:
 
 // let's start KB events from the top
 #define UI_EVENT_KB_FLIP Event_Id_31
@@ -60,9 +70,40 @@
 #define BTN_BACK (BTN_ROW_4 | BTN_COL_3)
 #define BTN_OK (BTN_ROW_4 | BTN_COL_5)
 
+// Visual configurations:
+// The screensaver stackup:
+// 7 blocks of 18 px high
+// 170 px high photo section
+#define UI_IDLE_BLOCK_HEIGHT_PX 18
+#define UI_IDLE_BLOCK0_HEIGHT 1
+#define UI_IDLE_BLOCK1_HEIGHT 4
+#define UI_IDLE_BLOCK2_HEIGHT 2
+
+#define UI_IDLE_BLOCK0_TOP_PX       0
+#define UI_IDLE_BLOCK0_HEIGHT_PX    (UI_IDLE_BLOCK0_HEIGHT * UI_IDLE_BLOCK_HEIGHT_PX)
+#define UI_IDLE_BLOCK1_TOP_PX       UI_IDLE_BLOCK0_HEIGHT_PX
+#define UI_IDLE_BLOCK1_HEIGHT_PX    (UI_IDLE_BLOCK1_HEIGHT * UI_IDLE_BLOCK_HEIGHT_PX)
+#define UI_IDLE_BLOCK2_TOP_PX       (UI_IDLE_BLOCK0_HEIGHT_PX + UI_IDLE_BLOCK1_HEIGHT_PX)
+#define UI_IDLE_BLOCK2_HEIGHT_PX    (UI_IDLE_BLOCK2_HEIGHT * UI_IDLE_BLOCK_HEIGHT_PX)
+
+#define UI_IDLE_PHOTO_TOP           (UI_IDLE_BLOCK2_TOP_PX + UI_IDLE_BLOCK2_HEIGHT_PX)
+
+#define UI_PICKER_TOP               UI_IDLE_PHOTO_TOP
+
+// Data
+
 extern uint8_t kb_active_key;
 extern Event_Handle ui_event_h;
+extern Graphics_Context ui_gr_context_landscape;
+extern Graphics_Context ui_gr_context_portrait;
 
+// Modals:
+extern uint8_t ui_colorpicking;
+
+
+// Functions
+
+UInt pop_events(UInt *events_ptr, UInt events_to_check);
 void ui_init();
 
 #endif /* APPLICATION_UI_H_ */

@@ -7,6 +7,7 @@
 #include <qbadge.h>
 #include <queercon_drivers/epd.h>
 #include <queercon_drivers/ht16d35b.h>
+#include <queercon_drivers/storage.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -593,6 +594,8 @@ void ui_screensaver_do(UInt events) {
 void ui_task_fn(UArg a0, UArg a1) {
     UInt events;
 
+    storage_init();
+
     ui_transition(UI_SCREEN_IDLE);
 
     while (1) {
@@ -651,7 +654,8 @@ void ui_task_fn(UArg a0, UArg a1) {
 }
 
 void ui_init() {
-    // IO init:
+    kb_init();
+
     Task_Params taskParams;
     Task_Params_init(&taskParams);
     taskParams.stack = ui_task_stack;

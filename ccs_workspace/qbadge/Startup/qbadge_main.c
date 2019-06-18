@@ -114,7 +114,6 @@ int main()
     serial_init();
     led_init();
     epd_phy_init();
-    storage_init();
 
     // Set up the ADC reader clock & buffer
     Clock_Params clockParams;

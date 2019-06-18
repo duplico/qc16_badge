@@ -90,6 +90,12 @@
 
 #define UI_PICKER_TOP               UI_IDLE_PHOTO_TOP
 
+#define UI_PICKER_TAB_H 32
+#define UI_PICKER_TAB_W 32
+
+#define UI_PICKER_COLORBOX_H 32
+#define UI_PICKER_COLORBOX_BPAD 16
+
 // Data
 
 extern uint8_t kb_active_key;

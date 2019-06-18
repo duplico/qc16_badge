@@ -11,19 +11,53 @@
 #include <cbadge.h>
 #include <cbadge_serial.h>
 
-#define SERIAL_ENTER_PTX SYSCFG3 |= USCIARMP_1
-#define SERIAL_ENTER_PRX SYSCFG3 &= ~USCIARMP_1
-
 volatile serial_header_t serial_header_in = {0,};
 serial_header_t serial_header_out = {0,};
 volatile uint8_t *serial_header_buf;
 volatile uint8_t serial_buffer[SERIAL_BUFFER_LEN] = {0,};
+uint8_t serial_phy_mode_ptx = 0;
 volatile uint8_t serial_phy_state = 0;
 volatile uint8_t serial_phy_index = 0;
 volatile uint8_t serial_phy_timeout_counter = 0;
 
 uint8_t serial_ll_state;
 uint16_t serial_ll_timeout_ms;
+
+void serial_enter_ptx() {
+    // Swap to the alternate/PTX USCI config:
+    SYSCFG3 |= USCIARMP_1;
+    // Reconfigure our DIO for PTX:
+    //  DIO1(PTX) is a HIGH output
+    SERIAL_DIO_DIR |= SERIAL_DIO1_PTX;
+    SERIAL_DIO_OUT |= SERIAL_DIO1_PTX;
+    //  DIO2(PRX) is a LOW-pulled input
+    SERIAL_DIO_DIR &= ~SERIAL_DIO2_PRX;
+    SERIAL_DIO_REN |= SERIAL_DIO2_PRX;
+    SERIAL_DIO_OUT &= ~SERIAL_DIO2_PRX;
+
+
+    // PHY and link-layer state:
+    serial_phy_mode_ptx=1;
+    serial_ll_timeout_ms = PTX_TIME_MS;
+}
+
+void serial_enter_prx() {
+    // Swap to the main/PRX USCI config:
+     SYSCFG3 &= ~USCIARMP_1;
+
+     // Reconfigure our DIO for PRX:
+     //  DIO2(PRX) is a HIGH output
+     SERIAL_DIO_DIR |= SERIAL_DIO2_PRX;
+     SERIAL_DIO_OUT |= SERIAL_DIO2_PRX;
+     //  DIO1(PTX) is a LOW-pulled input
+     SERIAL_DIO_DIR &= ~SERIAL_DIO1_PTX;
+     SERIAL_DIO_REN |= SERIAL_DIO1_PTX;
+     SERIAL_DIO_OUT &= ~SERIAL_DIO1_PTX;
+
+    // PHY and link-layer state:
+    serial_phy_mode_ptx=0;
+    serial_ll_timeout_ms = PRX_TIME_MS;
+}
 
 void serial_send_start() {
     crc16_header_apply(&serial_header_out);
@@ -39,10 +73,9 @@ void serial_ll_timeout() {
             serial_ll_timeout_ms = PRX_TIME_MS;
             break; // If we're not active, we never leave PRX.
         }
-        SERIAL_ENTER_PTX;
+        serial_enter_ptx();
 
         serial_ll_state = SERIAL_LL_STATE_NC_PTX;
-        serial_ll_timeout_ms = PTX_TIME_MS;
 
         serial_header_out.from_id = my_conf.badge_id;
         serial_header_out.opcode = SERIAL_OPCODE_HELO;
@@ -51,10 +84,9 @@ void serial_ll_timeout() {
         serial_send_start();
         break;
     case SERIAL_LL_STATE_NC_PTX:
-        SERIAL_ENTER_PRX;
+        serial_enter_prx();
 
         serial_ll_state = SERIAL_LL_STATE_NC_PRX;
-        serial_ll_timeout_ms = PRX_TIME_MS;
         break;
 //    default:
     }
@@ -64,12 +96,20 @@ void serial_ll_timeout() {
 void serial_ll_ms_tick() {
     serial_ll_timeout_ms--;
 
-    if (!serial_ll_timeout_ms) {
-        serial_ll_timeout();
+    if (serial_ll_state == SERIAL_LL_STATE_C_IDLE) {
+        if (
+                 (serial_phy_mode_ptx && !(SERIAL_DIO_IN & SERIAL_DIO2_PRX))
+             || (!serial_phy_mode_ptx && !(SERIAL_DIO_IN & SERIAL_DIO1_PTX))
+        ) {
+            // We read connection-sense LOW, so we're unplugged.
+            serial_enter_prx();
+            serial_ll_state = SERIAL_LL_STATE_NC_PRX;
+            // TODO: send a flag to the event loop.
+        }
     }
 
-    if (serial_ll_state == SERIAL_LL_STATE_C_IDLE) {
-        // TODO: Check GPIO
+    if (!serial_ll_timeout_ms) {
+        serial_ll_timeout();
     }
 }
 
@@ -83,13 +123,6 @@ void serial_ll_handle_rx() {
             serial_header_out.opcode = SERIAL_OPCODE_ACK;
             serial_header_out.payload_len = 0;
             serial_header_out.to_id = SERIAL_ID_ANY;
-            // DIO2: Output HIGH.
-            SERIAL_DIO_DIR |= SERIAL_DIO2_RTR;
-            SERIAL_DIO_OUT |= SERIAL_DIO2_RTR;
-            // DIO1: Input w/ pulldown
-            SERIAL_DIO_DIR &= ~SERIAL_DIO1_ABS;
-            SERIAL_DIO_REN |= SERIAL_DIO1_ABS;
-            SERIAL_DIO_OUT &= ~SERIAL_DIO1_ABS;
             serial_send_start();
             // Once that completes, we'll be connected.
             serial_ll_state = SERIAL_LL_STATE_C_IDLE;
@@ -99,13 +132,6 @@ void serial_ll_handle_rx() {
     case SERIAL_LL_STATE_NC_PTX:
         // We sent a HELO when we entered this state, so we need an ACK.
         if (serial_header_in.opcode == SERIAL_OPCODE_ACK) {
-            // DIO1: Output HIGH.
-            SERIAL_DIO_DIR |= SERIAL_DIO1_ABS;
-            SERIAL_DIO_OUT |= SERIAL_DIO1_ABS;
-            // DIO2: Input w/ pulldown
-            SERIAL_DIO_DIR &= ~SERIAL_DIO2_RTR;
-            SERIAL_DIO_REN |= SERIAL_DIO2_RTR;
-            SERIAL_DIO_OUT &= ~SERIAL_DIO2_RTR;
             serial_ll_state = SERIAL_LL_STATE_C_IDLE;
             s_serial_ll = 1;
         }
@@ -118,14 +144,7 @@ void serial_ll_handle_rx() {
 void serial_phy_handle_rx() {
     // We just got a complete serial message
     //  (header and, possibly, payload).
-    if (crc16_buf((uint8_t *) &serial_header_in, sizeof(serial_header_t) - sizeof(serial_header_in.crc16_header)) != serial_header_in.crc16_header ) {
-        // Bad CRC header.
-        return;
-    }
-
-    if (crc16_buf(serial_buffer, serial_header_in.payload_len) != serial_header_in.crc16_payload) {
-        // Bad payload header
-        // TODO: consider NACKing if we're connected?
+    if (!validate_header(&serial_header_in)) {
         return;
     }
 
@@ -138,36 +157,31 @@ void serial_phy_handle_rx() {
 }
 
 void init_serial() {
-    // Our initial config is in PRX mode. We'll stay there,
-    //  unless we're ACTIVE.
-    serial_ll_state = SERIAL_LL_STATE_NC_PRX;
-    serial_ll_timeout_ms = PRX_TIME_MS;
-
-    // Read P1.1 to determine whether we're free-standing, or
-    //  if we're connected to a badge that's powering us. If it's LOW,
-    //  then this badge is active WITHOUT another badge powering us.
-    //  How cool! Switch that pin to an output to signal that
-    //  this badge is now active.
-    if (!(P1IN & BIT1)) {
+    // Read our serial DIO lines to determine whether we're free-standing, or
+    //  if we're connected to a badge that's powering us.
+    // If both DIO lines are LOW, that means this badge is active,
+    //  WITHOUT another badge powering us.
+    if (SERIAL_DIO_IN & (SERIAL_DIO1_PTX | SERIAL_DIO2_PRX)) {
+        // We are being externally powered, because at least one of
+        //  DIO1_PTX and DIO2_PRX are asserted (and we have those
+        //  set as inputs with pull-down resistors)
+        my_conf.active = 0;
+    } else {
         // We are under our own power.
-        // Assert the Active Badge Signal (ABS, P1.1).
-        P1DIR |= BIT1;
-        P1OUT |= BIT1;
         if (!my_conf.activated) {
             my_conf.activated = 1;
             // This badge was just turned on under its own power for the first time!
             s_activated = 1;
         }
         my_conf.active = 1;
-    } else {
-        my_conf.active = 0;
     }
 
     // Pause the UART peripheral:
     UCA0CTLW0 |= UCSWRST;
     // Source the baud rate generation from SMCLK (~1 MHz)
     // 8E2 (Enable parity, even parity, 2 stop bits)
-    UCA0CTLW0 |= UCSSEL__SMCLK + UCPEN_1 + UCPAR__EVEN + UCSPB_1;
+//    UCA0CTLW0 |= UCSSEL__SMCLK + UCPEN_1 + UCPAR__EVEN + UCSPB_1;
+    UCA0CTLW0 |= UCSSEL__SMCLK + UCPEN_0 + UCSPB_0;
     // Configure the baud rate to 9600.
     //  (See page 589 in the family user's guide, SLAU445I)
     // The below is for 1.00 MHz SMCLK:
@@ -182,6 +196,10 @@ void init_serial() {
     //  But, we'd prefer that interrupt not to fire, so we'll clear it
     //  now:
     UCA0IFG &= ~UCTXIFG;
+
+    // Our initial config is in PRX mode.
+    serial_ll_state = SERIAL_LL_STATE_NC_PRX;
+    serial_enter_prx();
 
     // Enable interrupts for TX and RX:
     UCA0IE |= UCTXIE | UCRXIE;

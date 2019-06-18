@@ -25,7 +25,7 @@ volatile uint8_t f_pwm_loop = 0x00;
 /// Interrupt flag indicating 1 ms has passed.
 volatile uint8_t f_ms = 0x00;
 
-#pragma PERSISTENT(my_conf)
+//#pragma PERSISTENT(my_conf)
 cbadge_conf_t my_conf = {
     .activated=0,
     .active=0,
@@ -92,18 +92,18 @@ void init_io() {
 
     // GPIO:
     // P1.0     LED A       (SEL 00; DIR 1)
-    // P1.1     B2B ABS     (SEL 00; DIR 0) (pull-down) (DIO1)
+    // P1.1     B2B PTX     (SEL 00; DIR 0) (pull-down) (DIO1)
     // P1.2     RX (PTX)    (SEL 01; DIR 0)
     // P1.3     TX (PTX)    (SEL 01; DIR 1)
-    // P1.4     B2B RTR     (SEL 00; DIR 1 OUT 0) (DIO2)
+    // P1.4     B2B PRX     (SEL 00; DIR 0) (pull-down) (DIO2)
     // P1.5     B1          (SEL 00; DIR 0)
     // P1.6     RX (PRX)   (SEL 01; DIR 0)
     // P1.7     TX (PRX)   (SEL 01; DIR 1)
     // (PRX is the default config)
-    P1DIR = 0b10001011;
+    P1DIR = 0b10001001;
     P1SEL0 = 0b11001100; // LSB
     P1SEL1 = 0b00000000; // MSB
-    P1REN = 0b00000010;
+    P1REN = 0b00010010;
     P1OUT = 0x00;
     // P2.0     LED B       (SEL: 00; DIR 1)
     // P2.1     B2          (SEL: 00; DIR 0)
@@ -131,11 +131,10 @@ void init() {
     // Stop the watchdog timer.
     WDTCTL = WDTPW | WDTCNTCL;
 
-    // Set up the clock system:
+    init_conf();
     init_clocks();
     init_io();
     init_serial();
-    init_conf();
 
     // Set up the WDT to do our time loop.
     WDTCTL = TICK_WDT_BITS;

@@ -39,5 +39,6 @@ uint8_t validate_header(serial_header_t *header) {
         // Bad header CRC.
         return 0;
     }
+
     return 1;
 }

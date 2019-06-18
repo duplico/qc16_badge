@@ -27,31 +27,21 @@ UART_Params uart_params;
 PIN_Handle serial_pin_h;
 PIN_State serial_pin_state;
 
-uint8_t serial_mode;
-uint32_t serial_next_timeout;
+uint8_t serial_phy_mode_ptx = 0;
+
+uint8_t serial_ll_state;
+uint32_t serial_ll_next_timeout;
 Clock_Handle serial_timeout_clock_h;
 
-const PIN_Config serial_gpio_startup[] = {
-    QC16_PIN_SERIAL_DIO1_ABS | PIN_INPUT_EN | PIN_PULLDOWN,
-    QC16_PIN_SERIAL_DIO2_RTR | PIN_INPUT_EN | PIN_PULLDOWN,
+const PIN_Config serial_gpio_prx[] = {
+    QC16_PIN_SERIAL_DIO1_PTX | PIN_INPUT_EN | PIN_PULLDOWN,
+    QC16_PIN_SERIAL_DIO2_PRX | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH,
     PIN_TERMINATE
 };
 
-const PIN_Config serial_gpio_active[] = {
-    QC16_PIN_SERIAL_DIO1_ABS | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH,
-    QC16_PIN_SERIAL_DIO2_RTR | PIN_INPUT_EN | PIN_PULLDOWN,
-    PIN_TERMINATE
-};
-
-const PIN_Config serial_gpio_prx_connected[] = {
-    QC16_PIN_SERIAL_DIO1_ABS | PIN_INPUT_EN | PIN_PULLDOWN,
-    QC16_PIN_SERIAL_DIO2_RTR | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH,
-    PIN_TERMINATE
-};
-
-const PIN_Config serial_gpio_ptx_connected[] = {
-    QC16_PIN_SERIAL_DIO1_ABS | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH,
-    QC16_PIN_SERIAL_DIO2_RTR | PIN_INPUT_EN | PIN_PULLDOWN,
+const PIN_Config serial_gpio_ptx[] = {
+    QC16_PIN_SERIAL_DIO1_PTX | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH,
+    QC16_PIN_SERIAL_DIO2_PRX | PIN_INPUT_EN | PIN_PULLDOWN,
     PIN_TERMINATE
 };
 
@@ -88,32 +78,52 @@ void serial_clock_swi(UArg a0) {
 
 }
 
+// The UART may NOT be open when this is called.
+void serial_enter_ptx() {
+    serial_phy_mode_ptx = 1;
+    uart_params.readTimeout = PTX_TIME_MS * 100;
+    serial_ll_next_timeout = Clock_getTicks() + (PTX_TIME_MS * 100);
+    uart = UART_open(QC16_UART_PTX, &uart_params);
+
+    // Set the GPIO/PIN configuration to the PTX setup:
+    PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_ptx[0]);
+    PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_ptx[1]);
+}
+
+// The UART may NOT be open when this is called.
+void serial_enter_prx() {
+    serial_phy_mode_ptx = 0;
+    uart_params.readTimeout = PRX_TIME_MS * 100;
+    serial_ll_next_timeout = Clock_getTicks() + (PRX_TIME_MS * 100);
+    uart = UART_open(QC16_UART_PRX, &uart_params);
+
+    // Set the GPIO/PIN configuration to the PTX setup:
+    PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_prx[0]);
+    PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_prx[1]);
+}
+
+void serial_enter_c_idle() {
+    serial_ll_next_timeout = Clock_getTicks() + (SERIAL_C_DIO_POLL_MS * 100);
+}
+
 void serial_rx_done(serial_header_t *header, uint8_t *payload) {
     // If this is called, it's already been validated.
-    switch(serial_mode) {
+    switch(serial_ll_state) {
     case SERIAL_LL_STATE_NC_PRX:
         // We are expecting a HELO.
         if (header->opcode == SERIAL_OPCODE_HELO) {
-            // Set DIO2 high; set DIO1(ABS) to input w/ pulldown
-            PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_prx_connected[0]);
-            PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_prx_connected[1]);
             // Send an ACK, set connected.
             serial_send_ack(uart);
-            serial_mode = SERIAL_LL_STATE_C_IDLE;
-            // Cancel next timeout.
-            serial_next_timeout = 0;
+
+            serial_enter_c_idle();
+            serial_ll_state = SERIAL_LL_STATE_C_IDLE;
         }
         break;
     case SERIAL_LL_STATE_NC_PTX:
         // We are expecting an ACK.
         if (header->opcode == SERIAL_OPCODE_ACK) {
-            // DIO1(ABS) output high:
-            // DIO2 input with pull-down:
-            PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_ptx_connected[0]);
-            PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_ptx_connected[1]);
-            serial_mode = SERIAL_LL_STATE_C_IDLE;
-            // Cancel next timeout.
-            serial_next_timeout = 0;
+            serial_enter_c_idle();
+            serial_ll_state = SERIAL_LL_STATE_C_IDLE;
         }
         break;
     case SERIAL_LL_STATE_C_IDLE:
@@ -123,24 +133,40 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
 }
 
 void serial_timeout() {
-    switch(serial_mode) {
+    volatile uint8_t i;
+    switch(serial_ll_state) {
     case SERIAL_LL_STATE_NC_PRX:
         // Switch UART TX/RX and change timeout.
         UART_close(uart);
-        serial_mode = SERIAL_LL_STATE_NC_PTX;
-        uart_params.readTimeout = PTX_TIME_MS * 100;
-        serial_next_timeout = Clock_getTicks() + (PTX_TIME_MS * 100);
-        uart = UART_open(QC16_UART_PTX, &uart_params);
+        serial_enter_ptx();
+        serial_ll_state = SERIAL_LL_STATE_NC_PTX;
+        // The UART RX doesn't turn on until we call for a read,
+        //  so in order to make sure we receive a response, we need
+        //  to call UART_read prior to sending our HELO message.
+        // This will either return gibberish (if we're unplugged),
+        //  or it will time out after PTX_TIME_MS ms.
+        UART_read(uart, &i, 1);
         // Also, since this is now the TX mode, we need to send a HELO.
         serial_send_helo(uart);
         break;
     case SERIAL_LL_STATE_NC_PTX:
         // Switch UART TX/RX and change timeout.
         UART_close(uart);
-        serial_mode = SERIAL_LL_STATE_NC_PRX;
-        uart_params.readTimeout = PRX_TIME_MS * 100;
-        serial_next_timeout = Clock_getTicks() + (PRX_TIME_MS * 100);
-        uart = UART_open(QC16_UART_PRX, &uart_params);
+        serial_enter_prx();
+        serial_ll_state = SERIAL_LL_STATE_NC_PRX;
+        break;
+    case SERIAL_LL_STATE_C_IDLE:
+        serial_ll_next_timeout = Clock_getTicks() + (SERIAL_C_DIO_POLL_MS * 100);
+        if (
+                 (serial_phy_mode_ptx && !PIN_getInputValue(QC16_PIN_SERIAL_DIO2_PRX))
+             || (!serial_phy_mode_ptx && !PIN_getInputValue(QC16_PIN_SERIAL_DIO1_PTX))
+        ) {
+            // We just registered a disconnect signal.
+
+            serial_ll_state = SERIAL_LL_STATE_NC_PRX;
+            UART_close(uart);
+            serial_enter_prx();
+        }
         break;
 //    default:
     }
@@ -152,11 +178,18 @@ void serial_task_fn(UArg a0, UArg a1) {
     //  Primary TX - in which we send a HELO and wait, very briefly, for ACK.
     serial_header_t header_in;
     uint8_t input[32];
-    int_fast32_t result;
+    volatile int_fast32_t result;
 
-    serial_next_timeout = Clock_getTicks() + PRX_TIME_MS * 100;
+    serial_ll_next_timeout = Clock_getTicks() + PRX_TIME_MS * 100;
 
     while (1) {
+        // Just keep listening, unless we have a timeout.
+        if (serial_ll_next_timeout && Clock_getTicks() >= serial_ll_next_timeout) {
+            serial_timeout();
+        }
+
+        // This blocks on a semaphore while waiting to return, so it's safe
+        //  not to have a Task_yield() in this. *I think.*
         result = UART_read(uart, input, 1);
         if (result == 1 && input[0] == SERIAL_PHY_SYNC_WORD) {
             // Got the sync word, now try to read a header:
@@ -175,13 +208,6 @@ void serial_task_fn(UArg a0, UArg a1) {
                 }
             }
         }
-
-        // Just keep listening, unless we have a timeout.
-        if (serial_next_timeout && Clock_getTicks() >= serial_next_timeout) {
-            serial_timeout();
-        }
-
-        Task_yield();
     }
 }
 
@@ -194,8 +220,8 @@ void serial_init() {
     uart_params.writeMode = UART_MODE_BLOCKING;
     uart_params.readEcho = UART_ECHO_OFF;
     uart_params.readReturnMode = UART_RETURN_FULL;
-    uart_params.parityType = UART_PAR_EVEN;
-    uart_params.stopBits = UART_STOP_TWO;
+    uart_params.parityType = UART_PAR_NONE;
+    uart_params.stopBits = UART_STOP_ONE;
 
 //    Clock_Params clockParams;
 //    Error_Block eb;
@@ -212,17 +238,12 @@ void serial_init() {
     taskParams.priority = 1;
     Task_construct(&serial_task, serial_task_fn, &taskParams, NULL);
 
-    uart_params.readTimeout = PRX_TIME_MS * 100;
-    uart = UART_open(QC16_UART_PRX, &uart_params);
+    // It's not actually possible for a qbadge to be externally powered,
+    //  so we're not even going to check.
+    serial_pin_h = PIN_open(&serial_pin_state, serial_gpio_prx);
 
-    serial_mode = SERIAL_LL_STATE_NC_PRX;
-    serial_pin_h = PIN_open(&serial_pin_state, serial_gpio_startup);
+    // This will start up the UART, and configure our GPIO (again).
+    serial_enter_prx();
 
-    if (PIN_getInputValue(QC16_PIN_SERIAL_DIO1_ABS)) {
-        // This is not actually possible without modifying the hardware.
-    } else {
-        // If it's low, we're under our own power.
-        PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_active[0]);
-        PIN_setConfig(serial_pin_h, PIN_BM_ALL, serial_gpio_active[1]);
-    }
+    serial_ll_state = SERIAL_LL_STATE_NC_PRX;
 }

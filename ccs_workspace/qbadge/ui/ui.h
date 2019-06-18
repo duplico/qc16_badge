@@ -60,8 +60,9 @@
 #define BTN_BACK (BTN_ROW_4 | BTN_COL_3)
 #define BTN_OK (BTN_ROW_4 | BTN_COL_5)
 
-extern Clock_Handle kb_debounce_clock_h;
 extern uint8_t kb_active_key;
+extern Event_Handle ui_event_h;
+
 void ui_init();
 
 #endif /* APPLICATION_UI_H_ */

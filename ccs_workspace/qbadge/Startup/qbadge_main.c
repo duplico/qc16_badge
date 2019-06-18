@@ -24,12 +24,13 @@
 #include <inc/hw_memmap.h>
 #include <driverlib/vims.h>
 #include <queercon_drivers/qbadge_serial.h>
+#include "queercon_drivers/epd_phy.h"
+#include <queercon_drivers/storage.h>
 
 #include "qbadge.h"
 
 #include "ui/ui.h"
 #include "ui/leds.h"
-#include "queercon_drivers/epd_phy.h"
 
 #define LED_BRIGHTNESS_INTERVAL 12500
 uint32_t vbat_out_uvolts = 0;

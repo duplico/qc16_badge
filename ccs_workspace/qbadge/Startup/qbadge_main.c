@@ -11,7 +11,6 @@
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/Task.h>
-#include <ti/grlib/grlib.h>
 #include <driverlib/aon_batmon.h>
 
 #include <board.h>
@@ -26,121 +25,11 @@
 #include <driverlib/vims.h>
 #include <queercon_drivers/qbadge_serial.h>
 
-#include <third_party/spiffs/SPIFFSNVS.h>
-#include <third_party/spiffs/spiffs.h>
-
 #include "qbadge.h"
 
 #include "ui/ui.h"
 #include "ui/leds.h"
 #include "queercon_drivers/epd_phy.h"
-
-
-uint8_t spiffsWorkBuffer[SPIFFS_LOGICAL_PAGE_SIZE * 2];
-uint8_t spiffsFileDescriptorCache[SPIFFS_FILE_DESCRIPTOR_SIZE * 4];
-uint8_t spiffsReadWriteCache[SPIFFS_LOGICAL_PAGE_SIZE * 2];
-spiffs           fs;
-spiffs_config    fsConfig;
-SPIFFSNVS_Data spiffsnvs;
-
-
-#define ADC_STACKSIZE 512
-Task_Struct adc_task;
-char adc_task_stack[ADC_STACKSIZE];
-
-/* Buffer placed in RAM to hold bytes read from non-volatile storage. */
-static char buffer[64];
-static const char signature[] =
-    {"SimpleLink SDK Non-Volatile Storage (NVS) SPI Example."};
-
-////////////////////////////////////
-//
-//    status = SPIFFSNVS_config(&spiffsnvs, QC16_NVSSPI25X0, &fs, &fsConfig,
-//                              SPIFFS_LOGICAL_BLOCK_SIZE, SPIFFS_LOGICAL_PAGE_SIZE);
-//    if (status != SPIFFSNVS_STATUS_SUCCESS) {
-//        while (1); // Spin forever.
-//    }
-//    status = SPIFFS_mount(&fs, &fsConfig, spiffsWorkBuffer,
-//        spiffsFileDescriptorCache, sizeof(spiffsFileDescriptorCache),
-//        spiffsReadWriteCache, sizeof(spiffsReadWriteCache), NULL);
-//
-//    if (status == SPIFFS_ERR_NOT_A_FS) {
-//        // Needs to be formatted before mounting.
-//        status = SPIFFS_format(&fs);
-//        status = SPIFFS_mount(&fs, &fsConfig, spiffsWorkBuffer,
-//            spiffsFileDescriptorCache, sizeof(spiffsFileDescriptorCache),
-//            spiffsReadWriteCache, sizeof(spiffsReadWriteCache), NULL);
-//    }
-//
-//    status = SPIFFS_creat(&fs, "testfile", 0);
-//    spiffs_file f;
-//    f = SPIFFS_open(&fs, "testfile", SPIFFS_O_CREAT + SPIFFS_O_WRONLY, 0);
-//    status = SPIFFS_write(&fs, f, "test", 4);
-//    status = SPIFFS_close(&fs, f);
-//
-//    spiffs_stat stat;
-//    status = SPIFFS_stat(&fs, "testfile", &stat);
-//
-//    char buf[10];
-//    f = SPIFFS_open(&fs, "testfile", SPIFFS_O_RDONLY, 0);
-//    status = SPIFFS_read(&fs, f, (void *)buf, 4);
-////////////////////////////////
-
-//    NVS_Handle nvsHandle;
-//    volatile NVS_Attrs regionAttrs;
-//    NVS_Params nvsParams;
-//
-//    NVS_init();
-//    NVS_Params_init(&nvsParams);
-//    nvsHandle = NVS_open(QC16_NVSSPI25X0, &nvsParams);
-//
-//    /*
-//     * This will populate a NVS_Attrs structure with properties specific
-//     * to a NVS_Handle such as region base address, region size,
-//     * and sector size.
-//     */
-//    NVS_getAttrs(nvsHandle, &regionAttrs);
-//
-//    /* Display the NVS region attributes. */
-////    Display_printf(displayHandle, 0, 0, "Sector Size: 0x%x",
-////            regionAttrs.sectorSize);
-////    Display_printf(displayHandle, 0, 0, "Region Size: 0x%x\n",
-////            regionAttrs.regionSize);
-//
-//    /*
-//     * Copy "sizeof(signature)" bytes from the NVS region base address into
-//     * buffer.
-//     */
-//    status = NVS_read(nvsHandle, 0, (void *) buffer, sizeof(signature));
-//
-//    /*
-//     * Determine if the NVS region contains the signature string.
-//     * Compare the string with the contents copied into buffer.
-//     */
-//    if (strcmp((char *) buffer, (char *) signature) == 0) {
-//
-//        /* Write buffer copied from flash to the console. */
-////        Display_printf(displayHandle, 0, 0, "%s", buffer);
-////        Display_printf(displayHandle, 0, 0, "Erasing SPI flash sector...");
-//
-//        /* Erase the entire flash sector. */
-////        status = NVS_erase(nvsHandle, 0, regionAttrs.sectorSize);
-//    }
-//    else {
-//
-//        /* The signature was not found in the NVS region. */
-////        Display_printf(displayHandle, 0, 0, "Writing signature to SPI flash...");
-//
-//        /*
-//         * Write signature to memory. The flash sector is erased prior
-//         * to performing the write operation. This is specified by
-//         * NVS_WRITE_ERASE.
-//         */
-//        status = NVS_write(nvsHandle, 0, (void *) signature, sizeof(signature),
-//            NVS_WRITE_ERASE | NVS_WRITE_POST_VERIFY);
-//    }
-
-////////////////////////////////////
 
 #define LED_BRIGHTNESS_INTERVAL 12500
 uint32_t vbat_out_uvolts = 0;
@@ -224,6 +113,7 @@ int main()
     serial_init();
     led_init();
     epd_phy_init();
+    storage_init();
 
     // Set up the ADC reader clock & buffer
     Clock_Params clockParams;

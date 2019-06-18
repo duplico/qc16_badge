@@ -14,6 +14,7 @@
 #define LED_EVENT_BRIGHTNESS    Event_Id_01
 #define LED_EVENT_SHOW_UPCONF   Event_Id_02
 #define LED_EVENT_HIDE_UPCONF   Event_Id_03
+#define LED_EVENT_TAIL_STEP     Event_Id_04
 
 typedef enum {
     LED_TAIL_ANIM_TYPE_OFF = 0,
@@ -42,5 +43,6 @@ extern rgbcolor16_t led_rainbow_colors[6];
 
 void led_init();
 void led_show_curr_colors();
+void led_tail_start_anim();
 
 #endif /* QUEERCON_DRIVERS_LEDS_H_ */

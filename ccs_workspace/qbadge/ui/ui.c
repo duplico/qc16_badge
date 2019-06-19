@@ -195,6 +195,7 @@ void ui_task_fn(UArg a0, UArg a1) {
             }
         }
 
+        // TODO: just have a flag that tracks whether we're portrait or landscape
         if (kb_active_key_masked == BTN_ROT
                 && ui_current != UI_SCREEN_IDLE
                 && !ui_colorpicking
@@ -203,6 +204,9 @@ void ui_task_fn(UArg a0, UArg a1) {
             //  portrait modes:
             epd_flip();
             Graphics_flushBuffer(&ui_gr_context_landscape);
+        } else if (kb_active_key_masked == BTN_ROT) {
+            // TODO: delete this
+            led_sidelight_set_level(0x10);
         }
 
         if (ui_colorpicking) {

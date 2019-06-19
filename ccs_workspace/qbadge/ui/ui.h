@@ -34,6 +34,8 @@
 
 #define UI_EVENT_ALL (UI_EVENT_KB_FLIP | UI_EVENT_KB_PRESS | UI_EVENT_REFRESH | UI_EVENT_ALL)
 
+// TODO: move all this shit to keypad.h
+
 #define BTN_STAT_MASK   0300
 #define BTN_RC_MASK     0077
 #define BTN_ROW_MASK    0070

@@ -29,6 +29,32 @@ led_tail_anim_t led_tail_anim_current = {
     }
 };
 
+//typedef enum {
+//    LED_TAIL_ANIM_TYPE_OFF = 0,
+//    LED_TAIL_ANIM_TYPE_CYCLE,
+//    LED_TAIL_ANIM_TYPE_FADE,
+//    LED_TAIL_ANIM_TYPE_SCROLL,
+//    LED_TAIL_ANIM_TYPE_SCROLLFADE,
+//    LED_TAIL_ANIM_TYPE_PANES,
+//    LED_TAIL_ANIM_TYPE_BUBBLE,
+//    LED_TAIL_ANIM_TYPE_FLASH,
+//    LED_TAIL_ANIM_TYPE_FIRE,
+//    LED_TAIL_ANIM_TYPE_COUNT
+//} led_tail_anim_type;
+
+uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT] = {
+    0,  //    LED_TAIL_ANIM_TYPE_OFF,
+    1,  //    LED_TAIL_ANIM_TYPE_ON,
+    6,  //    LED_TAIL_ANIM_TYPE_CYCLE,
+    6,  //    LED_TAIL_ANIM_TYPE_FADE,
+    6,  //    LED_TAIL_ANIM_TYPE_SCROLL,
+    6,  //    LED_TAIL_ANIM_TYPE_SCROLLFADE,
+    6,  //    LED_TAIL_ANIM_TYPE_PANES,
+    3,  //    LED_TAIL_ANIM_TYPE_BUBBLE,
+    1,  //    LED_TAIL_ANIM_TYPE_FLASH,
+    1,  //    LED_TAIL_ANIM_TYPE_FIRE,
+};
+
 rgbcolor16_t led_tail_src[6];
 /// Current colors of the LED dustbuster
 rgbcolor16_t led_tail_curr[6];
@@ -61,7 +87,7 @@ rgbcolor16_t led_rainbow_colors[6] = {
 rgbcolor16_t led_off = {0, 0, 0};
 
 uint8_t led_tail_anim_type_is_valid(led_tail_anim_type t) {
-    return t < 2;
+    return t < 3;
 }
 
 void led_tail_anim_type_next() {
@@ -155,6 +181,7 @@ void led_tail_timestep() {
 }
 
 void led_tail_start_anim() {
+    Clock_stop(led_tail_clock_h);
     memset(led_tail_src, 0x00, sizeof(rgbcolor16_t)*6);
     memset(led_tail_dest, 0x00, sizeof(rgbcolor16_t)*6);
     memset(led_tail_src, 0x00, sizeof(rgbcolor16_t)*6);
@@ -166,8 +193,14 @@ void led_tail_start_anim() {
     case LED_TAIL_ANIM_TYPE_OFF:
         ht16d_put_color(0, 6, &led_off);
         Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
+        // No animating; just set the color.
         return;
         break;
+    case LED_TAIL_ANIM_TYPE_ON:
+        ht16d_put_color(0, 6, &led_tail_anim_current.colors[0]);
+        Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
+        // No animating; just set the color.
+        return;
     case LED_TAIL_ANIM_TYPE_CYCLE:
         led_tail_steps_per_frame = 100;
         led_tail_frames_this_anim = 6;
@@ -182,6 +215,20 @@ void led_tail_start_anim() {
 
 void led_tail_step_swi(UArg a0) {
     Event_post(led_event_h, LED_EVENT_TAIL_STEP);
+}
+
+void led_sidelight_set_level(uint8_t level) {
+    ht16d_all_one_color(0xff, 0xff, 0xff);
+    //    rgbcolor16_t c;
+//    c.r = level << 7;
+//    c.g = level << 7;
+//    c.b = level << 7;
+//    led_sidelight_set_color(&c);
+}
+
+void led_sidelight_set_color(rgbcolor16_t *color) {
+    ht16d_put_color(12, 12, color);
+    Event_post(led_event_h, LED_EVENT_FLUSH);
 }
 
 void led_task_fn(UArg a0, UArg a1) {

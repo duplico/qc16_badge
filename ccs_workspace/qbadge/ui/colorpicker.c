@@ -42,7 +42,6 @@ void ui_colorpicking_wireframe() {
     // Clear the color picker menu area
     Graphics_fillRectangle(&ui_gr_context_portrait, &rect);
 
-
     // Switch to the "drawing" colors
     Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
     Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
@@ -209,7 +208,9 @@ void ui_colorpicking_do(UInt events) {
             break;
         case BTN_OK:
             break;
-
         }
+        // TODO:
+        // Call this if needed:
+        //led_tail_start_anim();
     }
 }

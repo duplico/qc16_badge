@@ -18,12 +18,29 @@
 
 typedef enum {
     LED_TAIL_ANIM_TYPE_OFF = 0,
+    LED_TAIL_ANIM_TYPE_ON,
     LED_TAIL_ANIM_TYPE_CYCLE,
+    LED_TAIL_ANIM_TYPE_FADE,
     LED_TAIL_ANIM_TYPE_SCROLL,
+    LED_TAIL_ANIM_TYPE_SCROLLFADE,
+    LED_TAIL_ANIM_TYPE_PANES,
     LED_TAIL_ANIM_TYPE_BUBBLE,
     LED_TAIL_ANIM_TYPE_FLASH,
+    LED_TAIL_ANIM_TYPE_FIRE,
     LED_TAIL_ANIM_TYPE_COUNT
 } led_tail_anim_type;
+
+typedef enum {
+    LED_TAIL_ANIM_MOD_NORMAL = 0,
+    LED_TAIL_ANIM_MOD_FAST,
+    LED_TAIL_ANIM_MOD_SLOW,
+    LED_TAIL_ANIM_MOD_TWINKLE,
+    LED_TAIL_ANIM_MOD_SALT,
+    LED_TAIL_ANIM_MOD_PEPPER,
+    LED_TAIL_ANIM_MOD_FLAG,
+    LED_TAIL_ANIM_MOD_FLAG_MOV,
+    LED_TAIL_ANIM_MOD_COUNT
+} led_tail_anim_mod;
 
 typedef struct {
     led_tail_anim_type type;
@@ -41,10 +58,14 @@ extern Event_Handle led_event_h;
 extern led_tail_anim_t led_tail_anim_current;
 extern rgbcolor16_t led_rainbow_colors[6];
 
-void led_init();
 void led_show_curr_colors();
 void led_tail_start_anim();
 void led_tail_anim_type_next();
 void led_tail_anim_type_prev();
+
+void led_sidelight_set_level(uint8_t level);
+void led_sidelight_set_color(rgbcolor16_t *color);
+
+void led_init();
 
 #endif /* QUEERCON_DRIVERS_LEDS_H_ */

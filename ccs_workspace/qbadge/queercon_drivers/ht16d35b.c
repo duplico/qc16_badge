@@ -148,8 +148,8 @@ void ht16d_read_reg(uint8_t reg[]) {
  ** * Grayscale mode
  ** * No fade, UCOM, USEG, or matrix masking
  ** * Global brightness to `HT16D_BRIGHTNESS_DEFAULT`
- ** * Only columns 0, 1, 2, and 3 in use
- ** * Constant current ratio to 0b0111
+ ** * Only columns 0, 1, 2, and 3 in use // TODO
+ ** * Constant current ratio to 0b0111 // TODO
  ** * HIGH SCAN mode (common-anode on columns)
  */
 void ht16d_init() {
@@ -185,7 +185,7 @@ void ht16d_init() {
     // Set column pin control for in-use cols (HTCMD_COM_PIN_CTL)
     ht16_d_send_cmd_dat(HTCMD_COM_PIN_CTL, 0b0001111);
     // Set constant current ratio (HTCMD_I_RATIO)
-    ht16_d_send_cmd_dat(HTCMD_I_RATIO, 0b0111); // MINIMUM CURRENT. 0b000 is max.
+    ht16_d_send_cmd_dat(HTCMD_I_RATIO, 0b0000); // 0b0111 MINIMUM CURRENT. 0b000 is max.
     // Set columns to 3 (0--2), and HIGH SCAN mode (HTCMD_COM_NUM)
     ht16_d_send_cmd_dat(HTCMD_COM_NUM, 0x02);
 

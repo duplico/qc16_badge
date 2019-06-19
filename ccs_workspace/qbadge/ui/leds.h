@@ -18,8 +18,8 @@
 
 typedef enum {
     LED_TAIL_ANIM_TYPE_OFF = 0,
-    LED_TAIL_ANIM_TYPE_SCROLL,
     LED_TAIL_ANIM_TYPE_CYCLE,
+    LED_TAIL_ANIM_TYPE_SCROLL,
     LED_TAIL_ANIM_TYPE_BUBBLE,
     LED_TAIL_ANIM_TYPE_FLASH,
     LED_TAIL_ANIM_TYPE_COUNT
@@ -44,5 +44,7 @@ extern rgbcolor16_t led_rainbow_colors[6];
 void led_init();
 void led_show_curr_colors();
 void led_tail_start_anim();
+void led_tail_anim_type_next();
+void led_tail_anim_type_prev();
 
 #endif /* QUEERCON_DRIVERS_LEDS_H_ */

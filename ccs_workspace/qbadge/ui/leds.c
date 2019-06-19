@@ -39,6 +39,7 @@ rgbdelta_t led_tail_step[6];
 uint16_t led_tail_steps_per_frame;
 uint16_t led_tail_frames_this_anim;
 uint16_t led_tail_frame_curr;
+uint16_t led_tail_frame_next;
 uint16_t led_tail_step_curr;
 
 #define LED_STACKSIZE 1024
@@ -59,6 +60,33 @@ rgbcolor16_t led_rainbow_colors[6] = {
 
 rgbcolor16_t led_off = {0, 0, 0};
 
+uint8_t led_tail_anim_type_is_valid(led_tail_anim_type t) {
+    return t < 2;
+}
+
+void led_tail_anim_type_next() {
+    led_tail_anim_type next_type = led_tail_anim_current.type;
+    do {
+        next_type += 1;
+        if (next_type >= LED_TAIL_ANIM_TYPE_COUNT)
+            next_type = 0;
+    } while (!led_tail_anim_type_is_valid(next_type));
+    led_tail_anim_current.type = next_type;
+    led_tail_start_anim();
+}
+
+void led_tail_anim_type_prev() {
+    led_tail_anim_type next_type = led_tail_anim_current.type;
+    do {
+        if (next_type == 0) {
+            next_type = LED_TAIL_ANIM_TYPE_COUNT;
+        }
+        next_type -= 1;
+    } while (!led_tail_anim_type_is_valid(next_type));
+    led_tail_anim_current.type = next_type;
+    led_tail_start_anim();
+}
+
 void led_flush() {
     ht16d_send_gray();
 }
@@ -70,23 +98,26 @@ void led_show_curr_colors() {
 
 /// Start the current frame of the LED animation.
 void led_tail_frame_setup() {
+    led_tail_frame_next = (led_tail_frame_curr+1)%led_tail_frames_this_anim;
+
     switch(led_tail_anim_current.type) {
     case LED_TAIL_ANIM_TYPE_CYCLE:
         for (uint8_t i=0; i<6; i++) {
-            led_tail_curr[i].r = led_tail_anim_current.colors[led_tail_frame_curr].r;
-            led_tail_curr[i].g = led_tail_anim_current.colors[led_tail_frame_curr].g;
-            led_tail_curr[i].b = led_tail_anim_current.colors[led_tail_frame_curr].b;
+            led_tail_src[i].r = led_tail_anim_current.colors[led_tail_frame_curr].r;
+            led_tail_src[i].g = led_tail_anim_current.colors[led_tail_frame_curr].g;
+            led_tail_src[i].b = led_tail_anim_current.colors[led_tail_frame_curr].b;
 
-            // src, dest, and steps are DONTCARE because we're not fading.
+            led_tail_dest[i].r = led_tail_anim_current.colors[led_tail_frame_next].r;
+            led_tail_dest[i].g = led_tail_anim_current.colors[led_tail_frame_next].g;
+            led_tail_dest[i].b = led_tail_anim_current.colors[led_tail_frame_next].b;
         }
         break;
     }
 
+    memcpy(led_tail_curr, led_tail_src, sizeof(rgbcolor16_t)*6);
+
     ht16d_put_colors(0, 6, led_tail_curr);
     Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
-
-    Clock_setTimeout(led_tail_clock_h, 100000); // TODO: this is just 1 second for now.
-    Clock_start(led_tail_clock_h);
 }
 
 void led_tail_timestep() {
@@ -99,15 +130,27 @@ void led_tail_timestep() {
         }
         led_tail_frame_setup();
     } else {
+        for (uint8_t i=0; i<6; i++) {
+            led_tail_step[i].r = ((int32_t)led_tail_dest[i].r - led_tail_src[i].r) / led_tail_steps_per_frame;
+            led_tail_step[i].g = ((int32_t)led_tail_dest[i].g - led_tail_src[i].g) / led_tail_steps_per_frame;
+            led_tail_step[i].b = ((int32_t)led_tail_dest[i].b - led_tail_src[i].b) / led_tail_steps_per_frame;
+
+            led_tail_curr[i].r = led_tail_src[i].r + (led_tail_step_curr * led_tail_step[i].r);
+            led_tail_curr[i].g = led_tail_src[i].g + (led_tail_step_curr * led_tail_step[i].g);
+            led_tail_curr[i].b = led_tail_src[i].b + (led_tail_step_curr * led_tail_step[i].b);
+        }
+
         switch(led_tail_anim_current.type) {
         case LED_TAIL_ANIM_TYPE_CYCLE:
             // we're not doing any stepping here because it's not one of
             // the animations that fades.
             break;
         }
+        ht16d_put_colors(0, 6, led_tail_curr);
+        Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
     }
 
-    Clock_setTimeout(led_tail_clock_h, 100000); // TODO: this is just 1 second for now.
+    Clock_setTimeout(led_tail_clock_h, 100000/led_tail_steps_per_frame); // TODO: this is just 1 second for now.
     Clock_start(led_tail_clock_h);
 }
 
@@ -120,13 +163,21 @@ void led_tail_start_anim() {
     led_tail_step_curr = 0;
 
     switch(led_tail_anim_current.type) {
+    case LED_TAIL_ANIM_TYPE_OFF:
+        ht16d_put_color(0, 6, &led_off);
+        Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
+        return;
+        break;
     case LED_TAIL_ANIM_TYPE_CYCLE:
-        led_tail_steps_per_frame = 1;
+        led_tail_steps_per_frame = 100;
         led_tail_frames_this_anim = 6;
         break;
     }
 
     led_tail_frame_setup();
+
+    Clock_setTimeout(led_tail_clock_h, 100000/led_tail_steps_per_frame); // TODO: this is just 1 second per frame now.
+    Clock_start(led_tail_clock_h);
 }
 
 void led_tail_step_swi(UArg a0) {

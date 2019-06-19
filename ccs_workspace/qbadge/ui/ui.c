@@ -165,6 +165,7 @@ void ui_task_fn(UArg a0, UArg a1) {
     storage_init();
 
     ui_transition(UI_SCREEN_IDLE);
+    uint8_t brightness = 0x10;
 
     while (1) {
         events = Event_pend(ui_event_h, Event_Id_NONE, ~Event_Id_NONE,  UI_AUTOREFRESH_TIMEOUT);
@@ -213,6 +214,20 @@ void ui_task_fn(UArg a0, UArg a1) {
             //  a normal state flow:
             switch(ui_current) {
             case UI_SCREEN_IDLE:
+                if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == BTN_UP) {
+                    brightness+=10;
+                    if (brightness > HT16D_BRIGHTNESS_MAX) {
+                        brightness = HT16D_BRIGHTNESS_MAX;
+                    }
+                    ht16d_set_global_brightness(brightness);
+                } else if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == BTN_DOWN) {
+                    if (brightness < 10) {
+                        brightness = 0;
+                    } else {
+                        brightness -= 0;
+                    }
+                    ht16d_set_global_brightness(brightness);
+                }
                 ui_screensaver_do(events);
                 break;
             }

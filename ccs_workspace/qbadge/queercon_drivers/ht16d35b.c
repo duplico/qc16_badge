@@ -21,9 +21,9 @@
 // Configuration:
 
 /// The number of RGB (3-channel) LEDs in the system.
-#define HT16D_LED_COUNT (6+6+12+5)
+#define HT16D_LED_COUNT (6+6+12+3)
 /// The number of COM lines in use.
-#define HT16D_COM_COUNT (4)
+#define HT16D_COM_COUNT (3)
 /// The configured slave address (based on pin A0).
 /**
  ** The slave address is: 0b110100X,
@@ -183,7 +183,7 @@ void ht16d_init() {
     // Set BW/Binary display mode.
     ht16_d_send_cmd_dat(HTCMD_BWGRAY_SEL, HTCMD_BWGRAY_SEL_GRAYSCALE);
     // Set column pin control for in-use cols (HTCMD_COM_PIN_CTL)
-    ht16_d_send_cmd_dat(HTCMD_COM_PIN_CTL, 0b0001111);
+    ht16_d_send_cmd_dat(HTCMD_COM_PIN_CTL, 0b0000111);
     // Set constant current ratio (HTCMD_I_RATIO)
     ht16_d_send_cmd_dat(HTCMD_I_RATIO, 0b0000); // 0b0111 MINIMUM CURRENT. 0b000 is max.
     // Set columns to 3 (0--2), and HIGH SCAN mode (HTCMD_COM_NUM)

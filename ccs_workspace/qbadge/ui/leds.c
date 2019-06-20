@@ -105,7 +105,17 @@ void led_flush() {
 }
 
 void led_show_curr_colors() {
-    ht16d_put_colors(6, 6, led_tail_anim_current.colors);
+    uint8_t count = led_tail_anim_color_counts[led_tail_anim_current.type];
+    if (count == 0) {
+        ht16d_put_color(6, 6, &led_off);
+        // Turn off the lights if there are no lights in this animation.
+        // If count == 0, the for loop will be skipped.
+    }
+
+    for (uint8_t i=0; i<count; i++) {
+        ht16d_put_color(6+i*(6/count), 6/count, &led_tail_anim_current.colors[i]);
+    }
+
     Event_post(led_event_h, LED_EVENT_FLUSH);
 }
 

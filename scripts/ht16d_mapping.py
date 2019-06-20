@@ -28,12 +28,12 @@ led_index_to_com_and_color_index = [
     [2,5],
     [1,5],
     [0,5],
-### Keypad lights: (D25-29)
+### Keypad lights: (D25-27) (28,29 are DNP)
     [0,8],
     [1,8],
     [2,8],
-    [3,8],
-    [3,4],
+    #[3,8],
+    #[3,4],
 ###
 ]
 
@@ -85,7 +85,6 @@ com_row_to_led_index = {
     0 : dict(),
     1 : dict(),
     2 : dict(),
-    3 : dict()
 }
 
 for led_index in range(len(led_index_to_com_and_color_index)):
@@ -97,7 +96,7 @@ for led_index in range(len(led_index_to_com_and_color_index)):
         com_row_to_led_index[com][row] = (led_index, color_id)
         
 all_mappings = []
-for com in range(4):
+for com in range(len(com_row_to_led_index)):
     com_mappings = []
     for row in range(28):
         if com in com_row_to_led_index and row in com_row_to_led_index[com]:

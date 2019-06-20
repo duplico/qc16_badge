@@ -45,7 +45,7 @@ typedef enum {
 typedef struct {
     led_tail_anim_type type;
     rgbcolor16_t colors[6];
-    uint16_t speed;
+    led_tail_anim_mod modifier;
 } led_tail_anim_t;
 
 typedef struct {

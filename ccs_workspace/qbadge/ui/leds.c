@@ -17,8 +17,8 @@
 #include "ui/leds.h"
 
 led_tail_anim_t led_tail_anim_current = {
-    .speed=1,
     .type=LED_TAIL_ANIM_TYPE_CYCLE,
+    .modifier = LED_TAIL_ANIM_MOD_NORMAL,
     .colors= {
               {255<<7, 0, 0},  // Red
               {255<<7, 20<<7, 0}, // Orange
@@ -28,19 +28,6 @@ led_tail_anim_t led_tail_anim_current = {
               {128<<7, 0, 96<<7}, // Purple
     }
 };
-
-//typedef enum {
-//    LED_TAIL_ANIM_TYPE_OFF = 0,
-//    LED_TAIL_ANIM_TYPE_CYCLE,
-//    LED_TAIL_ANIM_TYPE_FADE,
-//    LED_TAIL_ANIM_TYPE_SCROLL,
-//    LED_TAIL_ANIM_TYPE_SCROLLFADE,
-//    LED_TAIL_ANIM_TYPE_PANES,
-//    LED_TAIL_ANIM_TYPE_BUBBLE,
-//    LED_TAIL_ANIM_TYPE_FLASH,
-//    LED_TAIL_ANIM_TYPE_FIRE,
-//    LED_TAIL_ANIM_TYPE_COUNT
-//} led_tail_anim_type;
 
 uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT] = {
     0,  //    LED_TAIL_ANIM_TYPE_OFF,
@@ -156,6 +143,8 @@ void led_tail_timestep() {
         }
         led_tail_frame_setup();
     } else {
+        // This will only be encountered for an animation that fades
+        //  (that is, an animation with more than one step per frame)
         for (uint8_t i=0; i<6; i++) {
             led_tail_step[i].r = ((int32_t)led_tail_dest[i].r - led_tail_src[i].r) / led_tail_steps_per_frame;
             led_tail_step[i].g = ((int32_t)led_tail_dest[i].g - led_tail_src[i].g) / led_tail_steps_per_frame;
@@ -166,12 +155,6 @@ void led_tail_timestep() {
             led_tail_curr[i].b = led_tail_src[i].b + (led_tail_step_curr * led_tail_step[i].b);
         }
 
-        switch(led_tail_anim_current.type) {
-        case LED_TAIL_ANIM_TYPE_CYCLE:
-            // we're not doing any stepping here because it's not one of
-            // the animations that fades.
-            break;
-        }
         ht16d_put_colors(0, 6, led_tail_curr);
         Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
     }

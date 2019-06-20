@@ -149,7 +149,7 @@ void ht16d_read_reg(uint8_t reg[]) {
  ** * No fade, UCOM, USEG, or matrix masking
  ** * Global brightness to `HT16D_BRIGHTNESS_DEFAULT`
  ** * Only columns 0, 1, 2, and 3 in use // TODO
- ** * Constant current ratio to 0b0111 // TODO
+ ** * Constant current ratio to 0b0000 (max)
  ** * HIGH SCAN mode (common-anode on columns)
  */
 void ht16d_init() {

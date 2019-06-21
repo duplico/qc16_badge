@@ -55,11 +55,32 @@ void ui_colorpicking_wireframe() {
     // Draw the boxes that hold our non-LED color representations
     Graphics_drawLineH(&ui_gr_context_portrait, 1, EPD_WIDTH-1, EPD_HEIGHT-UI_PICKER_COLORBOX_H-UI_PICKER_COLORBOX_BPAD);
     Graphics_drawLineH(&ui_gr_context_portrait, 1, EPD_WIDTH-1, EPD_HEIGHT-UI_PICKER_COLORBOX_BPAD);
-    for (uint8_t i=1; i<128; i+=21) {
-        Graphics_drawLineV(&ui_gr_context_portrait, i, EPD_HEIGHT-16, EPD_HEIGHT-48);
-        // These are the lines that point at the LEDs themselves:
-        Graphics_drawLine(&ui_gr_context_portrait, i+10, EPD_HEIGHT-UI_PICKER_COLORBOX_BPAD, (int32_t)((25.6*(i-1))/21), EPD_HEIGHT-1);
+
+    uint8_t count = led_tail_anim_color_counts[led_tail_anim_current.type];
+    if (count) {
+        uint16_t width = EPD_WIDTH/count;
+        for (uint8_t i=0; i<count; i++) {
+            if (!ui_colorpicker_cursor_anim && ui_colorpicker_cursor_pos == i) {
+                // draw an arrow:
+                uint8_t arrow_x = ((width*i)+(width/2)-10);
+                Graphics_drawLine(&ui_gr_context_portrait, arrow_x, EPD_HEIGHT-64, arrow_x+10, EPD_HEIGHT-48);
+                Graphics_drawLine(&ui_gr_context_portrait, arrow_x+21, EPD_HEIGHT-64, arrow_x+11, EPD_HEIGHT-48);
+            }
+            rect = (Graphics_Rectangle) {width*i, EPD_HEIGHT-16, width*(i+1), EPD_HEIGHT-48};
+            Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
+        }
     }
+
+
+    rect = (Graphics_Rectangle) {0, EPD_HEIGHT-60, 127, EPD_HEIGHT-50};
+    Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
+
+
+//    for (uint8_t i=1; i<128; i+=21) {
+////        Graphics_drawLineV(&ui_gr_context_portrait, i, EPD_HEIGHT-16, EPD_HEIGHT-48);
+//        // These are the lines that point at the LEDs themselves:
+//        Graphics_drawLine(&ui_gr_context_portrait, i+10, EPD_HEIGHT-UI_PICKER_COLORBOX_BPAD, (int32_t)((25.6*(i-1))/21), EPD_HEIGHT-1);
+//    }
 
     // Draw the icon for the animation type currently selected:
     // TODO: Make sure there can't be an overrun here:
@@ -71,11 +92,6 @@ void ui_colorpicking_wireframe() {
         // TODO: change this representation.
         rect = (Graphics_Rectangle){10,UI_PICKER_TOP+4, EPD_WIDTH-11,UI_PICKER_TOP+4+64};
         Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
-    } else {
-        // Otherwise, draw an arrow over the relevant color:
-        uint8_t arrow_x = (21*ui_colorpicker_cursor_pos);
-        Graphics_drawLine(&ui_gr_context_portrait, arrow_x, EPD_HEIGHT-64, arrow_x+10, EPD_HEIGHT-48);
-        Graphics_drawLine(&ui_gr_context_portrait, arrow_x+21, EPD_HEIGHT-64, arrow_x+11, EPD_HEIGHT-48);
     }
 
 }

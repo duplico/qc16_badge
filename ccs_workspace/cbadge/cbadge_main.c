@@ -91,7 +91,7 @@ void init_io() {
     PM5CTL0 &= ~LOCKLPM5;
 
     // GPIO:
-    // P1.0     LED A       (SEL 00; DIR 1)
+    // P1.0     LED B       (SEL 00; DIR 1)
     // P1.1     B2B PTX     (SEL 00; DIR 0) (pull-down) (DIO1)
     // P1.2     RX (PTX)    (SEL 01; DIR 0)
     // P1.3     TX (PTX)    (SEL 01; DIR 1)
@@ -105,11 +105,11 @@ void init_io() {
     P1SEL1 = 0b00000000; // MSB
     P1REN = 0b00010010;
     P1OUT = 0x00;
-    // P2.0     LED B       (SEL: 00; DIR 1)
+    // P2.0     LED C       (SEL: 00; DIR 1)
     // P2.1     B2          (SEL: 00; DIR 0)
     //  ~~(There are no P.{2..5})~~
     // P2.6     B3          (SEL: 00; DIR 0)
-    // P2.7     LED C       (SEL: 00; DIR 1)
+    // P2.7     LED A       (SEL: 00; DIR 1)
     P2DIR = 0b10000001;
     P2SEL0 = 0x00;
     P2SEL1 = 0x00;

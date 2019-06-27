@@ -36,35 +36,115 @@ uint8_t ui_current = UI_SCREEN_STORY1;
 uint8_t ui_colorpicking = 0;
 uint8_t ui_textentry = 0;
 
+#define TOPBAR_HEIGHT 36
+#define TOPBAR_ICON_HEIGHT 24
+#define TOPBAR_ICON_WIDTH 24
+#define TOPBAR_TEXT_WIDTH 18
+#define TOPBAR_TEXT_HEIGHT (TOPBAR_HEIGHT - TOPBAR_ICON_HEIGHT)
+#define TOPBAR_SEG_WIDTH (TOPBAR_ICON_WIDTH + TOPBAR_TEXT_WIDTH)
+#define TOPBAR_SUB_WIDTH TOPBAR_SEG_WIDTH
+#define TOPBAR_SUB_HEIGHT (TOPBAR_HEIGHT - TOPBAR_ICON_HEIGHT - 1)
+
+#define BATTERY_X (EPD_HEIGHT-TOPBAR_ICON_WIDTH-1)
+#define BATTERY_ANODE_WIDTH 3
+#define BATTERY_ANODE_HEIGHT 6
+#define BATTERY_BODY_WIDTH (TOPBAR_ICON_WIDTH-BATTERY_ANODE_WIDTH)
+#define BATTERY_BODY_HEIGHT 15
+#define BATTERY_BODY_Y0 ((TOPBAR_ICON_HEIGHT-BATTERY_BODY_HEIGHT)/2)
+#define BATTERY_BODY_Y1 (BATTERY_BODY_Y0+BATTERY_BODY_HEIGHT)
+#define BATTERY_ANODE_Y0 ((TOPBAR_ICON_HEIGHT-BATTERY_ANODE_HEIGHT)/2)
+
+#define BATTERY_SEGMENT_PAD 1
+#define BATTERY_SEGMENT_WIDTH ((BATTERY_BODY_WIDTH/3)-BATTERY_SEGMENT_PAD)
+
+#define BATTERY_LOW_X0 BATTERY_X
+#define BATTERY_MID_X0 (BATTERY_X + BATTERY_SEGMENT_WIDTH + BATTERY_SEGMENT_PAD)
+#define BATTERY_HIGH_X0 (BATTERY_X + 2*(BATTERY_SEGMENT_WIDTH + BATTERY_SEGMENT_PAD))
+
+#define VBAT_FULL_2DOT 9
+#define VBAT_MID_2DOT 5
+#define VBAT_LOW_2DOT 2
+
+void ui_draw_top_bar_element_icons() {
+    // TODO: consider making this a global or heap var that we share everywhere.
+    Graphics_Rectangle rect;
+
+    // TODO: Add a pad here, explicitly:
+
+    for (uint8_t i=0; i<7; i++) {
+        rect.xMin = i*TOPBAR_SEG_WIDTH;
+        rect.xMax = i*TOPBAR_SEG_WIDTH+TOPBAR_ICON_WIDTH-1;
+        rect.yMin = 0;
+        rect.yMax = TOPBAR_ICON_HEIGHT-1;
+        Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+
+        rect.xMin = i*TOPBAR_SEG_WIDTH;
+        rect.xMax = i*TOPBAR_SEG_WIDTH+TOPBAR_SUB_WIDTH-1;
+        rect.yMin = TOPBAR_ICON_HEIGHT+1;
+        rect.yMax = TOPBAR_ICON_HEIGHT+TOPBAR_SUB_HEIGHT-1;
+        Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+
+        Graphics_drawString(&ui_gr_context_landscape, "123", 3, i*TOPBAR_SEG_WIDTH+TOPBAR_ICON_WIDTH, 8, 0);
+    }
+
+}
+
 void ui_draw_top_bar() {
     // Draw the top bar.
-    Graphics_drawLine(&ui_gr_context_landscape, 0, 28, 295, 28);
+    Graphics_drawLine(&ui_gr_context_landscape, 0, TOPBAR_HEIGHT, 295, TOPBAR_HEIGHT);
 
-    // Draw the battery symbol.
-    // Determine the battery voltage.
-    // 0.5 V is the minimum. 3.0V is the "maximum"
-    // They're probably just about empty when we get to 1.8 V.
+    // Draw the battery:
+
     Graphics_Rectangle rect;
-    rect.xMin = 248;
-    rect.xMax = 291;
-    rect.yMin = 2;
-    rect.yMax = 18;
-    Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
-    rect.xMin = 291;
-    rect.xMax = 295;
-    rect.yMin = 6;
-    rect.yMax = 13;
+    rect.xMin = BATTERY_X;
+    rect.xMax = BATTERY_X+BATTERY_BODY_WIDTH;
+    rect.yMin = BATTERY_BODY_Y0;
+    rect.yMax = BATTERY_BODY_Y1;
     Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
 
-    Graphics_setFont(&ui_gr_context_landscape, &g_sFontCmss16b);
+    rect.xMin = BATTERY_X+BATTERY_BODY_WIDTH;
+    rect.xMax = BATTERY_X+BATTERY_BODY_WIDTH+BATTERY_ANODE_WIDTH;
+    rect.yMin = BATTERY_ANODE_Y0;
+    rect.yMax = BATTERY_ANODE_Y0 + BATTERY_ANODE_HEIGHT;
+    Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+
     Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
     char bat_text[5] = "3.0V";
     sprintf(bat_text, "%d.%dV", vbat_out_uvolts/1000000, (vbat_out_uvolts/100000) % 10);
-    Graphics_drawStringCentered(&ui_gr_context_landscape, (int8_t *) bat_text, 4, 248 + (291-248)/2, 2 + (18-2)/2, 0);
+    Graphics_drawStringCentered(&ui_gr_context_landscape, (int8_t *) bat_text, 4, BATTERY_X + TOPBAR_ICON_WIDTH/2, TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1, 0);
 
-    Graphics_drawString(&ui_gr_context_landscape, "QBADGE", 6, 0, 0, 0);
+    // Now do the graphics part:
+    if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 >= VBAT_FULL_2DOT)) {
+        // full
+        rect.xMin = BATTERY_HIGH_X0+BATTERY_SEGMENT_PAD;
+        rect.xMax = BATTERY_HIGH_X0+BATTERY_SEGMENT_WIDTH-1;
+        rect.yMin = BATTERY_BODY_Y0+BATTERY_SEGMENT_PAD;
+        rect.yMax = BATTERY_BODY_Y1-BATTERY_SEGMENT_PAD-2;
+        Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
+    }
+    if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_MID_2DOT))) {
+        rect.xMin = BATTERY_MID_X0+BATTERY_SEGMENT_PAD;
+        rect.xMax = BATTERY_MID_X0+BATTERY_SEGMENT_WIDTH;
+        rect.yMin = BATTERY_BODY_Y0+BATTERY_SEGMENT_PAD;
+        rect.yMax = BATTERY_BODY_Y1-BATTERY_SEGMENT_PAD-2;
+        Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
+    }
+    if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_LOW_2DOT))) {
+        rect.xMin = BATTERY_LOW_X0+BATTERY_SEGMENT_PAD+1;
+        rect.xMax = BATTERY_LOW_X0+BATTERY_SEGMENT_WIDTH;
+        rect.yMin = BATTERY_BODY_Y0+BATTERY_SEGMENT_PAD;
+        rect.yMax = BATTERY_BODY_Y1-BATTERY_SEGMENT_PAD-2;
+        Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
+    }
+    if (vbat_out_uvolts/1000000 < 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 < VBAT_LOW_2DOT)) {
+        // ABOUT TO RUN OUT!!!
+        Graphics_drawString(&ui_gr_context_landscape, ":-(", 3, BATTERY_X+2, BATTERY_BODY_Y0+4, 0);
 
-    Graphics_flushBuffer(&ui_gr_context_landscape);
+    }
+
+    ui_draw_top_bar_element_icons();
+
+
 
     // Is our agent around? Draw the agent symbol.
 
@@ -79,6 +159,7 @@ void ui_draw_main_menu() {
 
     ui_draw_top_bar();
 
+    Graphics_flushBuffer(&ui_gr_context_landscape);
     // Draw the menu itself
 
 }
@@ -159,12 +240,22 @@ void ui_screensaver_do(UInt events) {
     }
 }
 
+void ui_mainmenu_do(UInt events) {
+    switch(events) {
+    case UI_EVENT_REFRESH:
+        ui_draw_main_menu();
+    case UI_EVENT_KB_PRESS:
+        break;
+    }
+}
+
 void ui_task_fn(UArg a0, UArg a1) {
     UInt events;
 
     storage_init();
 
-    ui_transition(UI_SCREEN_IDLE);
+//    ui_transition(UI_SCREEN_IDLE);
+    ui_transition(UI_SCREEN_MAINMENU);
     uint8_t brightness = 0x10;
 
     while (1) {
@@ -231,8 +322,13 @@ void ui_task_fn(UArg a0, UArg a1) {
                         brightness -= 0;
                     }
                     ht16d_set_global_brightness(brightness);
+                } else if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == BTN_OK) {
+                    ui_transition(UI_SCREEN_MAINMENU);
                 }
                 ui_screensaver_do(events);
+                break;
+            case UI_SCREEN_MAINMENU:
+                ui_mainmenu_do(events);
                 break;
             }
 

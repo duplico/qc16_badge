@@ -42,6 +42,8 @@ uint8_t ui_textentry = 0;
 #define TOPBAR_TEXT_WIDTH 18
 #define TOPBAR_TEXT_HEIGHT (TOPBAR_HEIGHT - TOPBAR_ICON_HEIGHT)
 #define TOPBAR_SEG_WIDTH (TOPBAR_ICON_WIDTH + TOPBAR_TEXT_WIDTH)
+#define TOPBAR_SEG_PAD 2
+#define TOPBAR_SEG_WIDTH_PADDED (TOPBAR_ICON_WIDTH + TOPBAR_TEXT_WIDTH + TOPBAR_SEG_PAD)
 #define TOPBAR_SUB_WIDTH TOPBAR_SEG_WIDTH
 #define TOPBAR_SUB_HEIGHT (TOPBAR_HEIGHT - TOPBAR_ICON_HEIGHT - 1)
 
@@ -65,26 +67,71 @@ uint8_t ui_textentry = 0;
 #define VBAT_MID_2DOT 5
 #define VBAT_LOW_2DOT 2
 
+#define TOP_BAR_LOCKS 0
+#define TOP_BAR_COINS 1
+#define TOP_BAR_CAMERAS 2
+#define TOP_BAR_AGENT 3
+#define TOP_BAR_HANDLER 4
+#define TOP_BAR_GAYDAR 5
+
 void ui_draw_top_bar_element_icons() {
     // TODO: consider making this a global or heap var that we share everywhere.
     Graphics_Rectangle rect;
 
     // TODO: Add a pad here, explicitly:
 
-    for (uint8_t i=0; i<7; i++) {
-        rect.xMin = i*TOPBAR_SEG_WIDTH;
-        rect.xMax = i*TOPBAR_SEG_WIDTH+TOPBAR_ICON_WIDTH-1;
-        rect.yMin = 0;
-        rect.yMax = TOPBAR_ICON_HEIGHT-1;
-        Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+    for (uint8_t i=0; i<6; i++) {
+        uint16_t icon_x = i*TOPBAR_SEG_WIDTH_PADDED;
+        uint16_t icon_y = 0;
+        uint16_t text_x = i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_ICON_WIDTH;
+        uint16_t text_y = 8;
+        uint16_t bar_x0 = i*TOPBAR_SEG_WIDTH_PADDED;
+        uint16_t bar_y0 = TOPBAR_ICON_HEIGHT+1;
+        uint16_t bar_x1 = i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_SUB_WIDTH-1;
+        uint16_t bar_y1 = TOPBAR_ICON_HEIGHT+TOPBAR_SUB_HEIGHT-1;
+        int8_t bar_level = -1;
+        int8_t bar_capacity = -1;
+        tImage *icon_img;
 
-        rect.xMin = i*TOPBAR_SEG_WIDTH;
-        rect.xMax = i*TOPBAR_SEG_WIDTH+TOPBAR_SUB_WIDTH-1;
-        rect.yMin = TOPBAR_ICON_HEIGHT+1;
-        rect.yMax = TOPBAR_ICON_HEIGHT+TOPBAR_SUB_HEIGHT-1;
-        Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+        switch(i) {
+        case TOP_BAR_LOCKS:
+            icon_img = &locks1BPP_UNCOMP;
+            bar_level = 1; // TODO: read
+            bar_capacity = 2;
+            break;
+        case TOP_BAR_COINS:
+            icon_img = &coins1BPP_UNCOMP;
+            bar_level = 2; // TODO: read
+            bar_capacity = 5;
+            break;
+        case TOP_BAR_CAMERAS:
+            icon_img = &cameras1BPP_UNCOMP;
+            bar_level = 3; // TODO: read
+            bar_capacity = 4;
+            break;
+        case TOP_BAR_AGENT:
+            icon_img = &agent1BPP_UNCOMP;
+            break;
+        case TOP_BAR_HANDLER:
+            icon_img = &handler1BPP_UNCOMP;
+            break;
+        case TOP_BAR_GAYDAR:
+            icon_img = &radar1BPP_UNCOMP;
+            break;
+        }
 
-        Graphics_drawString(&ui_gr_context_landscape, "123", 3, i*TOPBAR_SEG_WIDTH+TOPBAR_ICON_WIDTH, 8, 0);
+        Graphics_drawImage(&ui_gr_context_landscape, icon_img, icon_x, icon_y);
+
+        if (bar_capacity > 0) {
+            // The "fullness" bar, if applicable:
+            rect.xMin = bar_x0;
+            rect.xMax = bar_x1;
+            rect.yMin = bar_y0;
+            rect.yMax = bar_y1;
+            Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+        }
+
+        Graphics_drawString(&ui_gr_context_landscape, "123", 3, i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_ICON_WIDTH, 8, 0);
     }
 
 }

@@ -40,16 +40,11 @@ void storage_init() {
             spiffsReadWriteCache, sizeof(spiffsReadWriteCache), NULL);
     }
 
-    status = SPIFFS_creat(&fs, "testfile", 0);
-    spiffs_file f;
-    f = SPIFFS_open(&fs, "testfile", SPIFFS_O_CREAT + SPIFFS_O_WRONLY, 0);
-    status = SPIFFS_write(&fs, f, "test", 4);
-    status = SPIFFS_close(&fs, f);
-
     spiffs_stat stat;
     status = SPIFFS_stat(&fs, "testfile", &stat);
 
-    char buf[10];
-    f = SPIFFS_open(&fs, "testfile", SPIFFS_O_RDONLY, 0);
-    status = SPIFFS_read(&fs, f, (void *)buf, 4);
+    if (status == SPIFFS_OK) {
+        // successfully statted the testfile, need to delete.
+        SPIFFS_remove(&fs, "testfile");
+    }
 }

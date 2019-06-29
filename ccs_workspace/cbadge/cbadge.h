@@ -8,6 +8,8 @@
 #ifndef CBADGE_H_
 #define CBADGE_H_
 
+#include <qc16.h>
+
 #define TICK_WDT_BITS WDT_MDLY_0_5
 #define TICKS_PER_MS 2
 
@@ -16,17 +18,13 @@
 
 #define KEY_LVL (1000 * TICKS_PER_MS) // Should be about 1000 per ms
 
+// TODO: Persistence:
+//  Handle
+
 #define SERIAL_BUFFER_LEN 32
 // Currently ticks are about 2ms:
 // And, at 9600 baud a header takes about 7ms to send.
 #define SERIAL_PHY_TIMEOUT_MS 10
-
-typedef struct {
-    uint16_t badge_id;
-    uint8_t active;
-    uint8_t activated;
-    uint8_t initialized;
-} cbadge_conf_t;
 
 #define SERIAL_DIO_OUT P1OUT
 #define SERIAL_DIO_IN P1IN

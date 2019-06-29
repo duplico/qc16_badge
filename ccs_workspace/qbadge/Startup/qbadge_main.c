@@ -28,17 +28,20 @@
 #include <queercon_drivers/storage.h>
 
 #include "qbadge.h"
+#include <qc16.h>
 
 #include "ui/ui.h"
 #include "ui/leds.h"
 
-#define LED_BRIGHTNESS_INTERVAL 12500
 uint32_t vbat_out_uvolts = 0;
 uint16_t vbat_raw;
 uint16_t brightness_raw;
+Clock_Handle adc_clock_h;
 
 ADCBuf_Handle adc_buf_h;
 ADCBuf_Conversion next_conversion;
+
+qbadge_conf_t my_conf;
 
 void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     void *completedADCBuffer, uint32_t completedChannel) {
@@ -82,8 +85,6 @@ void adc_timer_fn(UArg a0)
         }
     }
 }
-
-Clock_Handle adc_clock_h;
 
 int main()
 {

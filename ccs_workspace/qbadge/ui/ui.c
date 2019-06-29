@@ -9,6 +9,7 @@
 #include <queercon_drivers/ht16d35b.h>
 #include <queercon_drivers/storage.h>
 #include <stdint.h>
+#include <string.h>
 #include <stdio.h>
 
 #include <ti/grlib/grlib.h>
@@ -16,6 +17,9 @@
 #include <ti/sysbios/knl/Task.h>
 #include <ti/sysbios/knl/Event.h>
 #include <ti/drivers/PIN.h>
+
+#include "queercon_drivers/storage.h"
+#include <third_party/spiffs/spiffs.h>
 
 #include <ui/images.h>
 #include <ui/colorpicker.h>
@@ -98,6 +102,7 @@ void ui_draw_top_bar_element_icons() {
             icon_img = &locks1BPP_UNCOMP;
             bar_level = 1; // TODO: read
             bar_capacity = 2;
+            text_x -= 2; // Unpad.
             break;
         case TOP_BAR_COINS:
             icon_img = &coins1BPP_UNCOMP;
@@ -130,8 +135,9 @@ void ui_draw_top_bar_element_icons() {
             rect.yMax = bar_y1;
             Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
         }
+        Graphics_setFont(&ui_gr_context_landscape, &g_sFontCmss16);
 
-        Graphics_drawString(&ui_gr_context_landscape, "123", 3, i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_ICON_WIDTH, 8, 0);
+        Graphics_drawString(&ui_gr_context_landscape, "123", 3, i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_ICON_WIDTH, 4, 0);
     }
 
 }
@@ -296,10 +302,58 @@ void ui_mainmenu_do(UInt events) {
     }
 }
 
+uint8_t conf_file_exists() {
+    volatile int32_t status;
+    spiffs_stat stat;
+    status = SPIFFS_stat(&fs, "/qbadge/conf", &stat);
+    if (status == SPIFFS_OK && stat.size == sizeof(my_conf)) {
+        return 1;
+    } else if (status == SPIFFS_OK) {
+        status = SPIFFS_remove(&fs, "/qbadge/conf");
+    }
+    // TODO: Validate more?
+    // We should create it if we got SPIFFS_ERR_NOT_FOUND...
+    return 0;
+}
+
+void load_conf() {
+    // TODO: Make sure this worked.
+    spiffs_file conf_file;
+    conf_file = SPIFFS_open(&fs, "/qbadge/conf", SPIFFS_O_RDONLY, 0);
+    SPIFFS_read(&fs, conf_file, (uint8_t *) (&my_conf), sizeof(my_conf));
+    SPIFFS_close(&fs, conf_file);
+}
+
+void write_conf() {
+    // TODO: Error handling.
+    spiffs_file conf_file;
+    conf_file = SPIFFS_open(&fs, "/qbadge/conf", SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);
+    SPIFFS_write(&fs, conf_file, (uint8_t *) (&my_conf), sizeof(my_conf));
+    SPIFFS_close(&fs, conf_file);
+}
+
+void init_conf() {
+    my_conf.badge_id = QBADGE_ID_UNASSIGNED;
+    memset(my_conf.element_level, 0x00, 3);
+    memset(my_conf.element_level_progress, 0x00, 3);
+    memset(my_conf.element_qty, 0x00, 6);
+    my_conf.initialized = 0;
+    write_conf();
+}
+
 void ui_task_fn(UArg a0, UArg a1) {
     UInt events;
 
+    // TODO: Do our first-boot things here.
+    // TODO: POST here.
     storage_init();
+
+    if (conf_file_exists()) {
+        load_conf();
+    } else {
+        init_conf();
+    }
+
 
 //    ui_transition(UI_SCREEN_IDLE);
     ui_transition(UI_SCREEN_MAINMENU);

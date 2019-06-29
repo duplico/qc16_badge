@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 // Configuration
-#define PTX_TIME_MS 1000
+#define PTX_TIME_MS 1000 // TODO: shorten?
 #define PRX_TIME_MS 1000
 
 // Serial protocol details

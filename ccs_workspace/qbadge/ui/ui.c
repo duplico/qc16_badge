@@ -51,6 +51,8 @@ uint8_t ui_textentry = 0;
 #define TOPBAR_SUB_WIDTH TOPBAR_SEG_WIDTH
 #define TOPBAR_SUB_HEIGHT (TOPBAR_HEIGHT - TOPBAR_ICON_HEIGHT - 1)
 
+#define TOPBAR_HEADSUP_START (3*TOPBAR_SEG_WIDTH_PADDED)
+
 #define BATTERY_X (EPD_HEIGHT-TOPBAR_ICON_WIDTH-1)
 #define BATTERY_ANODE_WIDTH 3
 #define BATTERY_ANODE_HEIGHT 6
@@ -74,17 +76,16 @@ uint8_t ui_textentry = 0;
 #define TOP_BAR_LOCKS 0
 #define TOP_BAR_COINS 1
 #define TOP_BAR_CAMERAS 2
-#define TOP_BAR_AGENT 3
-#define TOP_BAR_HANDLER 4
-#define TOP_BAR_GAYDAR 5
 
-void ui_draw_top_bar_element_icons() {
+// TODO: write draw_top_bar_remote_element_icons()
+
+void ui_draw_top_bar_local_element_icons() {
     // TODO: consider making this a global or heap var that we share everywhere.
     Graphics_Rectangle rect;
 
     // TODO: Add a pad here, explicitly:
 
-    for (uint8_t i=0; i<6; i++) {
+    for (uint8_t i=0; i<3; i++) {
         uint16_t icon_x = i*TOPBAR_SEG_WIDTH_PADDED;
         uint16_t icon_y = 0;
         uint16_t text_x = i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_ICON_WIDTH;
@@ -93,6 +94,7 @@ void ui_draw_top_bar_element_icons() {
         uint16_t bar_y0 = TOPBAR_ICON_HEIGHT+1;
         uint16_t bar_x1 = i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_SUB_WIDTH-1;
         uint16_t bar_y1 = TOPBAR_ICON_HEIGHT+TOPBAR_SUB_HEIGHT-1;
+        uint16_t number;
         int8_t bar_level = -1;
         int8_t bar_capacity = -1;
         tImage *icon_img;
@@ -103,25 +105,19 @@ void ui_draw_top_bar_element_icons() {
             bar_level = 1; // TODO: read
             bar_capacity = 2;
             text_x -= 2; // Unpad.
+            number = my_conf.element_qty[i]; // TODO
             break;
         case TOP_BAR_COINS:
             icon_img = &coins1BPP_UNCOMP;
             bar_level = 2; // TODO: read
             bar_capacity = 5;
+            number = my_conf.element_qty[i]; // TODO
             break;
         case TOP_BAR_CAMERAS:
             icon_img = &cameras1BPP_UNCOMP;
             bar_level = 3; // TODO: read
             bar_capacity = 4;
-            break;
-        case TOP_BAR_AGENT:
-            icon_img = &agent1BPP_UNCOMP;
-            break;
-        case TOP_BAR_HANDLER:
-            icon_img = &handler1BPP_UNCOMP;
-            break;
-        case TOP_BAR_GAYDAR:
-            icon_img = &radar1BPP_UNCOMP;
+            number = my_conf.element_qty[i]; // TODO
             break;
         }
 
@@ -139,15 +135,35 @@ void ui_draw_top_bar_element_icons() {
 
         Graphics_drawString(&ui_gr_context_landscape, "123", 3, i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_ICON_WIDTH, 4, 0);
     }
-
 }
 
-void ui_draw_top_bar() {
-    // Draw the top bar.
-    Graphics_drawLine(&ui_gr_context_landscape, 0, TOPBAR_HEIGHT, 295, TOPBAR_HEIGHT);
+void ui_draw_top_bar_qbadge_headsup_icons() {
+    // TODO: consider making this a global or heap var that we share everywhere.
+    Graphics_Rectangle rect;
 
-    // Draw the battery:
+    // TODO: Add a pad here, explicitly:
 
+    for (uint8_t i=0; i<3; i++) {
+        uint16_t icon_x = TOPBAR_HEADSUP_START + i*TOPBAR_SEG_WIDTH_PADDED;
+        uint16_t icon_y = 0;
+        tImage *icon_img;
+        switch(i) {
+        case 0: // agent
+            icon_img = &agent1BPP_UNCOMP;
+            break;
+        case 1: // handlers
+            icon_img = &handler1BPP_UNCOMP;
+            break;
+        case 2: // scan
+            icon_img = &radar1BPP_UNCOMP;
+            break;
+        }
+
+        Graphics_drawImage(&ui_gr_context_landscape, icon_img, icon_x, icon_y);
+    }
+}
+
+void ui_draw_top_bar_battery_life() {
     Graphics_Rectangle rect;
     rect.xMin = BATTERY_X;
     rect.xMax = BATTERY_X+BATTERY_BODY_WIDTH;
@@ -194,11 +210,15 @@ void ui_draw_top_bar() {
         Graphics_drawString(&ui_gr_context_landscape, ":-(", 3, BATTERY_X+2, BATTERY_BODY_Y0+4, 0);
 
     }
+}
 
-    ui_draw_top_bar_element_icons();
+void ui_draw_top_bar() {
+    // Draw the top bar.
+    Graphics_drawLine(&ui_gr_context_landscape, 0, TOPBAR_HEIGHT, 295, TOPBAR_HEIGHT);
 
-
-
+    ui_draw_top_bar_battery_life();
+    ui_draw_top_bar_local_element_icons();
+    ui_draw_top_bar_qbadge_headsup_icons();
     // Is our agent around? Draw the agent symbol.
 
     // Are there any handlers around? Draw the handler symbol.
@@ -344,8 +364,6 @@ void init_conf() {
 void ui_task_fn(UArg a0, UArg a1) {
     UInt events;
 
-    // TODO: Do our first-boot things here.
-    // TODO: POST here.
     storage_init();
 
     if (conf_file_exists()) {

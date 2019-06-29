@@ -148,7 +148,7 @@ void ht16d_read_reg(uint8_t reg[]) {
  ** * Grayscale mode
  ** * No fade, UCOM, USEG, or matrix masking
  ** * Global brightness to `HT16D_BRIGHTNESS_DEFAULT`
- ** * Only columns 0, 1, 2, and 3 in use // TODO
+ ** * Only columns 0, 1, and 2, in use
  ** * Constant current ratio to 0b0000 (max)
  ** * HIGH SCAN mode (common-anode on columns)
  */

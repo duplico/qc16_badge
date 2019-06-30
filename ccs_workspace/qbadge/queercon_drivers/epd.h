@@ -81,5 +81,6 @@ extern Graphics_Display epd_gr_display_landscape;
 extern Graphics_Display epd_gr_display_portrait;
 extern const Graphics_Display_Functions epd_grDisplayFunctions;
 void epd_flip();
+extern uint8_t epd_upside_down;
 extern uint8_t epd_do_partial;
 #endif /* QUEERCON_DRIVERS_EPD_H_ */

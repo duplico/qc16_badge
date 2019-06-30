@@ -16,11 +16,14 @@
 
 #define UI_CLOCK_TICKS (UI_CLOCK_MS * 100) // derived
 
+// (below 10 are PORTRAIT)
 // UI screens:
 #define UI_SCREEN_IDLE 0
-#define UI_SCREEN_MAINMENU 1
-#define UI_SCREEN_COLORPICKER 2
+#define UI_SCREEN_COLORPICKER 1
+#define UI_SCREEN_MAINMENU 10
 #define UI_SCREEN_STORY1 101
+
+#define LOWEST_LANDSCAPE_SCREEN UI_SCREEN_MAINMENU
 
 // Keyboard related:
 
@@ -99,6 +102,7 @@
 
 // Data
 
+extern uint8_t ui_current;
 extern uint8_t kb_active_key;
 extern Event_Handle ui_event_h;
 extern Graphics_Context ui_gr_context_landscape;
@@ -112,5 +116,6 @@ extern uint8_t ui_colorpicking;
 
 UInt pop_events(UInt *events_ptr, UInt events_to_check);
 void ui_init();
+uint8_t ui_is_landscape();
 
 #endif /* APPLICATION_UI_H_ */

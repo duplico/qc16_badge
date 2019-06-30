@@ -190,17 +190,17 @@ void ui_colorpicking_do(UInt events) {
             // Animation selection is highlighted
 
             switch(kb_active_key_masked) {
-            case BTN_UP: // This is "right"
+            case BTN_RIGHT:
                 led_tail_anim_type_next();
                 Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
-            case BTN_DOWN: // "left"
+            case BTN_LEFT:
                 led_tail_anim_type_prev();
                 Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
-            case BTN_RIGHT: // "down"
+            case BTN_DOWN:
                 ui_colorpicker_cursor_anim = 0;
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
@@ -220,21 +220,21 @@ void ui_colorpicking_do(UInt events) {
                 // Any color button:
                 ui_colorpicking_colorbutton();
                 break;
-            case BTN_UP: // This is "right"
+            case BTN_RIGHT:
                 if (ui_colorpicker_cursor_pos == 5)
                     ui_colorpicker_cursor_pos = 0;
                 else
                     ui_colorpicker_cursor_pos++;
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
-            case BTN_DOWN: // "left"
+            case BTN_LEFT:
                 if (ui_colorpicker_cursor_pos == 0)
                     ui_colorpicker_cursor_pos = 5;
                 else
                     ui_colorpicker_cursor_pos--;
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
-            case BTN_LEFT: // "up"
+            case BTN_UP:
                 ui_colorpicker_cursor_anim = 1;
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;

@@ -15,6 +15,7 @@
 #include <board.h>
 
 #include "ui/ui.h"
+#include <queercon_drivers/epd.h>
 #include "keypad.h"
 
 Clock_Handle kb_debounce_clock_h;
@@ -108,7 +109,44 @@ void kb_clock_swi(UArg a0) {
         Event_post(ui_event_h, UI_EVENT_KB_RELEASE);
     } else if (!(kb_active_key & BTN_PRESSED) && button_press && button_press == button_press_prev) {
         // A button is pressed.
-        kb_active_key = button_press | BTN_PRESSED;
+        kb_active_key = button_press;
+        if (!ui_is_landscape()) {
+            switch(button_press) {
+            case BTN_UP:
+                kb_active_key = BTN_RIGHT;
+                break;
+            case BTN_DOWN:
+                kb_active_key = BTN_LEFT;
+                break;
+            case BTN_LEFT:
+                kb_active_key = BTN_UP;
+                break;
+            case BTN_RIGHT:
+                kb_active_key = BTN_DOWN;
+                break;
+            }
+        } else if (!epd_upside_down) {
+            // Apparently, these are coded for when it's actually upside down,
+            //  so everything is backwards. Lulz.
+            // TODO: fix, if we have time.
+            switch(button_press) {
+            case BTN_UP:
+                kb_active_key = BTN_DOWN;
+                break;
+            case BTN_DOWN:
+                kb_active_key = BTN_UP;
+                break;
+            case BTN_LEFT:
+                kb_active_key = BTN_RIGHT;
+                break;
+            case BTN_RIGHT:
+                kb_active_key = BTN_LEFT;
+                break;
+            }
+            // We COULD adjust so that "left" is "up"
+
+        }
+        kb_active_key |= BTN_PRESSED;
         Event_post(ui_event_h, UI_EVENT_KB_PRESS);
     }
 }

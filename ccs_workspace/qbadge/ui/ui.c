@@ -80,6 +80,19 @@ uint8_t ui_textentry = 0;
 
 // TODO: write draw_top_bar_remote_element_icons()
 
+uint8_t ui_is_landscape() {
+    if (ui_colorpicking) {
+        return 0;
+    }
+    if (ui_textentry) {
+        return 1;
+    }
+    if (ui_current < LOWEST_LANDSCAPE_SCREEN) {
+        return 0;
+    }
+    return 1;
+}
+
 void ui_draw_top_bar_local_element_icons() {
     // TODO: consider making this a global or heap var that we share everywhere.
     Graphics_Rectangle rect;
@@ -338,6 +351,7 @@ void ui_transition(uint8_t destination) {
     if (ui_current == destination) {
         return; // Nothing to do.
     }
+    ui_selected_item = 0;
 
     ui_current = destination;
     Event_post(ui_event_h, UI_EVENT_REFRESH);
@@ -365,10 +379,25 @@ void ui_mainmenu_do(UInt events) {
     switch(events) {
     case UI_EVENT_REFRESH:
         ui_draw_main_menu();
+        break;
     case UI_EVENT_KB_PRESS:
         switch(kb_active_key_masked) {
         case BTN_BACK:
             ui_transition(UI_SCREEN_IDLE);
+            break;
+        case BTN_LEFT:
+            if (ui_selected_item == 0)
+                ui_selected_item = MAINMENU_ICON_COUNT;
+            ui_selected_item--;
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
+            epd_do_partial = 1;
+            break;
+        case BTN_RIGHT:
+            ui_selected_item++;
+            if (ui_selected_item == MAINMENU_ICON_COUNT)
+                ui_selected_item = 0;
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
+            epd_do_partial = 1;
             break;
         }
         break;

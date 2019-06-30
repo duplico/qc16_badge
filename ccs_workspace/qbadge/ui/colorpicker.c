@@ -22,6 +22,7 @@
 #include <ui/ui.h>
 #include <ui/keypad.h>
 #include <ui/images.h>
+#include <ui/graphics.h>
 #include <board.h>
 
 uint8_t ui_colorpicker_cursor_pos = 0;
@@ -84,7 +85,7 @@ void ui_colorpicking_wireframe() {
 
     // Draw the icon for the animation type currently selected:
     // TODO: Make sure there can't be an overrun here:
-    Graphics_drawImage(&ui_gr_context_portrait, image_anim_type_buttons[led_tail_anim_current.type], 32, UI_PICKER_TOP+4);
+    qc16gr_drawImage(&ui_gr_context_portrait, image_anim_type_buttons[led_tail_anim_current.type], 32, UI_PICKER_TOP+4);
 
     if (ui_colorpicker_cursor_anim) {
         // If we have the animation type selected, draw a box around its area:
@@ -100,15 +101,22 @@ void ui_colorpicking_load() {
     ui_colorpicking = 1;
 
     Graphics_Rectangle rect;
+    rect.xMin = 0;
+    rect.yMin = 0;
+    rect.xMax = EPD_WIDTH-1;
+    rect.yMax = UI_PICKER_TOP;
 
-    // Switch to the "clearing" colors
-    Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
-    Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
+    // Fade out the background
+    fadeRectangle(&ui_gr_context_portrait, &rect);
 
-    // Fade out the background.
-    for (int16_t i=0; i<UI_PICKER_TOP*2; i+=2) {
-        Graphics_drawLine(&ui_gr_context_portrait, 0, i, i, 0);
-    }
+//    // Switch to the "clearing" colors
+//    Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
+//    Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
+//
+//    // Fade out the background.
+//    for (int16_t i=0; i<UI_PICKER_TOP*2; i+=2) {
+//        Graphics_drawLine(&ui_gr_context_portrait, 0, i, i, 0);
+//    }
 
     // Clear the color picker "tab" area
     rect = (Graphics_Rectangle){64-(UI_PICKER_TAB_W/2), UI_PICKER_TOP-UI_PICKER_TAB_H,
@@ -120,7 +128,7 @@ void ui_colorpicking_load() {
     Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
 
     // Draw the color picker "tab" and the color picker icon.
-    Graphics_drawImage(&ui_gr_context_portrait, &picker1BPP_UNCOMP, 64-(picker1BPP_UNCOMP.xSize/2), UI_PICKER_TOP-UI_PICKER_TAB_H);
+    qc16gr_drawImage(&ui_gr_context_portrait, &img_picker, 64-(img_picker.xSize/2), UI_PICKER_TOP-UI_PICKER_TAB_H);
     Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
 
     // This will draw everything else:

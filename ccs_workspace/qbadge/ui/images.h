@@ -8,21 +8,19 @@
 #ifndef UI_IMAGES_H_
 #define UI_IMAGES_H_
 
-extern const tImage example_photo1BPP_UNCOMP;
-extern const tImage picker1BPP_UNCOMP;
-extern const tImage  ideaalt1BPP_COMP_RLE4;
-extern const tImage  idea1BPP_COMP_RLE4;
-
-extern const tImage  cameras1BPP_UNCOMP;
-extern const tImage  cocktails1BPP_UNCOMP;
-extern const tImage  coins1BPP_UNCOMP;
-extern const tImage  flags1BPP_UNCOMP;
-extern const tImage  keys1BPP_UNCOMP;
-extern const tImage  locks1BPP_UNCOMP;
-extern const tImage  radar1BPP_UNCOMP;
-extern const tImage  agent1BPP_UNCOMP;
-extern const tImage  handler1BPP_UNCOMP;
+extern const Graphics_Image img_example_photo;
+extern const Graphics_Image img_picker;
+extern const Graphics_Image img_cameras;
+extern const Graphics_Image img_cocktails;
+extern const Graphics_Image img_coins;
+extern const Graphics_Image img_flags;
+extern const Graphics_Image img_keys;
+extern const Graphics_Image img_locks;
+extern const Graphics_Image img_radar;
+extern const Graphics_Image img_agent;
+extern const Graphics_Image img_handler;
 
 extern const tImage *image_anim_type_buttons[];
+extern const tImage *image_mainmenu_icons[];
 
 #endif /* UI_IMAGES_H_ */

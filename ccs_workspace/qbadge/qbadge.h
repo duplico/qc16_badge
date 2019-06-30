@@ -15,6 +15,7 @@
 #define UI_AUTOREFRESH_TIMEOUT 6000000
 #define UI_CLOCK_MS 15
 #define LED_BRIGHTNESS_INTERVAL 12500 // TODO: rename
+#define UI_TEXT_FONT g_sFontCmss16
 
 extern qbadge_conf_t my_conf;
 

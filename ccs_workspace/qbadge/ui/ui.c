@@ -21,6 +21,7 @@
 #include "queercon_drivers/storage.h"
 #include <third_party/spiffs/spiffs.h>
 
+#include <ui/graphics.h>
 #include <ui/images.h>
 #include <ui/colorpicker.h>
 #include "leds.h"
@@ -101,27 +102,27 @@ void ui_draw_top_bar_local_element_icons() {
 
         switch(i) {
         case TOP_BAR_LOCKS:
-            icon_img = &locks1BPP_UNCOMP;
+            icon_img = &img_locks;
             bar_level = 1; // TODO: read
             bar_capacity = 2;
             text_x -= 2; // Unpad.
             number = my_conf.element_qty[i]; // TODO
             break;
         case TOP_BAR_COINS:
-            icon_img = &coins1BPP_UNCOMP;
+            icon_img = &img_coins;
             bar_level = 2; // TODO: read
             bar_capacity = 5;
             number = my_conf.element_qty[i]; // TODO
             break;
         case TOP_BAR_CAMERAS:
-            icon_img = &cameras1BPP_UNCOMP;
+            icon_img = &img_cameras;
             bar_level = 3; // TODO: read
             bar_capacity = 4;
             number = my_conf.element_qty[i]; // TODO
             break;
         }
 
-        Graphics_drawImage(&ui_gr_context_landscape, icon_img, icon_x, icon_y);
+        qc16gr_drawImage(&ui_gr_context_landscape, icon_img, icon_x, icon_y);
 
         if (bar_capacity > 0) {
             // The "fullness" bar, if applicable:
@@ -131,7 +132,7 @@ void ui_draw_top_bar_local_element_icons() {
             rect.yMax = bar_y1;
             Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
         }
-        Graphics_setFont(&ui_gr_context_landscape, &g_sFontCmss16);
+        Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
 
         Graphics_drawString(&ui_gr_context_landscape, "123", 3, i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_ICON_WIDTH, 4, 0);
     }
@@ -149,17 +150,17 @@ void ui_draw_top_bar_qbadge_headsup_icons() {
         tImage *icon_img;
         switch(i) {
         case 0: // agent
-            icon_img = &agent1BPP_UNCOMP;
+            icon_img = &img_agent;
             break;
         case 1: // handlers
-            icon_img = &handler1BPP_UNCOMP;
+            icon_img = &img_handler;
             break;
         case 2: // scan
-            icon_img = &radar1BPP_UNCOMP;
+            icon_img = &img_radar;
             break;
         }
 
-        Graphics_drawImage(&ui_gr_context_landscape, icon_img, icon_x, icon_y);
+        qc16gr_drawImage(&ui_gr_context_landscape, icon_img, icon_x, icon_y);
     }
 }
 
@@ -177,6 +178,7 @@ void ui_draw_top_bar_battery_life() {
     rect.yMax = BATTERY_ANODE_Y0 + BATTERY_ANODE_HEIGHT;
     Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
 
+    // TODO: change this font:
     Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
     char bat_text[5] = "3.0V";
     sprintf(bat_text, "%d.%dV", vbat_out_uvolts/1000000, (vbat_out_uvolts/100000) % 10);
@@ -226,11 +228,57 @@ void ui_draw_top_bar() {
 
 }
 
+uint8_t ui_selected_item = 0;
+#define MAINMENU_ICON_COUNT 4
+#define MAINMENU_NAME_MAX_LEN 7
+const char mainmenu_icon[MAINMENU_ICON_COUNT][MAINMENU_NAME_MAX_LEN+1] = {
+    "Info",
+    "Mission",
+    "Scan",
+    "Files",
+};
+
+void ui_draw_main_menu_icons() {
+    // Our area starts at TOPBAR_HEIGHT+1:
+    // 0..35 top bar
+    // 36 line
+    // 37..127 menu area (91 px high)
+    // So, we can have, like, 64x64 icons?
+    // 5px pad left, 5px pad right, on all.
+
+    Graphics_Rectangle rect;
+    rect.yMin = TOPBAR_HEIGHT+8;
+    rect.yMax = rect.yMin+64 - 1;
+    for (uint8_t i=0; i<4; i++) {
+        rect.xMin = 5*(i+1) + i*(64+5);
+        rect.xMax = rect.xMin + 64 - 1;
+
+        qc16gr_drawImage(&ui_gr_context_landscape, image_mainmenu_icons[i], rect.xMin, rect.yMin);
+
+        if (ui_selected_item == i) {
+            // make it selected
+            Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
+            Graphics_drawStringCentered(
+                    &ui_gr_context_landscape,
+                    (int8_t *) mainmenu_icon[i],
+                    MAINMENU_NAME_MAX_LEN,
+                    rect.xMin+32,
+                    rect.yMax+9,
+                    0
+                );
+        } else {
+            fadeRectangle(&ui_gr_context_landscape, &rect);
+        }
+    }
+}
+
 void ui_draw_main_menu() {
     // Clear the buffer.
     Graphics_clearDisplay(&ui_gr_context_landscape);
 
     ui_draw_top_bar();
+
+    ui_draw_main_menu_icons();
 
     Graphics_flushBuffer(&ui_gr_context_landscape);
     // Draw the menu itself
@@ -248,7 +296,7 @@ UInt pop_events(UInt *events_ptr, UInt events_to_check) {
 void ui_draw_screensaver() {
     Graphics_clearDisplay(&ui_gr_context_portrait);
 
-    Graphics_setFont(&ui_gr_context_portrait, &g_sFontCmss16b);
+    Graphics_setFont(&ui_gr_context_portrait, &UI_TEXT_FONT);
     Graphics_drawStringCentered(
             &ui_gr_context_portrait,
             "- queercon 16 -",
@@ -281,7 +329,7 @@ void ui_draw_screensaver() {
     Graphics_drawLineH(&ui_gr_context_portrait, 0, 128, UI_IDLE_PHOTO_TOP-2);
     Graphics_drawLineH(&ui_gr_context_portrait, 0, 128, UI_IDLE_PHOTO_TOP-1);
 
-    Graphics_drawImage(&ui_gr_context_portrait, &example_photo1BPP_UNCOMP, 0, UI_IDLE_PHOTO_TOP);
+    qc16gr_drawImage(&ui_gr_context_portrait, &img_example_photo, 0, UI_IDLE_PHOTO_TOP);
 
     Graphics_flushBuffer(&ui_gr_context_portrait);
 }
@@ -318,6 +366,11 @@ void ui_mainmenu_do(UInt events) {
     case UI_EVENT_REFRESH:
         ui_draw_main_menu();
     case UI_EVENT_KB_PRESS:
+        switch(kb_active_key_masked) {
+        case BTN_BACK:
+            ui_transition(UI_SCREEN_IDLE);
+            break;
+        }
         break;
     }
 }
@@ -372,8 +425,6 @@ void ui_task_fn(UArg a0, UArg a1) {
         init_conf();
     }
 
-
-//    ui_transition(UI_SCREEN_IDLE);
     ui_transition(UI_SCREEN_MAINMENU);
     uint8_t brightness = 0x10;
 
@@ -415,8 +466,6 @@ void ui_task_fn(UArg a0, UArg a1) {
             epd_flip();
             Graphics_flushBuffer(&ui_gr_context_landscape);
         } else if (kb_active_key_masked == BTN_ROT) {
-            // TODO: delete this
-            led_sidelight_set_level(0x10);
         }
 
         if (ui_colorpicking) {
@@ -429,18 +478,7 @@ void ui_task_fn(UArg a0, UArg a1) {
             switch(ui_current) {
             case UI_SCREEN_IDLE:
                 if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == BTN_UP) {
-                    brightness+=10;
-                    if (brightness > HT16D_BRIGHTNESS_MAX) {
-                        brightness = HT16D_BRIGHTNESS_MAX;
-                    }
-                    ht16d_set_global_brightness(brightness);
                 } else if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == BTN_DOWN) {
-                    if (brightness < 10) {
-                        brightness = 0;
-                    } else {
-                        brightness -= 0;
-                    }
-                    ht16d_set_global_brightness(brightness);
                 } else if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == BTN_OK) {
                     ui_transition(UI_SCREEN_MAINMENU);
                 }

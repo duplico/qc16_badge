@@ -17,15 +17,6 @@
 #define LED_BRIGHTNESS_INTERVAL 12500 // TODO: rename
 #define UI_TEXT_FONT g_sFontCmss16
 
-extern qbadge_conf_t my_conf;
-
-// TODO: Persistence for:
-//  Current LED animation
-//  Current photo
-//  Badges seen
-//  Badges connected
-//  Handle?
-
 // Hardware/driver-level configuration:
 
 #define SPIFFS_LOGICAL_BLOCK_SIZE    (4096)

@@ -15,6 +15,10 @@
 
 #include "board.h"
 
+#ifdef USE_RCOSC
+#include "rcosc_calibration.h"
+#endif // USE_RCOSC
+
 // DriverLib
 #include <driverlib/aon_batmon.h>
 #include "uble.h"
@@ -67,9 +71,10 @@ uint8 ubsTaskStack[UBS_TASK_STACK_SIZE];
 
 static bool UBLEBcastScan_initObserver(void);
 
+// TODO: Clean up this next part here:
 // GAP - Advertisement data (max size = 31 bytes, though this is
 // best kept short to conserve power while advertisting)
-uint8 advertData[23] =
+uint8 advertData[31] =
 {
  // Flags; this sets the device to use limited discoverable
  // mode (advertises for 30 seconds at a time) instead of general
@@ -85,22 +90,31 @@ uint8 advertData[23] =
  0x19, // 19 #badgelife
 
  // complete name
- 15,   // length of this data
+ 10,   // length of this data
  GAP_ADTYPE_LOCAL_NAME_COMPLETE,
- 'Q',
+ 'D',
+ 'U',
+ 'P',
+ 'L',
+ 'i',
  'C',
- 'u',
- 'b',
- 'e',
+ 'O',
  ' ',
- '1',
- '2',
- '3',
- '4',
- '5',
- '6',
- '7',
- '8',
+ ' ',
+ // Queercon data: ID, current icon, etc
+   12, // length of this data including the data type byte
+   GAP_ADTYPE_MANUFACTURER_SPECIFIC, // manufacturer specific adv data type // 0xff
+   0xD3, // Company ID - Fixed (queercon)
+   0x04, // Company ID - Fixed (queercon)
+   0x00, // Badge ID MSB //.22
+   0x00, // Badge ID LSB //.23
+   0x00, // SPARE
+   0x00, // SPARE
+   0x00, // SPARE
+   0x00, // SPARE
+   0x00, // SPARE
+   0x00, // CHECK // .29
+   0x00, // CHECK // .30
 };
 
 /*********************************************************************
@@ -150,6 +164,10 @@ void UBLEBcastScan_createTask(void)
     taskParams.priority = UBS_TASK_PRIORITY;
 
     Task_construct(&ubsTask, UBLEBcastScan_taskFxn, &taskParams, NULL);
+
+#ifdef USE_RCOSC
+    RCOSC_enableCalibration();
+#endif // USE_RCOSC
 }
 
 /*********************************************************************
@@ -467,7 +485,7 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
     volatile static uint8  chan;
     volatile static uint32 timeStamp;
 
-    /* We have an advertisment packe:
+    /* We have an advertisment packet:
      *
      * | Preamble  | Access Addr | PDU         | CRC     |
      * | 1-2 bytes | 4 bytes     | 2-257 bytes | 3 bytes |
@@ -477,8 +495,17 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
      * | 2 bytes | 1-255 bytes |
      *
      * The Header is expended to:
-     * | PDU Type...RxAdd | Length |
+     * | PDU Type...      | Length |
      * | 1 byte           | 1 byte |
+     *
+     * PDU types are:
+     * ADV_IND (0x00): Connectable undirected advertising which can be connected to by any BLE central.
+     * ADV_DIRECT_IND (0x01): Connectable directed advertising which can be connected to by one specific Central.
+     * ADV_NONCONN_IND (0x02): Non-connectable undirected advertising which cannot be connected to and cannot respond to a scan request.
+     * SCAN_REQ (0x03): sent by the Central requesting a scan response (which is a way to send more data via advertising but the response is directed specifically to the requester).
+     * SCAN_RSP (0x04): The scan response packet containing any additional info sent by the peripheral.
+     * CONNECT_REQ (0x05): a connection request packet sent by the Central to connect to a specific peripheral.
+     * ADV_SCAN_IND (0x06): Scannable undirected advertising which cannot be connected to but which can respond to a scan request.
      *
      * The Payload is expended to:
      * | AdvA    | AdvData    |
@@ -498,11 +525,49 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
      * the postfix length.
      *
      */
+
+    // What we receive here is:
+    /*
+     * | Type |      |
+     * | RxAdd|Len(1)|AdvAddr|AdvData   | RSSI   | Status | TimeStamp |
+     * |1 byte|1 byte|6 bytes|0-31 bytes| 1 byte | 1 byte | 4 bytes   |
+     *
+     * The PDU is expended to:
+     * | Header  | Payload     |
+     * | 2 bytes | 1-255 bytes |
+     *
+     * The Header is expended to:
+     * | PDU Type...RxAdd | Length |
+     * | 1 byte           | 1 byte |
+     *
+     * The Payload is expended to:
+     * | AdvA    | AdvData    |
+     * | 6 bytes | 0-31 bytes |
+     *
+     * The Postfix is expended to:
+     * | RSSI   | Status | TimeStamp |
+     * | 1 byte | 1 byte | 4 bytes   |
+     *
+     * The Status is expended to:
+     * | bCrcErr | bIgnore | channel  |
+     * | bit 7   | bit 6   | bit 5..0 |
+     */
     if (status == SUCCESS)
     {
+        // We want: pPayload[0] == 0x02; (non-connectable non-scannable)
+        // TODO: What do DC Furs badges look like?
+        // pPayload[1] == length
+        // Now, look for:
+        //  1. GAP_ADTYPE_LOCAL_NAME_COMPLETE
+        //    followed by a handle
+        //  2. GAP_ADTYPE_MANUFACTURER_SPECIFIC
+        //     0xD3
+        //     0x04
+        //    followed by our beacon struct, whatever that is.
         devAddr = Util_convertBdAddr2Str(pPayload + 2);
         chan = (*(pPayload + len - 5) & 0x3F);
         timeStamp = *(uint32 *)(pPayload + len - 4);
+        // We got a message!
     }
     else
     {

@@ -49,6 +49,11 @@ uint16_t crc16_buf(volatile uint8_t *sbuf, uint8_t len);
 uint16_t crc_build(uint8_t data, uint8_t start_over);
 void crc16_header_apply(serial_header_t *header);
 uint8_t validate_header(serial_header_t *header);
-
+uint8_t is_cbadge(uint16_t id);
+uint8_t is_qbadge(uint16_t id);
+uint8_t check_id_buf(uint16_t id, uint8_t *buf);
+void set_id_buf(uint16_t id, uint8_t *buf);
+uint8_t byte_rank(uint8_t v);
+uint16_t buffer_rank(uint8_t *buf, uint8_t len);
 
 #endif /* QC16_SERIAL_COMMON_H_ */

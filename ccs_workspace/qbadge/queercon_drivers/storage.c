@@ -21,6 +21,21 @@ spiffs           fs;
 spiffs_config    fsConfig;
 SPIFFSNVS_Data   spiffsnvs;
 
+void storage_read_file(char *fname, uint8_t *dest, uint16_t size) {
+    spiffs_file fd;
+    fd = SPIFFS_open(&fs, fname, SPIFFS_O_RDONLY, 0);
+    SPIFFS_read(&fs, fd, dest, size);
+    SPIFFS_close(&fs, fd);
+}
+
+void storage_overwrite_file(char *fname, uint8_t *src, uint16_t size) {
+    // TODO: Error handling.
+    spiffs_file fd;
+    fd = SPIFFS_open(&fs, fname, SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);
+    SPIFFS_write(&fs, fd, src, size);
+    SPIFFS_close(&fs, fd);
+}
+
 void storage_init() {
     volatile int32_t status;
     status = SPIFFSNVS_config(&spiffsnvs, QC16_NVSSPI25X0, &fs, &fsConfig,

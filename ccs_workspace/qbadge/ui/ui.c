@@ -155,7 +155,11 @@ void ui_draw_top_bar_local_element_icons() {
         }
         Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
 
-        Graphics_drawString(&ui_gr_context_landscape, "123", 3, i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_ICON_WIDTH, 4, 0);
+        // TODO: handle >999
+        char amt[4];
+        sprintf(amt, "%d", badge_conf.element_qty[i]);
+        amt[3] = 0x00;
+        Graphics_drawString(&ui_gr_context_landscape, (int8_t *)amt, 3, i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_ICON_WIDTH, 4, 0);
     }
 }
 
@@ -163,25 +167,59 @@ void ui_draw_top_bar_qbadge_headsup_icons() {
     // TODO: consider making this a global or heap var that we share everywhere.
     Graphics_Rectangle rect;
 
+    char cnt[5]; // TODO
+
     // TODO: Add a pad here, explicitly:
+
 
     for (uint8_t i=0; i<3; i++) {
         uint16_t icon_x = TOPBAR_HEADSUP_START + i*TOPBAR_SEG_WIDTH_PADDED;
         uint16_t icon_y = 0;
+        uint8_t fade = 0;
+
         tImage *icon_img;
+
+
         switch(i) {
         case 0: // agent
             icon_img = &img_agent;
+            if (!badge_conf.agent_present) {
+                fade = 1;
+                // TODO: progress bar for returning...?
+            }
             break;
         case 1: // handlers
             icon_img = &img_handler;
+            // TODO: count:
+            // TODO: are any here?
+            fade = 1;
             break;
         case 2: // scan
             icon_img = &img_radar;
+            sprintf(cnt, "%d", qbadges_near_count);
+            Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
+            Graphics_drawStringCentered(
+                    &ui_gr_context_landscape,
+                    (int8_t *) cnt,
+                    4,
+                    icon_x + TOPBAR_SEG_WIDTH/2,
+                    TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1,
+                    0);
+            // TODO: count:
+
             break;
         }
 
+        // Align the icon horizontally:
+        icon_x += (TOPBAR_SEG_WIDTH - icon_img->ySize) / 2;
         qc16gr_drawImage(&ui_gr_context_landscape, icon_img, icon_x, icon_y);
+        if (fade) {
+            rect.xMin = icon_x;
+            rect.yMin = icon_y;
+            rect.xMax = icon_x + icon_img->xSize;
+            rect.yMax = icon_y + icon_img->ySize;
+            fadeRectangle(&ui_gr_context_landscape, &rect);
+        }
     }
 
     // Is our agent around? Draw the agent symbol.
@@ -275,7 +313,16 @@ void ui_draw_top_bar_battery_life() {
 
 void ui_draw_top_bar() {
     // Draw the top bar.
+    // TODO: do we prefer this?:
     Graphics_drawLine(&ui_gr_context_landscape, 0, TOPBAR_HEIGHT, 295, TOPBAR_HEIGHT);
+    Graphics_drawLine(&ui_gr_context_landscape, 0, TOPBAR_HEIGHT+1, 295, TOPBAR_HEIGHT+1);
+    Graphics_Rectangle rect;
+    rect.xMin = 0;
+    rect.xMax = 295;
+    rect.yMin = TOPBAR_HEIGHT;
+    rect.yMax = TOPBAR_HEIGHT+1;
+
+    fadeRectangle(&ui_gr_context_landscape, &rect);
 
     ui_draw_top_bar_battery_life();
     ui_draw_top_bar_local_element_icons();
@@ -477,6 +524,8 @@ void ui_task_fn(UArg a0, UArg a1) {
                 ui_colorpicking_unload();
             } else if (ui_textentry) {
                 ui_textentry_unload();
+            } else if (ui_current == UI_SCREEN_IDLE) {
+                Event_post(ui_event_h, UI_EVENT_REFRESH);
             } else {
                 ui_transition(UI_SCREEN_IDLE);
             }

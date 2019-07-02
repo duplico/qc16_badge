@@ -8,7 +8,7 @@
 #ifndef QC16_H_
 #define QC16_H_
 
-#define QC16_BADGE_NAME_LEN 10
+#define QC16_BADGE_NAME_LEN 9
 
 typedef struct {
     uint16_t badge_id;

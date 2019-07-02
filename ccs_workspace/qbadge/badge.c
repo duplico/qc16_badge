@@ -7,6 +7,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include <xdc/runtime/Error.h>
+#include <ti/sysbios/knl/Clock.h>
+
 #include <third_party/spiffs/spiffs.h>
 
 #include <qc16.h>
@@ -26,11 +29,24 @@ uint32_t qbadges_near[QBADGE_BITFIELD_LONGS] = {0, };
 uint32_t qbadges_seen[QBADGE_BITFIELD_LONGS] = {0, };
 uint32_t qbadges_connected[QBADGE_BITFIELD_LONGS] = {0, };
 uint32_t cbadges_connected[CBADGE_BITFIELD_LONGS] = {0, };
+uint16_t qbadges_near_count=0;
+uint16_t qbadges_near_count_running=0;
+
+Clock_Handle radar_clock_h;
 
 #pragma DATA_SECTION(startup_id, ".qc16cfg")
 volatile const uint16_t startup_id = QBADGE_ID_UNASSIGNED;
 
+void reset_scan_cycle(UArg a0) {
+    if (qbadges_near_count_running != qbadges_near_count) {
+        // TODO: post event
+    }
+    qbadges_near_count_running = 0;
+    memset((void *) qbadges_near, 0x00, 4*QBADGE_BITFIELD_LONGS);
+}
+
 uint8_t conf_file_exists() {
+    // TODO: This isn't the same as the config file being valid.
     volatile int32_t status;
     spiffs_stat stat;
     status = SPIFFS_stat(&fs, "/qbadge/conf", &stat);
@@ -71,9 +87,6 @@ void generate_config() {
 
     // TODO: Consider writing my name to the name list in the memory?
 
-//    memcpy(badge_conf.badge_name, badge_names[badge_conf.badge_id],
-//           QC15_BADGE_NAME_LEN);
-
     badge_conf.last_clock = 0;
 
     set_badge_seen(badge_conf.badge_id, "");
@@ -83,20 +96,6 @@ void generate_config() {
 
 uint8_t config_is_valid() {
     return 1;
-}
-
-///// Validate, load, and/or generate this badge's configuration as appropriate.
-void init_config() {
-    if (conf_file_exists()) {
-        load_conf();
-    }
-    // Check the stored config:
-    if (config_is_valid()) return;
-
-    // If we're still here, the config source was invalid, and
-    //  we must generate a new one.
-    generate_config();
-
 }
 
 // TODO: Persistence for:
@@ -122,11 +121,25 @@ uint8_t badge_connected(uint16_t id) {
     return 0;
 }
 
-uint8_t set_badge_seen(uint16_t id, uint8_t *name) {
+uint8_t badge_near(uint16_t id) {
+    // TODO: protect from overrun
+    if (is_qbadge(id) && check_id_buf(id, (uint8_t *) qbadges_near))
+        return 1;
+    return 0;
+}
+
+uint8_t set_badge_seen(uint16_t id, char *name) {
     if (!is_qbadge(id) || id == QBADGE_ID_UNASSIGNED)
         return 0;
 
     // If we're here, it's a qbadge.
+
+    // Mark this badge as "nearby"
+    if (!badge_near(id) && id != badge_conf.badge_id) {
+        // TODO: If we're going to raise a signal on this, we'll need a second buffer.
+        set_id_buf(id, (uint8_t *) qbadges_near);
+        qbadges_near_count_running++;
+    }
 
     // Let's update its name.
     // TODO:
@@ -171,4 +184,27 @@ uint8_t set_badge_connected(uint16_t id, char *handle) {
 
     write_conf();
     return 1;
+}
+// TODO: rename
+/// Validate, load, and/or generate this badge's configuration as appropriate.
+void init_config() {
+    if (conf_file_exists()) {
+        load_conf();
+    }
+    // Check the stored config:
+    if (config_is_valid()) return;
+
+    // If we're still here, the config source was invalid, and
+    //  we must generate a new one.
+    generate_config();
+
+
+    Clock_Params clockParams;
+    Error_Block eb;
+    Error_init(&eb);
+
+    Clock_Params_init(&clockParams);
+    clockParams.period = 4500000; // 45 seconds // TODO: decide, extract
+    clockParams.startFlag = TRUE;
+    radar_clock_h = Clock_create(reset_scan_cycle, clockParams.period, &clockParams, &eb);
 }

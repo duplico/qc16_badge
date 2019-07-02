@@ -30,6 +30,10 @@
 
 #include "uble_bcast_scan.h"
 
+#include <badge.h>
+#include <qc16.h>
+#include <qc16_serial_common.h>
+
 // Task configuration
 #define UBS_TASK_PRIORITY                     3
 
@@ -74,7 +78,7 @@ static bool UBLEBcastScan_initObserver(void);
 // TODO: Clean up this next part here:
 // GAP - Advertisement data (max size = 31 bytes, though this is
 // best kept short to conserve power while advertisting)
-uint8 advertData[31] =
+uint8 advertData[30] =
 {
  // Flags; this sets the device to use limited discoverable
  // mode (advertises for 30 seconds at a time) instead of general
@@ -90,8 +94,8 @@ uint8 advertData[31] =
  0x19, // 19 #badgelife
 
  // complete name
- 10,   // length of this data
- GAP_ADTYPE_LOCAL_NAME_COMPLETE,
+ QC16_BADGE_NAME_LEN+1, // index 7   // length of this data
+ GAP_ADTYPE_LOCAL_NAME_COMPLETE, // TODO: is it ok that there is no null term?
  'D',
  'U',
  'P',
@@ -102,20 +106,26 @@ uint8 advertData[31] =
  ' ',
  ' ',
  // Queercon data: ID, current icon, etc
-   12, // length of this data including the data type byte
+   11, // length of this data including the data type byte
    GAP_ADTYPE_MANUFACTURER_SPECIFIC, // manufacturer specific adv data type // 0xff
    0xD3, // Company ID - Fixed (queercon)
    0x04, // Company ID - Fixed (queercon)
-   0x00, // Badge ID MSB //.22
+   0x00, // Badge ID MSB //.22 // TODO: confirm msb/lsb here
    0x00, // Badge ID LSB //.23
    0x00, // SPARE
    0x00, // SPARE
    0x00, // SPARE
    0x00, // SPARE
-   0x00, // SPARE
-   0x00, // CHECK // .29
-   0x00, // CHECK // .30
+   0x00, // CHECK // .28
+   0x00, // CHECK // .39
 };
+
+typedef struct {
+    uint16_t badge_id;
+    uint16_t spare1;
+    uint16_t spare2;
+    uint16_t crc16;
+} qc16_ble_t;
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -194,9 +204,6 @@ static void UBLEBcastScan_init(void)
 
     // Default is not to switch antenna
     uble_registerAntSwitchCB(NULL);
-
-    uble_stackInit(UBLE_ADDRTYPE_PUBLIC, NULL, UBLEBcastScan_eventProxy,
-                   RF_TIME_CRITICAL);
 
     uble_stackInit(UBLE_ADDRTYPE_PUBLIC, NULL, UBLEBcastScan_eventProxy,
                    RF_TIME_CRITICAL);
@@ -319,8 +326,15 @@ static void UBLEBcastScan_bcast_stateChangeCB(ugapBcastState_t newState)
  *
  * @return  None.
  */
-static void UBLEBcastScan_bcast_advPrepareCB(void)
-{
+static void UBLEBcastScan_bcast_advPrepareCB(void) {
+    // TODO: Elsewhere this may have problems without a null term, like on the receiving end...
+    char *name = (char *) &advertData[9];
+    qc16_ble_t *badge_frame = (qc16_ble_t *) &advertData[22];
+    memcpy(name, badge_conf.handle, QC16_BADGE_NAME_LEN);
+    badge_frame->badge_id = badge_conf.badge_id;
+    badge_frame->spare1 = 0;
+    badge_frame->spare2 = 0;
+    badge_frame->crc16 = crc16_buf((uint8_t *) badge_frame, sizeof(qc16_ble_t)-2);
 }
 
 /*********************************************************************
@@ -564,9 +578,45 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
         //     0xD3
         //     0x04
         //    followed by our beacon struct, whatever that is.
-        devAddr = Util_convertBdAddr2Str(pPayload + 2);
-        chan = (*(pPayload + len - 5) & 0x3F);
-        timeStamp = *(uint32 *)(pPayload + len - 4);
+        char *name;
+        qc16_ble_t *badge_frame;
+        // the MAC address is 6 bytes at pPayload[2]
+        // the data begins at pPayload[8]
+        uint8_t *advData = &pPayload[8];
+        // The advData is up to 31 bytes long, which should be len-8-6
+        uint8_t i = 0;
+        uint8_t seems_queercon = 0;
+        while (i < len-8-6) {
+            uint8_t section_len = advData[i];
+            switch(advData[i+1]) {
+            case GAP_ADTYPE_LOCAL_NAME_COMPLETE:
+                name = (char *) &advData[i+2];
+                seems_queercon |= 0xf0;
+                break;
+            case GAP_ADTYPE_MANUFACTURER_SPECIFIC:
+                if (advData[i+2] == 0xD3 && advData[i+3] == 0x04) {
+                    // this is the queercon ID.
+                    badge_frame = (qc16_ble_t *) &advData[i+4];
+                    seems_queercon |= 0x0f;
+                }
+                break;
+            }
+            i += section_len+1;
+        }
+        if (i >= len-8-6) {
+            // TODO
+        }
+
+        if (seems_queercon == 0xFF) {
+            // TODO: validate CRC
+            // this looks like a badge.
+            set_badge_seen(badge_frame->badge_id, name);
+        }
+
+        // TODO: clean up:
+//        devAddr = Util_convertBdAddr2Str(pPayload + 2);
+//        chan = (*(pPayload + len - 5) & 0x3F);
+//        timeStamp = *(uint32 *)(pPayload + len - 4);
         // We got a message!
     }
     else

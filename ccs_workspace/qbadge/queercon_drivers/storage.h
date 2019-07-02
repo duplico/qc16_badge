@@ -11,6 +11,8 @@
 #include <third_party/spiffs/spiffs.h>
 
 void storage_init();
+void storage_read_file(char *fname, uint8_t *dest, uint16_t size);
+void storage_overwrite_file(char *fname, uint8_t *src, uint16_t size);
 
 extern spiffs fs;
 

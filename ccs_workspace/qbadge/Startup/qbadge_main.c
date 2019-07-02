@@ -38,7 +38,6 @@ uint32_t vbat_out_uvolts = 0;
 uint16_t vbat_raw;
 uint16_t brightness_raw;
 Clock_Handle adc_clock_h;
-Clock_Handle qc_clock_h;
 
 ADCBuf_Handle adc_buf_h;
 ADCBuf_Conversion next_conversion;
@@ -55,10 +54,6 @@ void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
         ADCBuf_convertAdjustedToMicroVolts(handle, completedChannel, completedADCBuffer, &vbat_out_uvolts, conversion->samplesRequestedCount);
         break;
     }
-}
-
-void qc_timer_fn(UArg a0) {
-    qc_clock = ClockP_getSystemTicks() / 1000;
 }
 
 void adc_timer_fn(UArg a0)
@@ -140,12 +135,6 @@ int main()
     clockParams.period = LED_BRIGHTNESS_INTERVAL;
     clockParams.startFlag = TRUE;
     adc_clock_h = Clock_create(adc_timer_fn, 2, &clockParams, &eb);
-
-    qc_clock = 0; // TODO: move this qc_clock initialization.
-    Clock_Params_init(&clockParams);
-    clockParams.period = 1000; // 10 ms
-    clockParams.startFlag = TRUE;
-    qc_clock_h = Clock_create(qc_timer_fn, clockParams.period, &clockParams, &eb);
 
     BIOS_start();     /* enable interrupts and start SYS/BIOS */
 

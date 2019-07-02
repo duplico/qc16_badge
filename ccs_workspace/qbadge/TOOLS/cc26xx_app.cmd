@@ -184,6 +184,7 @@
 
 #define FLASH_LAST_PAGE_START      (FLASH_SIZE - PAGE_SIZE)
 
+
 /*******************************************************************************
  * Stack
  */
@@ -268,6 +269,7 @@ SECTIONS
   .emb_text       :   >> FLASH | FLASH_LAST_PAGE
   .snvSectors     :   > FLASH (HIGH)
   .ccfg           :   >  FLASH_LAST_PAGE (HIGH)
+  .qc16cfg		  :   >  FLASH_LAST_PAGE (HIGH)
 
   GROUP > SRAM
   {

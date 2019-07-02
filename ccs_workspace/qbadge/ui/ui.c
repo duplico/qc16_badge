@@ -17,9 +17,9 @@
 #include <ti/sysbios/knl/Task.h>
 #include <ti/sysbios/knl/Event.h>
 #include <ti/drivers/PIN.h>
+#include <ti/sysbios/family/arm/cc26xx/Seconds.h>
 
 #include "queercon_drivers/storage.h"
-#include <third_party/spiffs/spiffs.h>
 
 #include <ui/graphics.h>
 #include <ui/images.h>
@@ -28,6 +28,7 @@
 #include "ui/ui.h"
 #include "ui/keypad.h"
 #include "board.h"
+#include <badge.h>
 
 Event_Handle ui_event_h;
 Graphics_Context ui_gr_context_landscape;
@@ -55,13 +56,20 @@ uint8_t ui_textentry = 0;
 #define TOPBAR_HEADSUP_START (3*TOPBAR_SEG_WIDTH_PADDED)
 
 #define BATTERY_X (EPD_HEIGHT-TOPBAR_ICON_WIDTH-1)
-#define BATTERY_ANODE_WIDTH 3
-#define BATTERY_ANODE_HEIGHT 6
+#define BATTERY_ANODE_WIDTH 2
+#define BATTERY_ANODE_HEIGHT 4
 #define BATTERY_BODY_WIDTH (TOPBAR_ICON_WIDTH-BATTERY_ANODE_WIDTH)
-#define BATTERY_BODY_HEIGHT 15
-#define BATTERY_BODY_Y0 ((TOPBAR_ICON_HEIGHT-BATTERY_BODY_HEIGHT)/2)
-#define BATTERY_BODY_Y1 (BATTERY_BODY_Y0+BATTERY_BODY_HEIGHT)
-#define BATTERY_ANODE_Y0 ((TOPBAR_ICON_HEIGHT-BATTERY_ANODE_HEIGHT)/2)
+#define BATTERY_BODY_HEIGHT 8
+#define BATTERY_BODY_VPAD 2
+#define BATTERIES_HEIGHT (BATTERY_BODY_HEIGHT*2 + BATTERY_BODY_VPAD)
+
+#define BATTERY_BODY0_Y0 ((TOPBAR_ICON_HEIGHT-BATTERIES_HEIGHT)/2)
+#define BATTERY_BODY0_Y1 (BATTERY_BODY0_Y0+BATTERY_BODY_HEIGHT)
+#define BATTERY_BODY1_Y0 (BATTERY_BODY0_Y1 + BATTERY_BODY_VPAD)
+#define BATTERY_BODY1_Y1 (BATTERY_BODY1_Y0+BATTERY_BODY_HEIGHT)
+
+#define BATTERY_ANODE0_Y0 (BATTERY_BODY0_Y0+(BATTERY_BODY_HEIGHT)/2-BATTERY_ANODE_HEIGHT/2)
+#define BATTERY_ANODE1_Y0 (BATTERY_BODY1_Y0+(BATTERY_BODY_HEIGHT)/2-BATTERY_ANODE_HEIGHT/2)
 
 #define BATTERY_SEGMENT_PAD 1
 #define BATTERY_SEGMENT_WIDTH ((BATTERY_BODY_WIDTH/3)-BATTERY_SEGMENT_PAD)
@@ -71,8 +79,8 @@ uint8_t ui_textentry = 0;
 #define BATTERY_HIGH_X0 (BATTERY_X + 2*(BATTERY_SEGMENT_WIDTH + BATTERY_SEGMENT_PAD))
 
 #define VBAT_FULL_2DOT 9
-#define VBAT_MID_2DOT 5
-#define VBAT_LOW_2DOT 2
+#define VBAT_MID_2DOT 3
+#define VBAT_LOW_2DOT 1
 
 #define TOP_BAR_LOCKS 0
 #define TOP_BAR_COINS 1
@@ -119,19 +127,19 @@ void ui_draw_top_bar_local_element_icons() {
             bar_level = 1; // TODO: read
             bar_capacity = 2;
             text_x -= 2; // Unpad.
-            number = my_conf.element_qty[i]; // TODO
+            number = badge_conf.element_qty[i]; // TODO
             break;
         case TOP_BAR_COINS:
             icon_img = &img_coins;
             bar_level = 2; // TODO: read
             bar_capacity = 5;
-            number = my_conf.element_qty[i]; // TODO
+            number = badge_conf.element_qty[i]; // TODO
             break;
         case TOP_BAR_CAMERAS:
             icon_img = &img_cameras;
             bar_level = 3; // TODO: read
             bar_capacity = 4;
-            number = my_conf.element_qty[i]; // TODO
+            number = badge_conf.element_qty[i]; // TODO
             break;
         }
 
@@ -175,20 +183,39 @@ void ui_draw_top_bar_qbadge_headsup_icons() {
 
         qc16gr_drawImage(&ui_gr_context_landscape, icon_img, icon_x, icon_y);
     }
+
+    // Is our agent around? Draw the agent symbol.
+
+    // Are there any handlers around? Draw the handler symbol.
+
 }
 
 void ui_draw_top_bar_battery_life() {
     Graphics_Rectangle rect;
+    // Draw the top battery:
     rect.xMin = BATTERY_X;
     rect.xMax = BATTERY_X+BATTERY_BODY_WIDTH;
-    rect.yMin = BATTERY_BODY_Y0;
-    rect.yMax = BATTERY_BODY_Y1;
+    rect.yMin = BATTERY_BODY0_Y0;
+    rect.yMax = BATTERY_BODY0_Y1;
     Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
 
     rect.xMin = BATTERY_X+BATTERY_BODY_WIDTH;
     rect.xMax = BATTERY_X+BATTERY_BODY_WIDTH+BATTERY_ANODE_WIDTH;
-    rect.yMin = BATTERY_ANODE_Y0;
-    rect.yMax = BATTERY_ANODE_Y0 + BATTERY_ANODE_HEIGHT;
+    rect.yMin = BATTERY_ANODE0_Y0;
+    rect.yMax = BATTERY_ANODE0_Y0 + BATTERY_ANODE_HEIGHT;
+    Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+
+    // Bottom battery:
+    rect.xMin = BATTERY_X;
+    rect.xMax = BATTERY_X+BATTERY_BODY_WIDTH;
+    rect.yMin = BATTERY_BODY1_Y0;
+    rect.yMax = BATTERY_BODY1_Y1;
+    Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+
+    rect.xMin = BATTERY_X+BATTERY_BODY_WIDTH;
+    rect.xMax = BATTERY_X+BATTERY_BODY_WIDTH+BATTERY_ANODE_WIDTH;
+    rect.yMin = BATTERY_ANODE1_Y0;
+    rect.yMax = BATTERY_ANODE1_Y0 + BATTERY_ANODE_HEIGHT;
     Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
 
     // TODO: change this font:
@@ -202,27 +229,46 @@ void ui_draw_top_bar_battery_life() {
         // full
         rect.xMin = BATTERY_HIGH_X0+BATTERY_SEGMENT_PAD;
         rect.xMax = BATTERY_HIGH_X0+BATTERY_SEGMENT_WIDTH-1;
-        rect.yMin = BATTERY_BODY_Y0+BATTERY_SEGMENT_PAD;
-        rect.yMax = BATTERY_BODY_Y1-BATTERY_SEGMENT_PAD-2;
+        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD;
+        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-2;
+        Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
+
+        rect.xMin = BATTERY_HIGH_X0+BATTERY_SEGMENT_PAD;
+        rect.xMax = BATTERY_HIGH_X0+BATTERY_SEGMENT_WIDTH-1;
+        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD;
+        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-2;
         Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
     }
     if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_MID_2DOT))) {
         rect.xMin = BATTERY_MID_X0+BATTERY_SEGMENT_PAD;
         rect.xMax = BATTERY_MID_X0+BATTERY_SEGMENT_WIDTH;
-        rect.yMin = BATTERY_BODY_Y0+BATTERY_SEGMENT_PAD;
-        rect.yMax = BATTERY_BODY_Y1-BATTERY_SEGMENT_PAD-2;
+        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD;
+        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-2;
+        Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
+
+        rect.xMin = BATTERY_MID_X0+BATTERY_SEGMENT_PAD;
+        rect.xMax = BATTERY_MID_X0+BATTERY_SEGMENT_WIDTH;
+        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD;
+        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-2;
         Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
     }
     if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_LOW_2DOT))) {
         rect.xMin = BATTERY_LOW_X0+BATTERY_SEGMENT_PAD+1;
         rect.xMax = BATTERY_LOW_X0+BATTERY_SEGMENT_WIDTH;
-        rect.yMin = BATTERY_BODY_Y0+BATTERY_SEGMENT_PAD;
-        rect.yMax = BATTERY_BODY_Y1-BATTERY_SEGMENT_PAD-2;
+        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD;
+        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-2;
+        Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
+
+        rect.xMin = BATTERY_LOW_X0+BATTERY_SEGMENT_PAD+1;
+        rect.xMax = BATTERY_LOW_X0+BATTERY_SEGMENT_WIDTH;
+        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD;
+        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-2;
         Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
     }
     if (vbat_out_uvolts/1000000 < 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 < VBAT_LOW_2DOT)) {
         // ABOUT TO RUN OUT!!!
-        Graphics_drawString(&ui_gr_context_landscape, ":-(", 3, BATTERY_X+2, BATTERY_BODY_Y0+4, 0);
+        // TODO
+//        Graphics_drawString(&ui_gr_context_landscape, ":-(", 3, BATTERY_X+2, BATTERY_BODY_Y0+4, 0);
 
     }
 }
@@ -234,11 +280,6 @@ void ui_draw_top_bar() {
     ui_draw_top_bar_battery_life();
     ui_draw_top_bar_local_element_icons();
     ui_draw_top_bar_qbadge_headsup_icons();
-    // Is our agent around? Draw the agent symbol.
-
-    // Are there any handlers around? Draw the handler symbol.
-
-
 }
 
 uint8_t ui_selected_item = 0;
@@ -344,6 +385,13 @@ void ui_draw_screensaver() {
 
     qc16gr_drawImage(&ui_gr_context_portrait, &img_example_photo, 0, UI_IDLE_PHOTO_TOP);
 
+
+    // TODO:
+    char timestr [10];
+    sprintf(timestr, "%d", Seconds_get());
+    Graphics_setFont(&ui_gr_context_portrait, &UI_TEXT_FONT);
+    Graphics_drawString(&ui_gr_context_portrait, (int8_t *) timestr, 10, 0, 0, 1);
+
     Graphics_flushBuffer(&ui_gr_context_portrait);
 }
 
@@ -401,58 +449,21 @@ void ui_mainmenu_do(UInt events) {
             break;
         }
         break;
+    case UI_EVENT_BATTERY_UPDATE:
+    case UI_EVENT_RADAR_UPDATE:
+        // Do a partial redraw with the new numbers:
+        Event_post(ui_event_h, UI_EVENT_REFRESH);
+        epd_do_partial = 1;
+        break;
     }
-}
-
-uint8_t conf_file_exists() {
-    volatile int32_t status;
-    spiffs_stat stat;
-    status = SPIFFS_stat(&fs, "/qbadge/conf", &stat);
-    if (status == SPIFFS_OK && stat.size == sizeof(my_conf)) {
-        return 1;
-    } else if (status == SPIFFS_OK) {
-        status = SPIFFS_remove(&fs, "/qbadge/conf");
-    }
-    // TODO: Validate more?
-    // We should create it if we got SPIFFS_ERR_NOT_FOUND...
-    return 0;
-}
-
-void load_conf() {
-    // TODO: Make sure this worked.
-    spiffs_file conf_file;
-    conf_file = SPIFFS_open(&fs, "/qbadge/conf", SPIFFS_O_RDONLY, 0);
-    SPIFFS_read(&fs, conf_file, (uint8_t *) (&my_conf), sizeof(my_conf));
-    SPIFFS_close(&fs, conf_file);
-}
-
-void write_conf() {
-    // TODO: Error handling.
-    spiffs_file conf_file;
-    conf_file = SPIFFS_open(&fs, "/qbadge/conf", SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);
-    SPIFFS_write(&fs, conf_file, (uint8_t *) (&my_conf), sizeof(my_conf));
-    SPIFFS_close(&fs, conf_file);
-}
-
-void init_conf() {
-    my_conf.badge_id = QBADGE_ID_UNASSIGNED;
-    memset(my_conf.element_level, 0x00, 3);
-    memset(my_conf.element_level_progress, 0x00, 3);
-    memset(my_conf.element_qty, 0x00, 6);
-    my_conf.initialized = 0;
-    write_conf();
 }
 
 void ui_task_fn(UArg a0, UArg a1) {
     UInt events;
 
     storage_init();
-
-    if (conf_file_exists()) {
-        load_conf();
-    } else {
-        init_conf();
-    }
+    init_config();
+    Seconds_set(0);
 
     ui_transition(UI_SCREEN_MAINMENU);
     uint8_t brightness = 0x10;

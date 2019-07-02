@@ -44,6 +44,8 @@ ADCBuf_Conversion next_conversion;
 
 void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     void *completedADCBuffer, uint32_t completedChannel) {
+    // TODO: Determine when to set the battery event flag.
+
     ADCBuf_adjustRawValues(handle, completedADCBuffer, 1, completedChannel);
 
     switch(completedChannel) {

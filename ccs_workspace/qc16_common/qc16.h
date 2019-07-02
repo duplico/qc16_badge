@@ -20,6 +20,8 @@ typedef struct {
     uint16_t qbadges_connected_count;
     uint16_t cbadges_connected_count;
     uint32_t last_clock;
+    uint8_t agent_present;
+    uint32_t agent_return_time;
     char handle[QC16_BADGE_NAME_LEN + 1];
 } qbadge_conf_t;
 

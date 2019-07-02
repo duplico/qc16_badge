@@ -188,7 +188,6 @@ void led_tail_start_anim() {
         Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
         // No animating; just set the color.
         return;
-        break;
     case LED_TAIL_ANIM_TYPE_ON:
         ht16d_put_color(0, 6, &led_tail_anim_current.colors[0]);
         Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.

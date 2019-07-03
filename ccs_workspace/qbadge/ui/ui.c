@@ -382,8 +382,31 @@ void ui_draw_main_menu() {
     ui_draw_main_menu_icons();
 
     Graphics_flushBuffer(&ui_gr_context_landscape);
-    // Draw the menu itself
+}
 
+void ui_draw_files() {
+    // Clear the buffer.
+    Graphics_clearDisplay(&ui_gr_context_landscape);
+
+    ui_draw_top_bar();
+    // TODO: draw the files we actually want...
+    // TODO: allow to scroll
+
+    Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
+    uint8_t y=TOPBAR_HEIGHT + 3;
+
+    spiffs_DIR d;
+    struct spiffs_dirent e;
+    struct spiffs_dirent *pe = &e;
+
+    SPIFFS_opendir(&fs, "/", &d);
+    while ((pe = SPIFFS_readdir(&d, pe)) &&
+            (y+7 < EPD_WIDTH)) {
+        Graphics_drawString(&ui_gr_context_landscape, pe->name, SPIFFS_OBJ_NAME_LEN, 16, y, 1);
+        y+=9;
+    }
+    SPIFFS_closedir(&d);
+    Graphics_flushBuffer(&ui_gr_context_landscape);
 }
 
 UInt pop_events(UInt *events_ptr, UInt events_to_check) {
@@ -494,9 +517,53 @@ void ui_mainmenu_do(UInt events) {
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             epd_do_partial = 1;
             break;
+        case BTN_OK:
+            switch(ui_selected_item) {
+            case 0:
+                // TODO: Info
+                break;
+            case 1:
+                // TODO: Missions
+                break;
+            case 2:
+                // TODO: Radar
+                break;
+            case 3:
+                // TODO: files
+                ui_transition(UI_SCREEN_FILES);
+                break;
+            }
+            break;
         }
         break;
     case UI_EVENT_BATTERY_UPDATE:
+    case UI_EVENT_RADAR_UPDATE:
+        // Do a partial redraw with the new numbers:
+        Event_post(ui_event_h, UI_EVENT_REFRESH);
+        epd_do_partial = 1;
+        break;
+    }
+}
+
+void ui_files_do(UInt events) {
+    switch(events) {
+    case UI_EVENT_REFRESH:
+        ui_draw_files();
+        break;
+    case UI_EVENT_KB_PRESS:
+        switch(kb_active_key_masked) {
+        case BTN_BACK:
+            ui_transition(UI_SCREEN_MAINMENU);
+            break;
+        case BTN_LEFT:
+            break;
+        case BTN_RIGHT:
+            break;
+        case BTN_OK:
+            break;
+        }
+        break;
+    case UI_EVENT_BATTERY_UPDATE: // TODO: make a function for these:
     case UI_EVENT_RADAR_UPDATE:
         // Do a partial redraw with the new numbers:
         Event_post(ui_event_h, UI_EVENT_REFRESH);
@@ -575,6 +642,9 @@ void ui_task_fn(UArg a0, UArg a1) {
                 break;
             case UI_SCREEN_MAINMENU:
                 ui_mainmenu_do(events);
+                break;
+            case UI_SCREEN_FILES:
+                ui_files_do(events);
                 break;
             }
 

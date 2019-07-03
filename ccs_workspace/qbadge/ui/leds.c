@@ -29,7 +29,7 @@ led_tail_anim_t led_tail_anim_current = {
     }
 };
 
-uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT] = {
+const uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT] = {
     0,  //    LED_TAIL_ANIM_TYPE_OFF,
     1,  //    LED_TAIL_ANIM_TYPE_ON,
     6,  //    LED_TAIL_ANIM_TYPE_CYCLE,
@@ -72,6 +72,7 @@ rgbcolor16_t led_rainbow_colors[6] = {
 };
 
 rgbcolor16_t led_off = {0, 0, 0};
+rgbcolor16_t led_white = {0xfff, 0xfff, 0xfff};
 
 uint8_t led_tail_anim_type_is_valid(led_tail_anim_type t) {
     return t < 3;
@@ -229,7 +230,6 @@ void led_task_fn(UArg a0, UArg a1) {
 
     ht16d_init();
     ht16d_all_one_color(0,0,0);
-    led_tail_start_anim();
 
     while (1) {
         events = Event_pend(led_event_h, Event_Id_NONE, ~Event_Id_NONE,  BIOS_WAIT_FOREVER);

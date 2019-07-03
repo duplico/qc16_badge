@@ -8,6 +8,7 @@
 #ifndef QUEERCON_DRIVERS_LEDS_H_
 #define QUEERCON_DRIVERS_LEDS_H_
 
+#include <ti/sysbios/knl/Event.h>
 #include "queercon_drivers/ht16d35b.h"
 
 #define LED_EVENT_FLUSH         Event_Id_00
@@ -44,7 +45,7 @@ typedef enum {
 
 typedef struct {
     led_tail_anim_type type;
-    rgbcolor16_t colors[6];
+    rgbcolor16_t colors[6]; // TODO: this should be indices instead.
     led_tail_anim_mod modifier;
 } led_tail_anim_t;
 
@@ -57,7 +58,9 @@ typedef struct {
 extern Event_Handle led_event_h;
 extern led_tail_anim_t led_tail_anim_current;
 extern rgbcolor16_t led_rainbow_colors[6];
-extern uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT];
+extern rgbcolor16_t led_off;
+extern rgbcolor16_t led_white;
+extern const uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT];
 
 void led_show_curr_colors();
 void led_tail_start_anim();

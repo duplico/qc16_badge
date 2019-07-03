@@ -15,6 +15,7 @@
 #include <qc16.h>
 
 #include "queercon_drivers/storage.h"
+#include <ui/leds.h>
 #include <qc16_serial_common.h>
 #include "badge.h"
 
@@ -66,6 +67,7 @@ void load_conf() {
     storage_read_file("/qbadge/conn_c", (uint8_t *) cbadges_connected, 47*4);
     storage_read_file("/qbadge/conn_q", (uint8_t *) qbadges_connected, 47*4);
     storage_read_file("/qbadge/seen_q", (uint8_t *) qbadges_seen, 47*4);
+    load_anim(".current");
     srand(badge_conf.badge_id);
 }
 
@@ -74,6 +76,24 @@ void write_conf() {
     storage_overwrite_file("/qbadge/conn_c", (uint8_t *) cbadges_connected, CBADGE_BITFIELD_LONGS*4);
     storage_overwrite_file("/qbadge/conn_q", (uint8_t *) qbadges_connected, QBADGE_BITFIELD_LONGS*4);
     storage_overwrite_file("/qbadge/seen_q", (uint8_t *) qbadges_seen, QBADGE_BITFIELD_LONGS*4);
+}
+
+void write_anim_curr() {
+    storage_overwrite_file("/colors/.current", (uint8_t *) &led_tail_anim_current, sizeof(led_tail_anim_t));
+}
+
+void save_anim(char *name) {
+    char pathname[SPIFFS_OBJ_NAME_LEN] = "/colors/";
+    strcpy(&pathname[8], name);
+    storage_overwrite_file(pathname, (uint8_t *) &led_tail_anim_current, sizeof(led_tail_anim_t));
+}
+
+void load_anim(char *name) {
+    char pathname[SPIFFS_OBJ_NAME_LEN] = "/colors/";
+    strcpy(&pathname[8], name);
+    storage_read_file(pathname, (uint8_t *) &led_tail_anim_current, sizeof(led_tail_anim_t));
+    storage_overwrite_file("/colors/.current", (uint8_t *) &led_tail_anim_current, sizeof(led_tail_anim_t));
+    led_tail_start_anim();
 }
 
 void generate_config() {
@@ -86,12 +106,15 @@ void generate_config() {
     badge_conf.badge_id = startup_id;
 
     // TODO: Consider writing my name to the name list in the memory?
+    //       (This is probably done with set_badge_seen?)
 
     badge_conf.last_clock = 0;
 
     set_badge_seen(badge_conf.badge_id, "");
     set_badge_connected(badge_conf.badge_id, "");
     srand(badge_conf.badge_id);
+
+    // TODO: Initialize the current animation persistence.
 }
 
 uint8_t config_is_valid() {

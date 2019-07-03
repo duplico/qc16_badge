@@ -18,6 +18,7 @@
 #include <ti/sysbios/knl/Event.h>
 #include <ti/drivers/PIN.h>
 
+#include <badge.h>
 #include <ui/leds.h>
 #include <ui/ui.h>
 #include <ui/keypad.h>
@@ -72,17 +73,6 @@ void ui_colorpicking_wireframe() {
         }
     }
 
-
-    rect = (Graphics_Rectangle) {0, EPD_HEIGHT-60, 127, EPD_HEIGHT-50};
-    Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
-
-
-//    for (uint8_t i=1; i<128; i+=21) {
-////        Graphics_drawLineV(&ui_gr_context_portrait, i, EPD_HEIGHT-16, EPD_HEIGHT-48);
-//        // These are the lines that point at the LEDs themselves:
-//        Graphics_drawLine(&ui_gr_context_portrait, i+10, EPD_HEIGHT-UI_PICKER_COLORBOX_BPAD, (int32_t)((25.6*(i-1))/21), EPD_HEIGHT-1);
-//    }
-
     // Draw the icon for the animation type currently selected:
     // TODO: Make sure there can't be an overrun here:
     qc16gr_drawImage(&ui_gr_context_portrait, image_anim_type_buttons[led_tail_anim_current.type], 32, UI_PICKER_TOP+4);
@@ -134,6 +124,9 @@ void ui_colorpicking_load() {
     // This will draw everything else:
     Event_post(ui_event_h, UI_EVENT_REFRESH);
     Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
+
+    // TODO: if the selected color is out of range, do this:
+    ui_colorpicker_cursor_pos = 0;
 }
 
 void ui_colorpicking_unload() {
@@ -141,36 +134,45 @@ void ui_colorpicking_unload() {
     Event_post(led_event_h, LED_EVENT_HIDE_UPCONF);
     Event_post(ui_event_h, UI_EVENT_REFRESH);
     epd_do_partial = 1;
-
+    write_anim_curr();
 }
 
 void ui_colorpicking_colorbutton() {
+    uint8_t color_index;
+
+    // If the button we pressed corresponds to
     switch(kb_active_key_masked) {
     case BTN_RED:
-        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[0], sizeof(rgbcolor16_t));
-        Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
+        color_index = 0;
         break;
     case BTN_ORG:
-        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[1], sizeof(rgbcolor16_t));
-        Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
+        color_index = 1;
         break;
     case BTN_YEL:
-        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[2], sizeof(rgbcolor16_t));
-        Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
+        color_index = 2;
         break;
     case BTN_GRN:
-        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[3], sizeof(rgbcolor16_t));
-        Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
+        color_index = 3;
         break;
     case BTN_BLU:
-        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[4], sizeof(rgbcolor16_t));
-        Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
+        color_index = 4;
         break;
     case BTN_PUR:
-        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[5], sizeof(rgbcolor16_t));
-        Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
+        color_index = 5;
         break;
     }
+
+    // TODO: This isn't exactly what we want.
+
+    if (memcmp(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[color_index], sizeof(rgbcolor16_t)) == 0) {
+        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_off, sizeof(rgbcolor16_t));
+    } else if (memcmp(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_off, sizeof(rgbcolor16_t)) == 0) {
+        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_white, sizeof(rgbcolor16_t));
+    } else {
+        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[color_index], sizeof(rgbcolor16_t));
+    }
+
+    Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
 
     if (led_tail_anim_current.type == LED_TAIL_ANIM_TYPE_ON) {
         led_tail_start_anim();
@@ -192,17 +194,21 @@ void ui_colorpicking_do(UInt events) {
             switch(kb_active_key_masked) {
             case BTN_RIGHT:
                 led_tail_anim_type_next();
+                ui_colorpicker_cursor_pos = 0;
                 Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
             case BTN_LEFT:
                 led_tail_anim_type_prev();
+                ui_colorpicker_cursor_pos = 0;
                 Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
             case BTN_DOWN:
-                ui_colorpicker_cursor_anim = 0;
-                Event_post(ui_event_h, UI_EVENT_REFRESH);
+                if (led_tail_anim_color_counts[led_tail_anim_current.type]) {
+                    ui_colorpicker_cursor_anim = 0;
+                    Event_post(ui_event_h, UI_EVENT_REFRESH);
+                }
                 break;
             }
 
@@ -221,17 +227,16 @@ void ui_colorpicking_do(UInt events) {
                 ui_colorpicking_colorbutton();
                 break;
             case BTN_RIGHT:
-                if (ui_colorpicker_cursor_pos == 5)
+                if (ui_colorpicker_cursor_pos == led_tail_anim_color_counts[led_tail_anim_current.type])
                     ui_colorpicker_cursor_pos = 0;
                 else
-                    ui_colorpicker_cursor_pos++;
+                    ui_colorpicker_cursor_pos++; // TODO: this can overrun if max==1
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
             case BTN_LEFT:
                 if (ui_colorpicker_cursor_pos == 0)
-                    ui_colorpicker_cursor_pos = 5;
-                else
-                    ui_colorpicker_cursor_pos--;
+                    ui_colorpicker_cursor_pos = led_tail_anim_color_counts[led_tail_anim_current.type];
+                ui_colorpicker_cursor_pos--; // TODO: this can overrun if max==1
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
             case BTN_UP:

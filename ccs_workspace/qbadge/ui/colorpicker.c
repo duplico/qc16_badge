@@ -38,11 +38,11 @@ void ui_colorpicking_wireframe() {
         .xMin = 0,
         .yMin = UI_PICKER_TOP,
         .xMax = EPD_WIDTH-1,
-        .yMax = EPD_HEIGHT-2
+        .yMax = EPD_HEIGHT-1
     };
 
     // Clear the color picker menu area
-    Graphics_fillRectangle(&ui_gr_context_portrait, &rect);
+    fillRectangle(&ui_gr_context_portrait, &rect);
 
     // Switch to the "drawing" colors
     Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
@@ -99,19 +99,10 @@ void ui_colorpicking_load() {
     // Fade out the background
     fadeRectangle(&ui_gr_context_portrait, &rect);
 
-//    // Switch to the "clearing" colors
-//    Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
-//    Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
-//
-//    // Fade out the background.
-//    for (int16_t i=0; i<UI_PICKER_TOP*2; i+=2) {
-//        Graphics_drawLine(&ui_gr_context_portrait, 0, i, i, 0);
-//    }
-
     // Clear the color picker "tab" area
     rect = (Graphics_Rectangle){64-(UI_PICKER_TAB_W/2), UI_PICKER_TOP-UI_PICKER_TAB_H,
                                 64+(UI_PICKER_TAB_W/2), UI_PICKER_TOP};
-    Graphics_fillRectangle(&ui_gr_context_portrait, &rect);
+    fillRectangle(&ui_gr_context_portrait, &rect);
 
     // Switch to the "drawing" colors
     Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);

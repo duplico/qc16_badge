@@ -278,41 +278,41 @@ void ui_draw_top_bar_battery_life() {
         // full
         rect.xMin = BATTERY_HIGH_X0+BATTERY_SEGMENT_PAD;
         rect.xMax = BATTERY_HIGH_X0+BATTERY_SEGMENT_WIDTH-1;
-        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD;
-        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-2;
-        Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
+        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD+1;
+        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-1;
+        fillRectangle(&ui_gr_context_landscape, &rect);
 
         rect.xMin = BATTERY_HIGH_X0+BATTERY_SEGMENT_PAD;
         rect.xMax = BATTERY_HIGH_X0+BATTERY_SEGMENT_WIDTH-1;
-        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD;
-        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-2;
-        Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
+        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD+1;
+        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-1;
+        fillRectangle(&ui_gr_context_landscape, &rect);
     }
     if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_MID_2DOT))) {
         rect.xMin = BATTERY_MID_X0+BATTERY_SEGMENT_PAD;
         rect.xMax = BATTERY_MID_X0+BATTERY_SEGMENT_WIDTH;
-        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD;
-        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-2;
-        Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
+        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD+1;
+        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-1;
+        fillRectangle(&ui_gr_context_landscape, &rect);
 
         rect.xMin = BATTERY_MID_X0+BATTERY_SEGMENT_PAD;
         rect.xMax = BATTERY_MID_X0+BATTERY_SEGMENT_WIDTH;
-        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD;
-        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-2;
-        Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
+        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD+1;
+        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-1;
+        fillRectangle(&ui_gr_context_landscape, &rect);
     }
     if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_LOW_2DOT))) {
         rect.xMin = BATTERY_LOW_X0+BATTERY_SEGMENT_PAD+1;
         rect.xMax = BATTERY_LOW_X0+BATTERY_SEGMENT_WIDTH;
-        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD;
-        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-2;
-        Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
+        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD+1;
+        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-1;
+        fillRectangle(&ui_gr_context_landscape, &rect);
 
         rect.xMin = BATTERY_LOW_X0+BATTERY_SEGMENT_PAD+1;
         rect.xMax = BATTERY_LOW_X0+BATTERY_SEGMENT_WIDTH;
-        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD;
-        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-2;
-        Graphics_fillRectangle(&ui_gr_context_landscape, &rect);
+        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD+1;
+        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-1;
+        fillRectangle(&ui_gr_context_landscape, &rect);
     }
     if (vbat_out_uvolts/1000000 < 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 < VBAT_LOW_2DOT)) {
         // ABOUT TO RUN OUT!!!

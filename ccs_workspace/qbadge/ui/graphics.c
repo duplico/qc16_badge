@@ -229,3 +229,9 @@ void fadeRectangle(Graphics_Context *gr_context, Graphics_Rectangle *rect) {
     }
     gr_context->foreground = fg_prev;
 }
+
+void fillRectangle(Graphics_Context *gr_context, Graphics_Rectangle *rect) {
+    for (uint16_t y=rect->yMin; y<=rect->yMax; y++) {
+        Graphics_drawLineH(gr_context, rect->xMin, rect->xMax, y);
+    }
+}

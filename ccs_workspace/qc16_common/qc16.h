@@ -22,9 +22,18 @@ typedef enum {
 } element_type;
 
 typedef struct {
+    // TODO: name?
+    element_type element_types[2];
+    uint8_t element_levels[2];
+    uint8_t element_rewards[2];
+    uint8_t element_progress[2];
+} mission_t;
+
+typedef struct {
     uint16_t badge_id;
     uint8_t initialized;
     uint8_t element_level[3];
+    uint8_t element_level_max[3];
     uint8_t element_level_progress[3];
     uint16_t element_qty[3];
     uint16_t qbadges_seen_count;
@@ -34,6 +43,8 @@ typedef struct {
     uint8_t agent_present;
     uint32_t agent_return_time;
     element_type element_selected;
+    uint8_t mission_assigned[3];
+    mission_t missions[3];
     char handle[QC16_BADGE_NAME_LEN + 1];
 } qbadge_conf_t;
 
@@ -70,13 +81,5 @@ typedef struct {
 #define BADGE_TYPE_PILLAR 302
 
 #define BADGE_TYPE_CONTROLLER 401
-
-typedef struct {
-    // TODO: name?
-    element_type element_types[2];
-    uint8_t element_levels[2];
-    uint8_t element_rewards[2];
-    uint8_t element_progress[2];
-} mission_t;
 
 #endif /* QC16_H_ */

@@ -24,6 +24,11 @@
 
 qbadge_conf_t badge_conf;
 
+#pragma DATA_SECTION(startup_id, ".qc16cfg")
+volatile const uint16_t startup_id = QBADGE_ID_UNASSIGNED;
+
+// Radar constructs:
+
 #define QBADGE_BITFIELD_LONGS 21
 #define CBADGE_BITFIELD_LONGS 47
 uint32_t qbadges_near[QBADGE_BITFIELD_LONGS] = {0, };
@@ -35,8 +40,10 @@ uint16_t qbadges_near_count_running=0;
 
 Clock_Handle radar_clock_h;
 
-#pragma DATA_SECTION(startup_id, ".qc16cfg")
-volatile const uint16_t startup_id = QBADGE_ID_UNASSIGNED;
+// Game constructs:
+
+uint8_t mission_accepted[3];
+mission_t missions[3];
 
 void reset_scan_cycle(UArg a0) {
     if (qbadges_near_count_running != qbadges_near_count) {
@@ -113,6 +120,8 @@ void generate_config() {
     set_badge_seen(badge_conf.badge_id, "");
     set_badge_connected(badge_conf.badge_id, "");
     srand(badge_conf.badge_id);
+
+    // TODO: Set the selected element
 
     // TODO: Initialize the current animation persistence.
 }

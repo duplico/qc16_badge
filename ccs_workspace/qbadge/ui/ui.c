@@ -53,6 +53,8 @@ uint8_t ui_textentry = 0;
 #define TOPBAR_SUB_WIDTH TOPBAR_SEG_WIDTH
 #define TOPBAR_SUB_HEIGHT (TOPBAR_HEIGHT - TOPBAR_ICON_HEIGHT - 1)
 
+#define TOPBAR_PROGBAR_HEIGHT 5
+
 #define TOPBAR_HEADSUP_START (3*TOPBAR_SEG_WIDTH_PADDED)
 
 #define BATTERY_X (EPD_HEIGHT-TOPBAR_ICON_WIDTH-1)
@@ -101,65 +103,74 @@ uint8_t ui_is_landscape() {
     return 1;
 }
 
-void ui_draw_top_bar_local_element_icons() {
+void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capacity, uint16_t number, uint16_t x, uint16_t y) {
     // TODO: consider making this a global or heap var that we share everywhere.
     Graphics_Rectangle rect;
+    // TODO: assert on element
+    // TODO: bounds checking
 
-    // TODO: Add a pad here, explicitly:
+    // TODO: Add a pad here, explicitly? For the icon<->text
+    uint16_t text_x = x+TOPBAR_ICON_WIDTH;
+    uint16_t text_y = y+4;
+    uint16_t bar_x0 = x;
+    uint16_t bar_y0 = y+TOPBAR_ICON_HEIGHT+1;
+    uint16_t bar_y1 = bar_y0+TOPBAR_PROGBAR_HEIGHT-1;
+    tImage *icon_img;
 
+    switch(element) {
+    case ELEMENT_LOCKS:
+        icon_img = &img_locks;
+        text_x -= 2; // Unpad. // TODO
+        break;
+    case ELEMENT_COINS:
+        icon_img = &img_coins;
+        text_x += 1; // Pad. // TODO
+        break;
+    case ELEMENT_CAMERAS:
+        icon_img = &img_cameras;
+        break;
+    }
+
+    qc16gr_drawImage(&ui_gr_context_landscape, icon_img, x, y);
+
+    // The "fullness" bar, if applicable:
+    for (uint8_t i=0; i<5; i++) {
+        rect.xMin = bar_x0+2 + 8*i;
+        rect.xMax = rect.xMin + 6;
+        rect.yMin = bar_y0;
+        rect.yMax = bar_y1;
+        if (i < bar_level) {
+            fillRectangle(&ui_gr_context_landscape, &rect);
+        } else if (i < bar_capacity) {
+            Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+        } else {
+            Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+            fadeRectangle(&ui_gr_context_landscape, &rect);
+        }
+    }
+    Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
+
+    // TODO: handle >999
+    //       like: 1k, 2k, 3k...
+    char amt[4];
+    if (number < 999) {
+        sprintf(amt, "%d", number);
+    } else if (number < 100000) {
+        // <100k
+        sprintf(amt, "%dk", number/1000);
+    } else {
+        // TODO: lots!
+    }
+    amt[3] = 0x00;
+    Graphics_drawString(&ui_gr_context_landscape, (int8_t *)amt, 3, text_x, text_y, 0);
+}
+
+void ui_draw_top_bar_local_element_icons() {
     for (uint8_t i=0; i<3; i++) {
         uint16_t icon_x = i*TOPBAR_SEG_WIDTH_PADDED;
         uint16_t icon_y = 0;
-        uint16_t text_x = i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_ICON_WIDTH;
-        uint16_t text_y = 8;
-        uint16_t bar_x0 = i*TOPBAR_SEG_WIDTH_PADDED;
-        uint16_t bar_y0 = TOPBAR_ICON_HEIGHT+1;
-        uint16_t bar_x1 = i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_SUB_WIDTH-1;
-        uint16_t bar_y1 = TOPBAR_ICON_HEIGHT+TOPBAR_SUB_HEIGHT-1;
-        uint16_t number;
-        int8_t bar_level = -1;
-        int8_t bar_capacity = -1;
-        tImage *icon_img;
-
-        switch(i) {
-        case TOP_BAR_LOCKS:
-            icon_img = &img_locks;
-            bar_level = 1; // TODO: read
-            bar_capacity = 2;
-            text_x -= 2; // Unpad.
-            number = badge_conf.element_qty[i]; // TODO
-            break;
-        case TOP_BAR_COINS:
-            icon_img = &img_coins;
-            bar_level = 2; // TODO: read
-            bar_capacity = 5;
-            number = badge_conf.element_qty[i]; // TODO
-            break;
-        case TOP_BAR_CAMERAS:
-            icon_img = &img_cameras;
-            bar_level = 3; // TODO: read
-            bar_capacity = 4;
-            number = badge_conf.element_qty[i]; // TODO
-            break;
-        }
-
-        qc16gr_drawImage(&ui_gr_context_landscape, icon_img, icon_x, icon_y);
-
-        if (bar_capacity > 0) {
-            // The "fullness" bar, if applicable:
-            rect.xMin = bar_x0;
-            rect.xMax = bar_x1;
-            rect.yMin = bar_y0;
-            rect.yMax = bar_y1;
-            Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
-        }
-        Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
-
-        // TODO: handle >999
-        char amt[4];
-        sprintf(amt, "%d", badge_conf.element_qty[i]);
-        amt[3] = 0x00;
-        Graphics_drawString(&ui_gr_context_landscape, (int8_t *)amt, 3, i*TOPBAR_SEG_WIDTH_PADDED+TOPBAR_ICON_WIDTH, 4, 0);
+//        ui_draw_element(i, badge_conf.element_level[i], badge_conf.element_level[i], badge_conf.element_qty[i], icon_x, icon_y);
+        ui_draw_element(i, 2, 3, 12*i, icon_x, icon_y);
     }
 }
 

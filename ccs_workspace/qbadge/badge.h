@@ -22,6 +22,9 @@ extern uint32_t qbadges_connected[21];
 extern uint32_t cbadges_connected[47];
 extern uint16_t qbadges_near_count;
 
+extern uint8_t mission_accepted[3];
+extern mission_t missions[3];
+
 void load_conf();
 void write_conf();
 void init_config();

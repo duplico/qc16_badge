@@ -10,6 +10,17 @@
 
 #define QC16_BADGE_NAME_LEN 9
 
+typedef enum {
+    ELEMENT_LOCKS = 0,
+    ELEMENT_COINS,
+    ELEMENT_CAMERAS,
+    ELEMENT_KEYS,
+    ELEMENT_COCKTAILS,
+    ELEMENT_FLAGS,
+    ELEMENT_NONE,
+    ELEMENT_COUNT,
+} element_type;
+
 typedef struct {
     uint16_t badge_id;
     uint8_t initialized;
@@ -22,9 +33,9 @@ typedef struct {
     uint32_t last_clock;
     uint8_t agent_present;
     uint32_t agent_return_time;
+    element_type element_selected;
     char handle[QC16_BADGE_NAME_LEN + 1];
 } qbadge_conf_t;
-
 
 typedef struct {
     uint16_t badge_id;
@@ -59,5 +70,13 @@ typedef struct {
 #define BADGE_TYPE_PILLAR 302
 
 #define BADGE_TYPE_CONTROLLER 401
+
+typedef struct {
+    // TODO: name?
+    element_type element_types[2];
+    uint8_t element_levels[2];
+    uint8_t element_rewards[2];
+    uint8_t element_progress[2];
+} mission_t;
 
 #endif /* QC16_H_ */

@@ -40,7 +40,36 @@ uint16_t qbadges_near_count_running=0;
 uint16_t handlers_near_count=0;
 uint16_t handlers_near_count_running=0;
 
+uint8_t mission_avail_levels[6] = {0,};
+
 Clock_Handle radar_clock_h;
+
+/// Returns true if it is possible to call generate_mission().
+uint8_t mission_possible() {
+
+    return 1;
+}
+
+/// Generate and return a new mission.
+mission_t generate_mission() {
+    // TODO: Consider doing this with pointers instead.
+    // TODO: Check which handlers are around
+    mission_t new_mission;
+
+    // TODO: Decide whether it has a second element.
+
+    // TODO: Base this on handlers:
+    new_mission.element_types[0] = (element_type) (rand() % 3);
+
+    // TODO: Base this on level:
+    new_mission.element_levels[0] = 1;
+
+    // TODO: Plan this better:
+    new_mission.element_rewards[0] = 1 + rand() % 10;
+    new_mission.element_progress[0] = 1 + rand() % 10;
+
+    return new_mission;
+}
 
 void reset_scan_cycle(UArg a0) {
     if (qbadges_near_count_running != qbadges_near_count) {

@@ -10,6 +10,7 @@
 #include <queercon_drivers/storage.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #include <ti/grlib/grlib.h>
@@ -65,7 +66,7 @@ uint8_t ui_textentry = 0;
 #define BATTERY_BODY_VPAD 2
 #define BATTERIES_HEIGHT (BATTERY_BODY_HEIGHT*2 + BATTERY_BODY_VPAD)
 
-#define BATTERY_BODY0_Y0 ((TOPBAR_ICON_HEIGHT-BATTERIES_HEIGHT)/2)
+#define BATTERY_BODY0_Y0 ((TOPBAR_ICON_HEIGHT-BATTERIES_HEIGHT)/2-1)
 #define BATTERY_BODY0_Y1 (BATTERY_BODY0_Y0+BATTERY_BODY_HEIGHT)
 #define BATTERY_BODY1_Y0 (BATTERY_BODY0_Y1 + BATTERY_BODY_VPAD)
 #define BATTERY_BODY1_Y1 (BATTERY_BODY1_Y0+BATTERY_BODY_HEIGHT)
@@ -109,7 +110,6 @@ void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capaci
     // TODO: assert on element
     // TODO: bounds checking
 
-    // TODO: Add a pad here, explicitly? For the icon<->text
     uint16_t text_x = x+TOPBAR_ICON_WIDTH;
     uint16_t text_y = y+4;
     uint16_t bar_x0 = x;
@@ -117,33 +117,14 @@ void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capaci
     uint16_t bar_y1 = bar_y0+TOPBAR_PROGBAR_HEIGHT-1;
     tImage *icon_img;
 
-    icon_img = image_element_icons[(uint8_t) element];
-
-    switch(element) {
-    case ELEMENT_LOCKS:
-        text_x -= 2; // Unpad. // TODO
-        break;
-    case ELEMENT_COINS:
-        text_x += 1; // Pad. // TODO
-        break;
-    case ELEMENT_CAMERAS:
-        break;
-    case ELEMENT_KEYS:
-        text_x -= 2; // Unpad. // TODO
-        break;
-    case ELEMENT_COCKTAILS:
-        text_x += 1; // Pad. // TODO
-        break;
-    case ELEMENT_FLAGS:
-        break;
-    }
+    icon_img = (Graphics_Image *) image_element_icons[(uint8_t) element];
 
     qc16gr_drawImage(&ui_gr_context_landscape, icon_img, x, y);
 
     // The "fullness" bar, if applicable:
     for (uint8_t i=0; i<5; i++) {
-        rect.xMin = bar_x0+2 + 8*i;
-        rect.xMax = rect.xMin + 6;
+        rect.xMin = bar_x0+2 + 7*i;
+        rect.xMax = rect.xMin + 5;
         rect.yMin = bar_y0;
         rect.yMax = bar_y1;
         if (i < bar_level) {
@@ -445,9 +426,57 @@ void ui_draw_missions() {
 
     ui_draw_top_bar();
 
-    ui_draw_element(ELEMENT_FLAGS, 1, 1, 5, 168, 38);
-    ui_draw_element(ELEMENT_COCKTAILS, 1, 1, 5, 168, 68);
-    ui_draw_element(ELEMENT_KEYS, 1, 1, 5, 168, 98);
+    Graphics_Rectangle rect;
+
+    // TODO: consider a vertical level bar here instead???
+
+    for (uint8_t i=0; i<3; i++) {
+        if (!badge_conf.mission_assigned[i]) {
+            continue;
+        }
+        mission_t mission = badge_conf.missions[i];
+
+        rect.xMin=124;
+        rect.yMin=TOPBAR_HEIGHT+3+i*(TOPBAR_HEIGHT+2);
+        rect.xMax=rect.xMin+TOPBAR_SEG_WIDTH_PADDED*2;
+        rect.yMax=rect.yMin+TOPBAR_HEIGHT;
+        ui_draw_element(mission.element_types[0], mission.element_levels[0], 5, mission.element_rewards[0], rect.xMin+2, rect.yMin+1);
+        if (mission.element_types[1] != ELEMENT_COUNT_NONE) {
+            ui_draw_element(mission.element_types[1], mission.element_levels[1], 5, mission.element_rewards[1], rect.xMin+2+TOPBAR_SEG_WIDTH, rect.yMin+1);
+        }
+
+        // TODO: Fade if not equipped.
+
+        Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+
+//        rect.xMin=124+TOPBAR_SEG_WIDTH_PADDED*2+2;
+//        rect.yMin=TOPBAR_HEIGHT+3+i*(TOPBAR_HEIGHT+2);
+//        rect.xMax=rect.xMin+TOPBAR_SEG_WIDTH_PADDED*2;
+//        rect.yMax=rect.yMin+TOPBAR_HEIGHT;
+//        ui_draw_element(rand()%ELEMENT_COUNT_NONE, 1, 1, 5, rect.xMin+2, rect.yMin+1);
+//        ui_draw_element(rand()%ELEMENT_COUNT_NONE, 1, 1, 5, rect.xMin+2+TOPBAR_SEG_WIDTH, rect.yMin+1);
+//        Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+
+    }
+//
+//    rect.xMin=131;
+//    rect.yMin=38;
+//    rect.xMax=rect.xMin+2*TOPBAR_SEG_WIDTH;
+//    rect.yMax=rect.yMin+TOPBAR_HEIGHT-1;
+//    Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+//    ui_draw_element(ELEMENT_FLAGS, 1, 1, 5, 136-5, 38);
+//    ui_draw_element(ELEMENT_COCKTAILS, 1, 1, 5, 136-5, 68);
+//    ui_draw_element(ELEMENT_KEYS, 1, 1, 5, 136-5, 98);
+//    ui_draw_element(ELEMENT_FLAGS, 1, 1, 5, 176-5, 38);
+//    ui_draw_element(ELEMENT_COCKTAILS, 1, 1, 5, 176-5, 68);
+//    ui_draw_element(ELEMENT_KEYS, 1, 1, 5, 176-5, 98);
+//
+//    ui_draw_element(ELEMENT_CAMERAS, 1, 1, 5, 216, 38);
+//    ui_draw_element(ELEMENT_COINS, 1, 1, 5, 216, 68);
+//    ui_draw_element(ELEMENT_LOCKS, 1, 1, 5, 216, 98);
+//    ui_draw_element(ELEMENT_CAMERAS, 1, 1, 5, 256, 38);
+//    ui_draw_element(ELEMENT_COINS, 1, 1, 5, 256, 68);
+//    ui_draw_element(ELEMENT_LOCKS, 1, 1, 5, 256, 98);
 
     Graphics_flushBuffer(&ui_gr_context_landscape);
 }

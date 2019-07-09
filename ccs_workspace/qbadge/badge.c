@@ -37,13 +37,10 @@ uint32_t qbadges_connected[QBADGE_BITFIELD_LONGS] = {0, };
 uint32_t cbadges_connected[CBADGE_BITFIELD_LONGS] = {0, };
 uint16_t qbadges_near_count=0;
 uint16_t qbadges_near_count_running=0;
+uint16_t handlers_near_count=0;
+uint16_t handlers_near_count_running=0;
 
 Clock_Handle radar_clock_h;
-
-// Game constructs:
-
-uint8_t mission_accepted[3];
-mission_t missions[3];
 
 void reset_scan_cycle(UArg a0) {
     if (qbadges_near_count_running != qbadges_near_count) {
@@ -61,6 +58,7 @@ uint8_t conf_file_exists() {
     if (status == SPIFFS_OK && stat.size == sizeof(badge_conf)) {
         return 1;
     } else if (status == SPIFFS_OK) {
+        // wrong size:
         status = SPIFFS_remove(&fs, "/qbadge/conf");
     }
     // TODO: Validate more?
@@ -112,11 +110,13 @@ void generate_config() {
 
     badge_conf.badge_id = startup_id;
 
-    // TODO: Consider writing my name to the name list in the memory?
-    //       (This is probably done with set_badge_seen?)
-
     badge_conf.last_clock = 0;
+    badge_conf.agent_present = 1;
+    badge_conf.element_level_max[0] = 2;
+    badge_conf.element_level_max[1] = 2;
+    badge_conf.element_level_max[2] = 2;
 
+    // NB: These both will save the badge_conf:
     set_badge_seen(badge_conf.badge_id, "");
     set_badge_connected(badge_conf.badge_id, "");
     srand(badge_conf.badge_id);
@@ -124,6 +124,7 @@ void generate_config() {
     // TODO: Set the selected element
 
     // TODO: Initialize the current animation persistence.
+    write_conf();
 }
 
 uint8_t config_is_valid() {
@@ -224,7 +225,8 @@ void init_config() {
         load_conf();
     }
     // Check the stored config:
-    if (config_is_valid()) return;
+    // TODO
+//    if (config_is_valid()) return;
 
     // If we're still here, the config source was invalid, and
     //  we must generate a new one.

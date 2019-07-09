@@ -117,19 +117,32 @@ void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capaci
     uint16_t bar_y1 = bar_y0+TOPBAR_PROGBAR_HEIGHT-1;
     tImage *icon_img;
 
-    switch(element) {
-    case ELEMENT_LOCKS:
-        icon_img = &img_locks;
-        text_x -= 2; // Unpad. // TODO
-        break;
-    case ELEMENT_COINS:
-        icon_img = &img_coins;
-        text_x += 1; // Pad. // TODO
-        break;
-    case ELEMENT_CAMERAS:
-        icon_img = &img_cameras;
-        break;
-    }
+    icon_img = image_element_icons[(uint8_t) element];
+
+//    switch(element) {
+//    case ELEMENT_LOCKS:
+//        icon_img = &img_locks;
+//        text_x -= 2; // Unpad. // TODO
+//        break;
+//    case ELEMENT_COINS:
+//        icon_img = &img_coins;
+//        text_x += 1; // Pad. // TODO
+//        break;
+//    case ELEMENT_CAMERAS:
+//        icon_img = &img_cameras;
+//        break;
+//    case ELEMENT_KEYS:
+//        icon_img = &img_keys;
+//        text_x -= 2; // Unpad. // TODO
+//        break;
+//    case ELEMENT_COCKTAILS:
+//        icon_img = &img_cocktails;
+//        text_x += 1; // Pad. // TODO
+//        break;
+//    case ELEMENT_FLAGS:
+//        icon_img = &img_flags;
+//        break;
+//    }
 
     qc16gr_drawImage(&ui_gr_context_landscape, icon_img, x, y);
 
@@ -169,8 +182,7 @@ void ui_draw_top_bar_local_element_icons() {
     for (uint8_t i=0; i<3; i++) {
         uint16_t icon_x = i*TOPBAR_SEG_WIDTH_PADDED;
         uint16_t icon_y = 0;
-//        ui_draw_element(i, badge_conf.element_level[i], badge_conf.element_level[i], badge_conf.element_qty[i], icon_x, icon_y);
-        ui_draw_element(i, 2, 3, 12*i, icon_x, icon_y);
+        ui_draw_element((element_type) i, badge_conf.element_level[i], badge_conf.element_level_max[i], badge_conf.element_qty[i], icon_x, icon_y);
     }
 }
 
@@ -181,7 +193,6 @@ void ui_draw_top_bar_qbadge_headsup_icons() {
     char cnt[5]; // TODO
 
     // TODO: Add a pad here, explicitly:
-
 
     for (uint8_t i=0; i<3; i++) {
         uint16_t icon_x = TOPBAR_HEADSUP_START + i*TOPBAR_SEG_WIDTH_PADDED;
@@ -340,6 +351,11 @@ void ui_draw_top_bar() {
     ui_draw_top_bar_qbadge_headsup_icons();
 }
 
+uint8_t ui_x_cursor = 0;
+uint8_t ui_y_cursor = 0;
+uint8_t ui_x_max = 0;
+uint8_t ui_y_max = 0;
+
 uint8_t ui_selected_item = 0;
 #define MAINMENU_ICON_COUNT 4
 #define MAINMENU_NAME_MAX_LEN 7
@@ -367,7 +383,7 @@ void ui_draw_main_menu_icons() {
 
         qc16gr_drawImage(&ui_gr_context_landscape, image_mainmenu_icons[i], rect.xMin, rect.yMin);
 
-        if (ui_selected_item == i) {
+        if (ui_x_cursor == i) {
             // make it selected
             Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
             Graphics_drawStringCentered(
@@ -413,10 +429,37 @@ void ui_draw_files() {
     SPIFFS_opendir(&fs, "/", &d);
     while ((pe = SPIFFS_readdir(&d, pe)) &&
             (y+7 < EPD_WIDTH)) {
-        Graphics_drawString(&ui_gr_context_landscape, pe->name, SPIFFS_OBJ_NAME_LEN, 16, y, 1);
+        Graphics_drawString(&ui_gr_context_landscape, (int8_t *) pe->name, SPIFFS_OBJ_NAME_LEN, 16, y, 1);
         y+=9;
     }
     SPIFFS_closedir(&d);
+    Graphics_flushBuffer(&ui_gr_context_landscape);
+}
+
+void ui_draw_info() {
+    // Clear the buffer.
+    Graphics_clearDisplay(&ui_gr_context_landscape);
+
+    ui_draw_top_bar();
+
+    Graphics_flushBuffer(&ui_gr_context_landscape);
+}
+
+void ui_draw_missions() {
+    // Clear the buffer.
+    Graphics_clearDisplay(&ui_gr_context_landscape);
+
+    ui_draw_top_bar();
+
+    Graphics_flushBuffer(&ui_gr_context_landscape);
+}
+
+void ui_draw_scan() {
+    // Clear the buffer.
+    Graphics_clearDisplay(&ui_gr_context_landscape);
+
+    ui_draw_top_bar();
+
     Graphics_flushBuffer(&ui_gr_context_landscape);
 }
 
@@ -480,7 +523,31 @@ void ui_transition(uint8_t destination) {
     if (ui_current == destination) {
         return; // Nothing to do.
     }
-    ui_selected_item = 0;
+    ui_x_cursor = 0;
+    ui_y_cursor = 0;
+    // TODO: Set these correctly:
+    switch(destination) {
+    case UI_SCREEN_MAINMENU:
+        ui_x_max = MAINMENU_ICON_COUNT-1;
+        ui_y_max = 0;
+        break;
+    case UI_SCREEN_INFO:
+        ui_x_max = MAINMENU_ICON_COUNT-1;
+        ui_y_max = 0;
+        break;
+    case UI_SCREEN_MISSIONS:
+        ui_x_max = MAINMENU_ICON_COUNT-1;
+        ui_y_max = 0;
+        break;
+    case UI_SCREEN_SCAN:
+        ui_x_max = MAINMENU_ICON_COUNT-1;
+        ui_y_max = 0;
+        break;
+    case UI_SCREEN_FILES:
+        ui_x_max = MAINMENU_ICON_COUNT-1;
+        ui_y_max = 0;
+        break;
+    }
 
     ui_current = destination;
     Event_post(ui_event_h, UI_EVENT_REFRESH);
@@ -504,46 +571,34 @@ void ui_screensaver_do(UInt events) {
     }
 }
 
-void ui_mainmenu_do(UInt events) {
+// TODO: Rewrite doc header
+/// Do basic menu system stuff, returning 1 if we should return after calling.
+uint8_t ui_menusystem_do(UInt events) {
     switch(events) {
-    case UI_EVENT_REFRESH:
-        ui_draw_main_menu();
-        break;
     case UI_EVENT_KB_PRESS:
         switch(kb_active_key_masked) {
         case BTN_BACK:
-            ui_transition(UI_SCREEN_IDLE);
-            break;
+            if (ui_current == UI_SCREEN_MAINMENU) {
+                ui_transition(UI_SCREEN_IDLE);
+            } else {
+                ui_transition(UI_SCREEN_MAINMENU);
+            }
+            return 1;
         case BTN_LEFT:
-            if (ui_selected_item == 0)
-                ui_selected_item = MAINMENU_ICON_COUNT;
-            ui_selected_item--;
+            if (ui_x_cursor == 0)
+                ui_x_cursor = ui_x_max;
+            else
+                ui_x_cursor--;
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             epd_do_partial = 1;
             break;
         case BTN_RIGHT:
-            ui_selected_item++;
-            if (ui_selected_item == MAINMENU_ICON_COUNT)
-                ui_selected_item = 0;
+            if (ui_x_cursor == ui_x_max)
+                ui_x_cursor = 0;
+            else
+                ui_x_cursor++;
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             epd_do_partial = 1;
-            break;
-        case BTN_OK:
-            switch(ui_selected_item) {
-            case 0:
-                // TODO: Info
-                break;
-            case 1:
-                // TODO: Missions
-                break;
-            case 2:
-                // TODO: Radar
-                break;
-            case 3:
-                // TODO: files
-                ui_transition(UI_SCREEN_FILES);
-                break;
-            }
             break;
         }
         break;
@@ -552,6 +607,78 @@ void ui_mainmenu_do(UInt events) {
         // Do a partial redraw with the new numbers:
         Event_post(ui_event_h, UI_EVENT_REFRESH);
         epd_do_partial = 1;
+        break;
+    }
+    return 0;
+}
+
+void ui_mainmenu_do(UInt events) {
+    switch(events) {
+    case UI_EVENT_REFRESH:
+        ui_draw_main_menu();
+        break;
+    case UI_EVENT_KB_PRESS:
+        switch(kb_active_key_masked) {
+        case BTN_OK:
+            switch(ui_x_cursor) {
+            case 0:
+                ui_transition(UI_SCREEN_INFO);
+                break;
+            case 1:
+                ui_transition(UI_SCREEN_MISSIONS);
+                break;
+            case 2:
+                ui_transition(UI_SCREEN_SCAN);
+                break;
+            case 3:
+                ui_transition(UI_SCREEN_FILES);
+                break;
+            }
+            break;
+        }
+        break;
+    }
+}
+
+void ui_info_do(UInt events) {
+    switch(events) {
+    case UI_EVENT_REFRESH:
+        ui_draw_info();
+        break;
+    case UI_EVENT_KB_PRESS:
+        switch(kb_active_key_masked) {
+        case BTN_OK:
+            break;
+        }
+        break;
+    }
+}
+
+void ui_missions_do(UInt events) {
+    switch(events) {
+    case UI_EVENT_REFRESH:
+        ui_draw_missions();
+        break;
+    case UI_EVENT_KB_PRESS:
+        switch(kb_active_key_masked) {
+        case BTN_OK:
+            break;
+        }
+        break;
+    }
+}
+
+void ui_scan_do(UInt events) {
+    // TODO: Combine some of the shared code here.
+    switch(events) {
+    case UI_EVENT_REFRESH:
+        ui_draw_scan();
+        break;
+    case UI_EVENT_KB_PRESS:
+        switch(kb_active_key_masked) {
+        case BTN_OK:
+            break;
+        }
         break;
     }
 }
@@ -563,22 +690,9 @@ void ui_files_do(UInt events) {
         break;
     case UI_EVENT_KB_PRESS:
         switch(kb_active_key_masked) {
-        case BTN_BACK:
-            ui_transition(UI_SCREEN_MAINMENU);
-            break;
-        case BTN_LEFT:
-            break;
-        case BTN_RIGHT:
-            break;
         case BTN_OK:
             break;
         }
-        break;
-    case UI_EVENT_BATTERY_UPDATE: // TODO: make a function for these:
-    case UI_EVENT_RADAR_UPDATE:
-        // Do a partial redraw with the new numbers:
-        Event_post(ui_event_h, UI_EVENT_REFRESH);
-        epd_do_partial = 1;
         break;
     }
 }
@@ -642,23 +756,35 @@ void ui_task_fn(UArg a0, UArg a1) {
         } else {
             // If neither of our "overlay" options are in use, then we follow
             //  a normal state flow:
-            switch(ui_current) {
-            case UI_SCREEN_IDLE:
+            if (ui_current == UI_SCREEN_IDLE) {
                 if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == BTN_UP) {
                 } else if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == BTN_DOWN) {
                 } else if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == BTN_OK) {
                     ui_transition(UI_SCREEN_MAINMENU);
                 }
                 ui_screensaver_do(events);
-                break;
-            case UI_SCREEN_MAINMENU:
-                ui_mainmenu_do(events);
-                break;
-            case UI_SCREEN_FILES:
-                ui_files_do(events);
-                break;
+            } else if (ui_current >= UI_SCREEN_MAINMENU && ui_current <= UI_SCREEN_MAINMENU_END) {
+                if (ui_menusystem_do(events)) {
+                    continue;
+                }
+                switch(ui_current) {
+                case UI_SCREEN_MAINMENU:
+                    ui_mainmenu_do(events);
+                    break;
+                case UI_SCREEN_INFO:
+                    ui_info_do(events);
+                    break;
+                case UI_SCREEN_MISSIONS:
+                    ui_missions_do(events);
+                    break;
+                case UI_SCREEN_SCAN:
+                    ui_scan_do(events);
+                    break;
+                case UI_SCREEN_FILES:
+                    ui_files_do(events);
+                    break;
+                }
             }
-
         }
     }
 }

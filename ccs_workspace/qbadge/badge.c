@@ -71,6 +71,16 @@ mission_t generate_mission() {
     return new_mission;
 }
 
+/// Complete and receive rewards from a mission.
+void complete_mission(mission_t *mission) {
+
+}
+
+/// Complete and receive rewards from mission id.
+void complete_mission_id(uint8_t mission_id) {
+
+}
+
 void reset_scan_cycle(UArg a0) {
     if (qbadges_near_count_running != qbadges_near_count) {
         // TODO: post event

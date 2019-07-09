@@ -776,6 +776,35 @@ void ui_task_fn(UArg a0, UArg a1) {
         } else if (kb_active_key_masked == BTN_ROT) {
         }
 
+        if (events & UI_EVENT_KB_PRESS) {
+            switch(kb_active_key_masked) {
+            case BTN_F1_LOCK:
+                if (badge_conf.element_selected == ELEMENT_LOCKS) {
+                    badge_conf.element_selected = ELEMENT_COUNT_NONE;
+                } else {
+                    badge_conf.element_selected = ELEMENT_LOCKS;
+                }
+                Event_post(led_event_h, LED_EVENT_FN_LIGHT);
+                break;
+            case BTN_F2_COIN:
+                if (badge_conf.element_selected == ELEMENT_COINS) {
+                    badge_conf.element_selected = ELEMENT_COUNT_NONE;
+                } else {
+                    badge_conf.element_selected = ELEMENT_COINS;
+                }
+                Event_post(led_event_h, LED_EVENT_FN_LIGHT);
+                break;
+            case BTN_F3_CAMERA:
+                if (badge_conf.element_selected == ELEMENT_CAMERAS) {
+                    badge_conf.element_selected = ELEMENT_COUNT_NONE;
+                } else {
+                    badge_conf.element_selected = ELEMENT_CAMERAS;
+                }
+                Event_post(led_event_h, LED_EVENT_FN_LIGHT);
+                break;
+            }
+        }
+
         if (ui_colorpicking) {
             ui_colorpicking_do(events);
         } else if (ui_textentry) {

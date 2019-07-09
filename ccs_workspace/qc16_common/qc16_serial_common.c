@@ -4,6 +4,7 @@
 
 #include "qc16_serial_common.h"
 
+/// Calculate a 16-bit cyclic redundancy check on buffer sbuf of length len.
 uint16_t crc16_buf(volatile uint8_t *sbuf, uint8_t len) {
     uint16_t crc=QC16_CRC_SEED;
 

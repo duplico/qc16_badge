@@ -83,7 +83,7 @@ void led_tail_anim_type_next() {
     do {
         next_type += 1;
         if (next_type >= LED_TAIL_ANIM_TYPE_COUNT)
-            next_type = 0;
+            next_type = 0; // TODO: cast
     } while (!led_tail_anim_type_is_valid(next_type));
     led_tail_anim_current.type = next_type;
     led_tail_start_anim();

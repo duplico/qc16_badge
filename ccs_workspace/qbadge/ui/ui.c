@@ -42,9 +42,9 @@ uint8_t ui_current = UI_SCREEN_STORY1;
 uint8_t ui_colorpicking = 0;
 uint8_t ui_textentry = 0;
 
-#define TOPBAR_HEIGHT 36
-#define TOPBAR_ICON_HEIGHT 24
-#define TOPBAR_ICON_WIDTH 24
+#define TOPBAR_HEIGHT 30
+#define TOPBAR_ICON_HEIGHT 22
+#define TOPBAR_ICON_WIDTH 22
 #define TOPBAR_TEXT_WIDTH 18
 #define TOPBAR_TEXT_HEIGHT (TOPBAR_HEIGHT - TOPBAR_ICON_HEIGHT)
 #define TOPBAR_SEG_WIDTH (TOPBAR_ICON_WIDTH + TOPBAR_TEXT_WIDTH)
@@ -61,7 +61,7 @@ uint8_t ui_textentry = 0;
 #define BATTERY_ANODE_WIDTH 2
 #define BATTERY_ANODE_HEIGHT 4
 #define BATTERY_BODY_WIDTH (TOPBAR_ICON_WIDTH-BATTERY_ANODE_WIDTH)
-#define BATTERY_BODY_HEIGHT 8
+#define BATTERY_BODY_HEIGHT 7
 #define BATTERY_BODY_VPAD 2
 #define BATTERIES_HEIGHT (BATTERY_BODY_HEIGHT*2 + BATTERY_BODY_VPAD)
 
@@ -119,30 +119,24 @@ void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capaci
 
     icon_img = image_element_icons[(uint8_t) element];
 
-//    switch(element) {
-//    case ELEMENT_LOCKS:
-//        icon_img = &img_locks;
-//        text_x -= 2; // Unpad. // TODO
-//        break;
-//    case ELEMENT_COINS:
-//        icon_img = &img_coins;
-//        text_x += 1; // Pad. // TODO
-//        break;
-//    case ELEMENT_CAMERAS:
-//        icon_img = &img_cameras;
-//        break;
-//    case ELEMENT_KEYS:
-//        icon_img = &img_keys;
-//        text_x -= 2; // Unpad. // TODO
-//        break;
-//    case ELEMENT_COCKTAILS:
-//        icon_img = &img_cocktails;
-//        text_x += 1; // Pad. // TODO
-//        break;
-//    case ELEMENT_FLAGS:
-//        icon_img = &img_flags;
-//        break;
-//    }
+    switch(element) {
+    case ELEMENT_LOCKS:
+        text_x -= 2; // Unpad. // TODO
+        break;
+    case ELEMENT_COINS:
+        text_x += 1; // Pad. // TODO
+        break;
+    case ELEMENT_CAMERAS:
+        break;
+    case ELEMENT_KEYS:
+        text_x -= 2; // Unpad. // TODO
+        break;
+    case ELEMENT_COCKTAILS:
+        text_x += 1; // Pad. // TODO
+        break;
+    case ELEMENT_FLAGS:
+        break;
+    }
 
     qc16gr_drawImage(&ui_gr_context_landscape, icon_img, x, y);
 
@@ -450,6 +444,10 @@ void ui_draw_missions() {
     Graphics_clearDisplay(&ui_gr_context_landscape);
 
     ui_draw_top_bar();
+
+    ui_draw_element(ELEMENT_FLAGS, 1, 1, 5, 168, 38);
+    ui_draw_element(ELEMENT_COCKTAILS, 1, 1, 5, 168, 68);
+    ui_draw_element(ELEMENT_KEYS, 1, 1, 5, 168, 98);
 
     Graphics_flushBuffer(&ui_gr_context_landscape);
 }

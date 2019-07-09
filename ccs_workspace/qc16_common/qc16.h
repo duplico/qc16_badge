@@ -17,8 +17,7 @@ typedef enum {
     ELEMENT_KEYS,
     ELEMENT_COCKTAILS,
     ELEMENT_FLAGS,
-    ELEMENT_NONE,
-    ELEMENT_COUNT,
+    ELEMENT_COUNT_NONE,
 } element_type;
 
 typedef struct {

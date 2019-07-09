@@ -9,6 +9,7 @@
 
 #include <xdc/runtime/Error.h>
 #include <ti/sysbios/knl/Clock.h>
+#include <ti/sysbios/family/arm/cc26xx/Seconds.h>
 
 #include <third_party/spiffs/spiffs.h>
 
@@ -87,6 +88,7 @@ void reset_scan_cycle(UArg a0) {
     }
     qbadges_near_count_running = 0;
     memset((void *) qbadges_near, 0x00, 4*QBADGE_BITFIELD_LONGS);
+    // TODO: write config
 }
 
 uint8_t conf_file_exists() {
@@ -112,10 +114,15 @@ void load_conf() {
     storage_read_file("/qbadge/conn_q", (uint8_t *) qbadges_connected, 47*4);
     storage_read_file("/qbadge/seen_q", (uint8_t *) qbadges_seen, 47*4);
     load_anim(".current");
+    // Turn on the LED for my current light:
+    Event_post(led_event_h, LED_EVENT_FN_LIGHT);
+    Seconds_set(badge_conf.last_clock);
     srand(badge_conf.badge_id);
 }
 
 void write_conf() {
+    badge_conf.last_clock = Seconds_get();
+
     storage_overwrite_file("/qbadge/conf", (uint8_t *) (&badge_conf), sizeof(badge_conf));
     storage_overwrite_file("/qbadge/conn_c", (uint8_t *) cbadges_connected, CBADGE_BITFIELD_LONGS*4);
     storage_overwrite_file("/qbadge/conn_q", (uint8_t *) qbadges_connected, QBADGE_BITFIELD_LONGS*4);
@@ -169,13 +176,6 @@ void generate_config() {
 uint8_t config_is_valid() {
     return 1;
 }
-
-// TODO: Persistence for:
-//  Current LED animation
-//  Current photo
-//  Badges seen
-//  Badges connected
-//  Handle?
 
 uint8_t badge_seen(uint16_t id) {
     // TODO: protect from overrun
@@ -270,6 +270,10 @@ void init_config() {
     // If we're still here, the config source was invalid, and
     //  we must generate a new one.
     generate_config();
+
+    // Now that we've created and saved a config, we're going to load it.
+    // This way we guarantee that all the proper start-up occurs.
+    load_conf(); // TODO: validate
 
 
     Clock_Params clockParams;

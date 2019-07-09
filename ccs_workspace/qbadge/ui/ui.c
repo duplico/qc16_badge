@@ -729,7 +729,6 @@ void ui_task_fn(UArg a0, UArg a1) {
 
     storage_init();
     init_config();
-    Seconds_set(0);
 
     ui_transition(UI_SCREEN_MAINMENU);
     uint8_t brightness = 0x10;
@@ -777,6 +776,12 @@ void ui_task_fn(UArg a0, UArg a1) {
         }
 
         if (events & UI_EVENT_KB_PRESS) {
+            // NB: Below we are intentionally NOT writing the config.
+            //     This isn't a super important configuration option,
+            //     so we're not going to waste cycles (CPU and flash)
+            //     on saving our whole config every time the user hits
+            //     a button. Instead, we'll rely on the periodic save
+            //     that writes the current clock to the config.
             switch(kb_active_key_masked) {
             case BTN_F1_LOCK:
                 if (badge_conf.element_selected == ELEMENT_LOCKS) {

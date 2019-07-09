@@ -10,6 +10,7 @@ def image_uncompressed_bytes(img):
     run = 0
     val = 0
     out_bytes = []
+    row_run = 0
 
     for pixel_raw in img.getdata():
         pixel = 1 if pixel_raw else 0
@@ -18,11 +19,18 @@ def image_uncompressed_bytes(img):
             out_bytes.append(val)
             run = 0
             val = 0
+
+        if row_run == img.width:
+            out_bytes.append(val)
+            run = 0
+            val = 0
+            row_run = 0
         
         if pixel:
             val |= (0b10000000 >> run)
         
         run += 1
+        row_run += 1
 
     # We definitely didn't finish the above with a write-out, so do one:
     out_bytes.append(val)
@@ -85,39 +93,39 @@ def output_code(img_bytes, width, height, compression, name, dest=sys.stdout):
     print('    .pPixel=bytes_%s' % (name,), file=dest)
     print('};', file=dest)
 
-    pass
-
 def main():
     parser = argparse.ArgumentParser(prog='image_reformer.py')
-    parser.add_argument('infile', help="Path to the image to be encoded.")
     parser.add_argument('--name', '-n', default='', help="What to name the image.")
-    parser.add_argument('--show', '-s', action='store_true')
-    parser.add_argument('--landscape', '-l', action='store_true')
+    parser.add_argument('--show', '-s', default=False, action='store_true')
+    parser.add_argument('--landscape', '-l', default=False, action='store_true')
+    parser.add_argument('infile', help="Path to the image to be encoded.", nargs='*')
     args = parser.parse_args()
 
     out_name = args.name
-    if not out_name:
-        out_name = os.path.basename(args.infile)
-        out_name = os.path.splitext(out_name)[0]
 
-    img = Image.open(args.infile)
-    if args.landscape:
-        img.thumbnail((296, 128))
-    else:
-        img.thumbnail((128,296))
-    img = img.convert('1')
-    image_types = dict(
-        IMAGE_FMT_1BPP_COMP_RLE4=image_rle4_bytes(img),
-        IMAGE_FMT_1BPP_COMP_RLE7=image_rle7_bytes(img),
-        IMAGE_FMT_1BPP_UNCOMP=image_uncompressed_bytes(img)
-    )
-    
-    img.show()
+    for infile in args.infile:    
+        if not args.name:
+            out_name = os.path.basename(infile)
+            out_name = os.path.splitext(out_name)[0]
+        img = Image.open(infile)
+        if args.landscape:
+            img.thumbnail((296, 128))
+        else:
+            img.thumbnail((128,296))
+        img = img.convert('1')
+        image_types = dict(
+            IMAGE_FMT_1BPP_COMP_RLE4=image_rle4_bytes(img),
+            IMAGE_FMT_1BPP_COMP_RLE7=image_rle7_bytes(img),
+            IMAGE_FMT_1BPP_UNCOMP=image_uncompressed_bytes(img)
+        )
+        
+        if args.show:
+            img.show()
 
-    # Now, determine which of these image types is the smallest:
-    best_type = sorted(list(image_types.keys()), key=lambda a: len(image_types[a]))[0]
+        # Now, determine which of these image types is the smallest:
+        best_type = sorted(list(image_types.keys()), key=lambda a: len(image_types[a]))[0]
 
-    output_code(image_types[best_type], img.width, img.height, best_type, out_name)
+        output_code(image_types[best_type], img.width, img.height, best_type, out_name)
 
 
 if __name__ == '__main__':

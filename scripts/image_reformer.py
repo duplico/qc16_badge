@@ -91,6 +91,8 @@ def main():
     parser = argparse.ArgumentParser(prog='image_reformer.py')
     parser.add_argument('infile', help="Path to the image to be encoded.")
     parser.add_argument('--name', '-n', default='', help="What to name the image.")
+    parser.add_argument('--show', '-s', action='store_true')
+    parser.add_argument('--landscape', '-l', action='store_true')
     args = parser.parse_args()
 
     out_name = args.name
@@ -99,12 +101,18 @@ def main():
         out_name = os.path.splitext(out_name)[0]
 
     img = Image.open(args.infile)
+    if args.landscape:
+        img.thumbnail((296, 128))
+    else:
+        img.thumbnail((128,296))
     img = img.convert('1')
     image_types = dict(
         IMAGE_FMT_1BPP_COMP_RLE4=image_rle4_bytes(img),
         IMAGE_FMT_1BPP_COMP_RLE7=image_rle7_bytes(img),
         IMAGE_FMT_1BPP_UNCOMP=image_uncompressed_bytes(img)
     )
+    
+    img.show()
 
     # Now, determine which of these image types is the smallest:
     best_type = sorted(list(image_types.keys()), key=lambda a: len(image_types[a]))[0]

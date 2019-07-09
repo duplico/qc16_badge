@@ -13,6 +13,8 @@
 #include <ti/sysbios/knl/Event.h>
 #include <ti/sysbios/knl/Clock.h>
 
+#include <qc16.h>
+#include <badge.h>
 #include "queercon_drivers/ht16d35b.h"
 #include "ui/leds.h"
 
@@ -71,6 +73,12 @@ rgbcolor16_t led_rainbow_colors[6] = {
     {128<<7, 0, 96<<7}, // Purple
 };
 
+rgbcolor16_t led_fn_colors[3] = {
+    {0xff00, 0x0000, 0xb000}, // pink (locks)
+    {0xd500, 0x0000, 0x6900}, // other pink (coins)
+    {0x1B00, 0xCE00, 0xFA00}, // blue (cameras)
+};
+
 rgbcolor16_t led_off = {0, 0, 0};
 rgbcolor16_t led_white = {0xfff, 0xfff, 0xfff};
 
@@ -83,7 +91,7 @@ void led_tail_anim_type_next() {
     do {
         next_type += 1;
         if (next_type >= LED_TAIL_ANIM_TYPE_COUNT)
-            next_type = 0; // TODO: cast
+            next_type = (led_tail_anim_type) 0; // TODO: cast
     } while (!led_tail_anim_type_is_valid(next_type));
     led_tail_anim_current.type = next_type;
     led_tail_start_anim();
@@ -224,6 +232,20 @@ void led_sidelight_set_color(rgbcolor16_t *color) {
     Event_post(led_event_h, LED_EVENT_FLUSH);
 }
 
+void led_element_light() {
+    //24,25,26
+    ht16d_put_color(24, 3, &led_off);
+
+    Event_post(led_event_h, LED_EVENT_FLUSH);
+
+    if (badge_conf.element_selected > ELEMENT_CAMERAS) {
+        // no element selected, so we're done.
+        return;
+    }
+
+    ht16d_put_color(24+(1+(uint8_t)badge_conf.element_selected)%3, 1, &led_fn_colors[(uint8_t)badge_conf.element_selected]);
+}
+
 void led_task_fn(UArg a0, UArg a1) {
     UInt events;
     led_event_h = Event_create(NULL, NULL);
@@ -249,6 +271,11 @@ void led_task_fn(UArg a0, UArg a1) {
 
         if (events & LED_EVENT_TAIL_STEP) {
             led_tail_timestep();
+        }
+
+        // TODO: Post this somewhere on startup:
+        if (events & LED_EVENT_FN_LIGHT) {
+            led_element_light();
         }
     }
 }

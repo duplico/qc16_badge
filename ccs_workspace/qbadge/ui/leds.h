@@ -16,6 +16,7 @@
 #define LED_EVENT_SHOW_UPCONF   Event_Id_02
 #define LED_EVENT_HIDE_UPCONF   Event_Id_03
 #define LED_EVENT_TAIL_STEP     Event_Id_04
+#define LED_EVENT_FN_LIGHT      Event_Id_05
 
 typedef enum {
     LED_TAIL_ANIM_TYPE_OFF = 0,

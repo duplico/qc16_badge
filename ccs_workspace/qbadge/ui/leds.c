@@ -233,7 +233,6 @@ void led_sidelight_set_color(rgbcolor16_t *color) {
 }
 
 void led_element_light() {
-    //24,25,26
     ht16d_put_color(24, 3, &led_off);
 
     Event_post(led_event_h, LED_EVENT_FLUSH);
@@ -273,7 +272,6 @@ void led_task_fn(UArg a0, UArg a1) {
             led_tail_timestep();
         }
 
-        // TODO: Post this somewhere on startup:
         if (events & LED_EVENT_FN_LIGHT) {
             led_element_light();
         }

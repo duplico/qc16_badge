@@ -39,6 +39,7 @@ typedef struct {
     uint16_t qbadges_connected_count;
     uint16_t cbadges_connected_count;
     uint32_t last_clock;
+    uint8_t clock_is_set; // TODO: Determine whether we're even doing a time virus.
     uint8_t agent_present;
     uint32_t agent_return_time;
     element_type element_selected;

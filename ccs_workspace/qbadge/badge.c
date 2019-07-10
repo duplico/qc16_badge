@@ -138,8 +138,6 @@ mission_t generate_mission() {
         // We use the one with the highest RSSI
         // Mostly, it assigns missions that are on-brand for that handler.
 
-        // TODO: Decide whether it has a second element.
-
         // TODO: Base this on handlers:
         new_mission.element_types[0] = (element_type) (rand() % 3);
 
@@ -177,8 +175,32 @@ mission_t generate_mission() {
     return new_mission;
 }
 
-void begin_mission_id(uint8_t mission_id) {
+uint8_t mission_qualifies(uint8_t mission_id) {
+    // TODO: Handle the serial version
 
+    if (!badge_conf.agent_present) {
+        return 0; // can't do a mission without the agent.
+    }
+
+    if (badge_conf.missions[mission_id].element_levels[0] <= badge_conf.element_level[badge_conf.missions[mission_id].element_types[0]] && badge_conf.element_selected == badge_conf.missions[mission_id].element_types[0]) {
+        // mission is at or below our level for the element selected
+        return 1;
+    }
+
+    return 0;
+}
+
+// TODO: rename:
+void begin_mission_id(uint8_t mission_id) {
+    badge_conf.agent_mission_id = mission_id;
+    badge_conf.agent_present = 0;
+    // TODO: determine mission duration
+    // TODO: extract constant
+    badge_conf.agent_return_time = Seconds_get() + 600;
+    // TODO: issue event to update agent status in UI
+    // TODO: write conf
+    write_conf();
+    // TODO: if we only ever call write_conf from a task context, we should be ok?
 }
 
 /// Complete and receive rewards from a mission.
@@ -198,6 +220,7 @@ void reset_scan_cycle(UArg a0) {
     qbadges_near_count_running = 0;
     memset((void *) qbadges_near, 0x00, 4*QBADGE_BITFIELD_LONGS);
     // TODO: write config
+    // TODO: issue event to update the count & handler status
 }
 
 uint8_t conf_file_exists() {
@@ -320,6 +343,10 @@ uint8_t set_badge_seen(uint16_t id, char *name) {
         // TODO: If we're going to raise a signal on this, we'll need a second buffer.
         set_id_buf(id, (uint8_t *) qbadges_near);
         qbadges_near_count_running++;
+        if (qbadges_near_count_running > qbadges_near_count) {
+            qbadges_near_count = qbadges_near_count_running;
+            // TODO: Raise the refresh signal
+        }
     }
 
     // Let's update its name.

@@ -35,6 +35,8 @@ void begin_mission_id(uint8_t mission_id);
 void complete_mission(mission_t *mission);
 /// Complete and receive rewards from mission id.
 void complete_mission_id(uint8_t mission_id);
+// TODO: docstring
+uint8_t mission_qualifies(uint8_t mission_id);
 
 void load_conf();
 void write_conf();

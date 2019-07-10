@@ -850,7 +850,10 @@ void ui_task_fn(UArg a0, UArg a1) {
         } else if (kb_active_key_masked == BTN_ROT) {
         }
 
-        if (events & UI_EVENT_KB_PRESS
+        // NB: We only process element changes if the agent is present,
+        //     because if the agent is absent we're set in that element
+        //     on a mission!
+        if (events & UI_EVENT_KB_PRESS && badge_conf.agent_present
                 && (   kb_active_key_masked == BTN_F1_LOCK
                     || kb_active_key_masked == BTN_F2_COIN
                     || kb_active_key_masked == BTN_F3_CAMERA)) {

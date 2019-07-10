@@ -15,16 +15,12 @@ def image_uncompressed_bytes(img):
     for pixel_raw in img.getdata():
         pixel = 1 if pixel_raw else 0
 
-        if run == 8:
+        if run == 8 or row_run == img.width:
             out_bytes.append(val)
             run = 0
             val = 0
-
-        if row_run == img.width:
-            out_bytes.append(val)
-            run = 0
-            val = 0
-            row_run = 0
+            if row_run == img.width:
+                row_run = 0
         
         if pixel:
             val |= (0b10000000 >> run)

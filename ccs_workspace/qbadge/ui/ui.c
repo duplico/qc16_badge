@@ -455,6 +455,10 @@ void ui_draw_mission_icons() {
 
         ui_draw_element(mission.element_types[0], mission.element_levels[0], 5, mission.element_rewards[0], rect.xMin+2, rect.yMin+1);
 
+        if (!badge_conf.agent_present && badge_conf.agent_mission_id == i) {
+            Graphics_drawString(&ui_gr_context_landscape, "agent", 5, rect.xMax+1, rect.yMin+2, 0);
+        }
+
         if (mission_picking && i == ui_y_cursor) {
             // If we're mission picking, and this is the relevant mission...
             // Don't fade it, but DO mark it
@@ -738,8 +742,6 @@ void ui_missions_do(UInt events) {
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
             } else {
                 if (ui_x_cursor == 0) {
-                    // TODO: Consider having a cooldown on this
-                    // Handler
                     // TODO: validate conditions better
                     if (mission_possible()) {
                         mission_picking = 1;
@@ -754,6 +756,11 @@ void ui_missions_do(UInt events) {
                     // Choose & start a mission
                     for (uint8_t i=0; i<3; i++) {
                         // take the first one we qualify for
+                        if (mission_qualifies(i)) {
+                            begin_mission_id(i);
+                            Event_post(ui_event_h, UI_EVENT_REFRESH);
+                            break;
+                        }
                     }
                 }
             }

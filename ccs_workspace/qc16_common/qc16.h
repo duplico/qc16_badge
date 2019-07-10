@@ -43,6 +43,7 @@ typedef struct {
     uint8_t agent_present;
     uint8_t agent_mission_id;
     uint32_t agent_return_time;
+    uint32_t vhandler_return_time;
     element_type element_selected;
     uint8_t mission_assigned[3];
     mission_t missions[3];
@@ -59,6 +60,11 @@ typedef struct {
     uint16_t element_qty[3];
     char handle[QC16_BADGE_NAME_LEN + 1];
 } cbadge_conf_t;
+
+#define CBADGE_QTY_PLUS1    1
+#define CBADGE_QTY_PLUS2    50
+#define CBADGE_QTY_PLUS3    100
+#define CBADGE_QTY_PLUS4    500
 
 #define QBADGE_ID_START 0
 #define QBADGE_ID_UNASSIGNED 999 // TODO

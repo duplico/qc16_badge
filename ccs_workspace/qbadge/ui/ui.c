@@ -455,18 +455,18 @@ void ui_draw_mission_icons() {
 
         ui_draw_element(mission.element_types[0], mission.element_levels[0], 5, mission.element_rewards[0], rect.xMin+2, rect.yMin+1);
 
-        Graphics_setFont(&ui_gr_context_portrait, &UI_TEXT_FONT);
-        Graphics_drawString(&ui_gr_context_landscape, "o", 2, rect.xMax, (rect.yMin+rect.yMax)/2, 0);
-
         if (mission_picking && i == ui_y_cursor) {
             // If we're mission picking, and this is the relevant mission...
             // Don't fade it, but DO mark it
+            Graphics_drawLine(&ui_gr_context_landscape, rect.xMax, rect.yMin/2+rect.yMax/2, rect.xMax+5, rect.yMin/2+rect.yMax/2+5);
+            Graphics_drawLine(&ui_gr_context_landscape, rect.xMax, rect.yMin/2+rect.yMax/2, rect.xMax+5, rect.yMin/2+rect.yMax/2-5);
         } else if (mission_picking) {
             // If we're in mission picking mode, fade out the entire mission
             //  other than the one we're assigning.
             fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+1, rect.yMin+1, rect.xMax-1, rect.yMax-1);
         } else {
             // In a normal render, fade out the element if it's not equipped:
+            // TODO: We also need to be of sufficient level.
             if (badge_conf.element_selected != mission.element_types[0]) {
                 fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+2, rect.yMin+1, rect.xMin+1+TOPBAR_ICON_WIDTH, rect.yMin+1+TOPBAR_ICON_HEIGHT);
             }

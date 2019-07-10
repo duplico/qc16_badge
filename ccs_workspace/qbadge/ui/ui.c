@@ -551,7 +551,7 @@ void ui_draw_screensaver() {
     Graphics_drawLineH(&ui_gr_context_portrait, 0, 128, UI_IDLE_PHOTO_TOP-2);
     Graphics_drawLineH(&ui_gr_context_portrait, 0, 128, UI_IDLE_PHOTO_TOP-1);
 
-    qc16gr_drawImage(&ui_gr_context_portrait, &img_example_photo, 0, UI_IDLE_PHOTO_TOP);
+    qc16gr_drawImage(&ui_gr_context_portrait, &img_city, 0, UI_IDLE_PHOTO_TOP);
 
 
     // TODO:

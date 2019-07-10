@@ -9,6 +9,7 @@
 #define UI_IMAGES_H_
 
 extern const Graphics_Image img_example_photo;
+extern const Graphics_Image img_city;
 extern const Graphics_Image img_picker;
 extern const Graphics_Image img_cameras;
 extern const Graphics_Image img_cocktails;

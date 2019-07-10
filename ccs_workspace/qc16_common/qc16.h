@@ -34,7 +34,7 @@ typedef struct {
     uint8_t element_level[3];
     uint8_t element_level_max[3];
     uint8_t element_level_progress[3];
-    uint16_t element_qty[3];
+    uint32_t element_qty[3];
     uint16_t qbadges_seen_count;
     uint16_t qbadges_connected_count;
     uint16_t cbadges_connected_count;
@@ -42,6 +42,7 @@ typedef struct {
     uint8_t clock_is_set; // TODO: Determine whether we're even doing a time virus.
     uint8_t agent_present;
     uint8_t agent_mission_id;
+    uint8_t vhandler_present;
     uint32_t agent_return_time;
     uint32_t vhandler_return_time;
     element_type element_selected;

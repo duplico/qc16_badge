@@ -16,6 +16,7 @@
 #include <qc16.h>
 
 #include "queercon_drivers/storage.h"
+#include <ui/ui.h>
 #include <ui/leds.h>
 #include <qc16_serial_common.h>
 #include "badge.h"
@@ -48,10 +49,6 @@ Clock_Handle radar_clock_h;
 // TODO: track closest handler by RSSI
 // TODO: we need a >second-scale click
 
-uint8_t handler_virtual_available() {
-    return Seconds_get() >= badge_conf.vhandler_return_time;
-}
-
 uint8_t handler_nearby() {
     // TODO: implement:
     return 0;
@@ -59,7 +56,7 @@ uint8_t handler_nearby() {
 
 /// Returns true if it is possible to call generate_mission().
 uint8_t mission_possible() {
-    return handler_nearby() || handler_virtual_available();
+    return handler_nearby() || badge_conf.vhandler_present;
 }
 
 #define EXP_PER_LEVEL0 1
@@ -92,17 +89,19 @@ const uint16_t mission_reward_per_level[6][2] = {
     {100,900}   // 100-1000
 };
 
-const uint8_t exp_required_per_level[5] = {
+const uint8_t exp_required_per_level[6] = {
     EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1,
     EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1+EXP_PER_LEVEL1*MISSIONS_TO_LEVEL2,
     EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1+EXP_PER_LEVEL1*MISSIONS_TO_LEVEL2+EXP_PER_LEVEL2*MISSIONS_TO_LEVEL3,
     EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1+EXP_PER_LEVEL1*MISSIONS_TO_LEVEL2+EXP_PER_LEVEL2*MISSIONS_TO_LEVEL3+EXP_PER_LEVEL3*MISSIONS_TO_LEVEL4,
     EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1+EXP_PER_LEVEL1*MISSIONS_TO_LEVEL2+EXP_PER_LEVEL2*MISSIONS_TO_LEVEL3+EXP_PER_LEVEL3*MISSIONS_TO_LEVEL4+EXP_PER_LEVEL4*MISSIONS_TO_LEVEL5,
+    255, // NB: must be unreachable
 };
 
 /// Generate and return a new mission.
 mission_t generate_mission() {
     // TODO: Consider doing this with pointers instead.
+    // TODO: Missions with multiple elements should maybe give better rewards
     mission_t new_mission;
     new_mission.element_types[1] = ELEMENT_COUNT_NONE;
 
@@ -119,6 +118,7 @@ mission_t generate_mission() {
         // TODO: constant config for this timing:
         // 10-20 minutes
         badge_conf.vhandler_return_time = Seconds_get() + 600 + rand() % 600;
+        badge_conf.vhandler_present = 0;
         // The vhandler always hands out a primary element of qtype.
         new_mission.element_types[0] = (element_type) (rand() % 3);
 
@@ -196,7 +196,8 @@ void begin_mission_id(uint8_t mission_id) {
     badge_conf.agent_present = 0;
     // TODO: determine mission duration
     // TODO: extract constant
-    badge_conf.agent_return_time = Seconds_get() + 600;
+    // TODO: should be higher than 1 minute (10m, say)
+    badge_conf.agent_return_time = Seconds_get() + 60;
     // TODO: issue event to update agent status in UI
     // TODO: write conf
     write_conf();
@@ -205,21 +206,90 @@ void begin_mission_id(uint8_t mission_id) {
 
 /// Complete and receive rewards from a mission.
 void complete_mission(mission_t *mission) {
+    badge_conf.agent_present = 1;
+    // TODO: flag the HUD thingy instead
+    Event_post(ui_event_h, UI_EVENT_REFRESH);
 
+    uint8_t element_position = 0;
+    // TODO: is the following always true?
+    // NB: the primary element is always better, so if that's us then we want it:
+    if (mission->element_types[0] == badge_conf.element_selected && mission->element_levels[0] <= badge_conf.element_level[badge_conf.element_selected]) {
+        element_position = 0;
+    } else if (mission->element_types[1] < 3) {
+        element_position = 1;
+    } else {
+        // PROBLEM
+        // TODO
+        return;
+    }
+
+    // Ok! WE DID IT.
+    // We definitely get all the resources we earned.
+    // NB: We're not worrying about a rollover, because it's 32 bits,
+    //     and that would be LOLtastic if that happened.
+    //     (also, it would take running almost 4.3 million
+    //      level 5 missions.)
+    badge_conf.element_qty[badge_conf.element_selected] += mission->element_rewards[element_position];
+
+    // Now, let's look at progress.
+    // First, we'll add the level-up amount.
+    // NB: This is constructed in a way that means a byte won't be able to
+    //     overflow. So, it's OK to blindly add the progress reward,
+    //     and then check what happened.
+    badge_conf.element_level_progress[badge_conf.element_selected] += mission->element_progress[element_position];
+
+    // First, we need to constrain our progress by our level cap.
+    // NB: This depends DESPERATELY on a level cap never being 0.
+    if (badge_conf.element_level_progress[badge_conf.element_selected] > exp_required_per_level[badge_conf.element_level_max[badge_conf.element_selected]-1]) {
+        badge_conf.element_level_progress[badge_conf.element_selected] = exp_required_per_level[badge_conf.element_level_max[badge_conf.element_selected]-1];
+    }
+
+    // Now, we can determine if this was enough to increase a level.
+    if (badge_conf.element_level_progress[badge_conf.element_selected] >= exp_required_per_level[badge_conf.element_level[badge_conf.element_selected]]) {
+        // TODO: animation flag
+        badge_conf.element_level[badge_conf.element_selected]++;
+        // TODO: assert this is < 5
+    }
+
+    // We already posted the agent-present event, so we should be good to go.
+
+    // Clear our current element when the mission ends:
+    badge_conf.element_selected = ELEMENT_COUNT_NONE;
+    Event_post(led_event_h, LED_EVENT_FN_LIGHT);
 }
 
 /// Complete and receive rewards from mission id.
 void complete_mission_id(uint8_t mission_id) {
+    // Clear the assignment of this mission so it can be replaced:
+    badge_conf.mission_assigned[mission_id] = 0;
 
+    // Give us the rewards!
+    complete_mission(&badge_conf.missions[mission_id]);
 }
 
+// TODO: rename to signify that this is the thing that happens at minute-ish scale:
 void reset_scan_cycle(UArg a0) {
     if (qbadges_near_count_running != qbadges_near_count) {
         // TODO: post event
     }
     qbadges_near_count_running = 0;
     memset((void *) qbadges_near, 0x00, 4*QBADGE_BITFIELD_LONGS);
-    // TODO: write config
+
+    // TODO: refactor this out into a "check stuff's timing" function:
+
+    if (!badge_conf.agent_present && Seconds_get() > badge_conf.agent_return_time) {
+        complete_mission_id(badge_conf.agent_mission_id);
+        // TODO: post event for HUD update
+    }
+
+    if (!badge_conf.vhandler_present && Seconds_get() > badge_conf.vhandler_return_time) {
+        badge_conf.vhandler_present = 1;
+        // TODO: post event for HUD update
+    }
+
+    // TODO: write config (this is a swi, which is not good for that...)
+    //       (unless this is the *only* place we want to ever save...
+    //       Actually, I could be down for that...
     // TODO: issue event to update the count & handler status
 }
 
@@ -293,6 +363,8 @@ void generate_config() {
     badge_conf.element_level_max[0] = 2;
     badge_conf.element_level_max[1] = 2;
     badge_conf.element_level_max[2] = 2;
+
+    badge_conf.vhandler_present=1;
 
     // NB: These both will save the badge_conf:
     set_badge_seen(badge_conf.badge_id, "");

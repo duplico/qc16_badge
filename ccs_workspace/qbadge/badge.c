@@ -45,30 +45,134 @@ uint8_t mission_avail_levels[6] = {0,};
 
 Clock_Handle radar_clock_h;
 
+// TODO: track closest handler by RSSI
+// TODO: we need a >second-scale click
+
+uint8_t handler_virtual_available() {
+    return Seconds_get() >= badge_conf.vhandler_return_time;
+}
+
+uint8_t handler_nearby() {
+    // TODO: implement:
+    return 0;
+}
+
 /// Returns true if it is possible to call generate_mission().
 uint8_t mission_possible() {
-
-    return 1;
+    return handler_nearby() || handler_virtual_available();
 }
+
+#define EXP_PER_LEVEL0 1
+#define EXP_PER_LEVEL1 2
+#define EXP_PER_LEVEL2 4
+#define EXP_PER_LEVEL3 8
+#define EXP_PER_LEVEL4 16
+#define EXP_PER_LEVEL5 0
+
+#define MISSIONS_TO_LEVEL1 2
+#define MISSIONS_TO_LEVEL2 4
+#define MISSIONS_TO_LEVEL3 8
+#define MISSIONS_TO_LEVEL4 8
+#define MISSIONS_TO_LEVEL5 8
+
+const uint8_t mission_exp_per_level[6] = {
+    EXP_PER_LEVEL0,
+    EXP_PER_LEVEL1,
+    EXP_PER_LEVEL2,
+    EXP_PER_LEVEL3,
+    EXP_PER_LEVEL4,
+    EXP_PER_LEVEL5,
+};
+
+const uint16_t mission_reward_per_level[6][2] = {
+    {1,4},      // 1-5
+    {5,5},      // 5-10
+    {10,40},    // 10-50
+    {50,50},    // 50-100
+    {100,900}   // 100-1000
+};
+
+const uint8_t exp_required_per_level[5] = {
+    EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1,
+    EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1+EXP_PER_LEVEL1*MISSIONS_TO_LEVEL2,
+    EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1+EXP_PER_LEVEL1*MISSIONS_TO_LEVEL2+EXP_PER_LEVEL2*MISSIONS_TO_LEVEL3,
+    EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1+EXP_PER_LEVEL1*MISSIONS_TO_LEVEL2+EXP_PER_LEVEL2*MISSIONS_TO_LEVEL3+EXP_PER_LEVEL3*MISSIONS_TO_LEVEL4,
+    EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1+EXP_PER_LEVEL1*MISSIONS_TO_LEVEL2+EXP_PER_LEVEL2*MISSIONS_TO_LEVEL3+EXP_PER_LEVEL3*MISSIONS_TO_LEVEL4+EXP_PER_LEVEL4*MISSIONS_TO_LEVEL5,
+};
 
 /// Generate and return a new mission.
 mission_t generate_mission() {
     // TODO: Consider doing this with pointers instead.
-    // TODO: Check which handlers are around
     mission_t new_mission;
-
-    // TODO: Decide whether it has a second element.
     new_mission.element_types[1] = ELEMENT_COUNT_NONE;
 
-    // TODO: Base this on handlers:
-    new_mission.element_types[0] = (element_type) (rand() % 3);
+    // TODO: Check which handlers are around
 
-    // TODO: Base this on level:
-    new_mission.element_levels[0] = 1;
+    // First, we assign a type and level to the mission element(s).
+    // This is done based on which handler we pull the mission from.
+    // That can either be a real handler, nearby, in which case we
+    // select which one based on RSSI; or, it can be the virtual
+    // handler, which is available to assign low-level missions at
+    // a configurable time interval.
 
-    // TODO: Plan this better:
-    new_mission.element_rewards[0] = 1 + rand() % 10;
-    new_mission.element_progress[0] = 1 + rand() % 10;
+    if (!handler_nearby()) {
+        // TODO: constant config for this timing:
+        // 10-20 minutes
+        badge_conf.vhandler_return_time = Seconds_get() + 600 + rand() % 600;
+        // The vhandler always hands out a primary element of qtype.
+        new_mission.element_types[0] = (element_type) (rand() % 3);
+
+        // TODO: extract constant:
+        // The vhandler has a max level it can assign:
+        new_mission.element_levels[0] = rand() % 3;
+
+        if (!(rand() % 3)) {
+            // There's a chance to assign a second element.
+            // TODO: Extract constant
+            // A second element is needed. We'll assign it totally randomly.
+            new_mission.element_types[1] = (element_type) (rand() % 6);
+        }
+    } else {
+        // Human handler. No cooldown.
+        // TODO: We sure about no cooldown?
+        // We use the one with the highest RSSI
+        // Mostly, it assigns missions that are on-brand for that handler.
+
+        // TODO: Decide whether it has a second element.
+
+        // TODO: Base this on handlers:
+        new_mission.element_types[0] = (element_type) (rand() % 3);
+
+        // TODO: Base this on level?
+        new_mission.element_levels[0] = rand() % 6;
+
+        // TODO: higher levels should make it more likely that there's a
+        //       second element.
+        if (!(rand() % 3)) {
+            // There's a chance to assign a second element.
+            // TODO: Extract constant
+            // A second element is needed. We'll assign it totally randomly.
+            // TODO: actually, we should prefer to make it the complement of
+            //       the primary element.
+            new_mission.element_types[1] = (element_type) (rand() % 6);
+            // TODO: this needs to be after the original is adjusted:
+            //       maybe???
+            new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
+        }
+    }
+
+    // Is the mission too high-level for us? If so, reduce it:
+    if (new_mission.element_levels[0] > badge_conf.element_level[new_mission.element_types[0]]) {
+        new_mission.element_levels[0] = badge_conf.element_level[new_mission.element_types[0]];
+        // TODO: should it be possible for this to be higher?
+        new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
+    }
+
+    // Now, calculate each element's rewards based on its level:
+    for (uint8_t i=0; i<2; i++) {
+        new_mission.element_rewards[i] = mission_reward_per_level[new_mission.element_levels[i]][0] + rand() % mission_reward_per_level[new_mission.element_levels[i]][1];
+        new_mission.element_progress[i] = mission_exp_per_level[new_mission.element_levels[i]];
+    }
 
     return new_mission;
 }

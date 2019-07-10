@@ -83,6 +83,9 @@ void adc_timer_fn(UArg a0)
 
     if (AONBatMonNewTempMeasureReady()) {
         if (AONBatMonTemperatureGetDegC() < 6) { // deg C (-256..255)
+            // it's COLD!
+        } else if (AONBatMonTemperatureGetDegC() > 37) {
+            // it's HOT! (over 100 F)
         }
     }
 }

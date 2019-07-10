@@ -23,6 +23,7 @@ extern const Graphics_Image img_cbadge;
 
 extern const tImage *image_anim_type_buttons[];
 extern const tImage *image_mainmenu_icons[];
+extern const tImage *image_missionmenu_icons[];
 extern const Graphics_Image *image_element_icons[6];
 
 #endif /* UI_IMAGES_H_ */

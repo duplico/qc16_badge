@@ -58,6 +58,7 @@ mission_t generate_mission() {
     mission_t new_mission;
 
     // TODO: Decide whether it has a second element.
+    new_mission.element_types[1] = ELEMENT_COUNT_NONE;
 
     // TODO: Base this on handlers:
     new_mission.element_types[0] = (element_type) (rand() % 3);
@@ -70,6 +71,10 @@ mission_t generate_mission() {
     new_mission.element_progress[0] = 1 + rand() % 10;
 
     return new_mission;
+}
+
+void begin_mission_id(uint8_t mission_id) {
+
 }
 
 /// Complete and receive rewards from a mission.

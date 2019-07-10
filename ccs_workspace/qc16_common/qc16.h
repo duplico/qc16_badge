@@ -41,6 +41,7 @@ typedef struct {
     uint32_t last_clock;
     uint8_t clock_is_set; // TODO: Determine whether we're even doing a time virus.
     uint8_t agent_present;
+    uint8_t agent_mission_id;
     uint32_t agent_return_time;
     element_type element_selected;
     uint8_t mission_assigned[3];

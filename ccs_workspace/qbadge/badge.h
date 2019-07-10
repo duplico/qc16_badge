@@ -27,6 +27,15 @@ extern uint16_t handlers_near_count_running;
 extern uint8_t mission_accepted[3];
 extern mission_t missions[3];
 
+uint8_t mission_possible();
+/// Generate and return a new mission.
+mission_t generate_mission();
+void begin_mission_id(uint8_t mission_id);
+/// Complete and receive rewards from a mission.
+void complete_mission(mission_t *mission);
+/// Complete and receive rewards from mission id.
+void complete_mission_id(uint8_t mission_id);
+
 void load_conf();
 void write_conf();
 void init_config();

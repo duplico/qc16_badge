@@ -89,6 +89,9 @@ uint8_t ui_textentry = 0;
 #define TOP_BAR_COINS 1
 #define TOP_BAR_CAMERAS 2
 
+uint8_t mission_picking = 0;
+mission_t candidate_mission;
+
 // TODO: write draw_top_bar_remote_element_icons()
 
 uint8_t ui_is_landscape() {
@@ -333,46 +336,56 @@ uint8_t ui_y_max = 0;
 
 uint8_t ui_selected_item = 0;
 #define MAINMENU_ICON_COUNT 4
-#define MAINMENU_NAME_MAX_LEN 7
+#define MAINMENU_NAME_MAX_LEN 12
 const char mainmenu_icon[MAINMENU_ICON_COUNT][MAINMENU_NAME_MAX_LEN+1] = {
     "Info",
     "Mission",
     "Scan",
     "Files",
 };
+const char mission_menu_text[2][MAINMENU_NAME_MAX_LEN+1] = {
+    "Get mission",
+    "Send agent",
+};
 
-void ui_draw_main_menu_icons() {
-    // Our area starts at TOPBAR_HEIGHT+1:
-    // 0..35 top bar
-    // 36 line
-    // 37..127 menu area (91 px high)
-    // So, we can have, like, 64x64 icons?
-    // 5px pad left, 5px pad right, on all.
-
+void ui_draw_menu_icons(uint8_t selected_index, const Graphics_Image **icons, const char text[][MAINMENU_NAME_MAX_LEN+1], uint16_t pad, uint16_t x, uint16_t y, uint8_t len) {
     Graphics_Rectangle rect;
-    rect.yMin = TOPBAR_HEIGHT+8;
-    rect.yMax = rect.yMin+64 - 1;
-    for (uint8_t i=0; i<4; i++) {
-        rect.xMin = 5*(i+1) + i*(64+5);
-        rect.xMax = rect.xMin + 64 - 1;
+    rect.yMin = y;
+    rect.yMax = rect.yMin + icons[0]->ySize - 1;
+    for (uint8_t i=0; i<len; i++) {
+        // NB: This depends on all icons being same width:
+        rect.xMin = x + i*(icons[i]->xSize + pad);
+        rect.xMax = rect.xMin + icons[i]->xSize - 1;
 
-        qc16gr_drawImage(&ui_gr_context_landscape, image_mainmenu_icons[i], rect.xMin, rect.yMin);
+        qc16gr_drawImage(&ui_gr_context_landscape, icons[i], rect.xMin, rect.yMin);
 
-        if (ui_x_cursor == i) {
+        if (selected_index == i) {
             // make it selected
             Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
-            Graphics_drawStringCentered(
+            int32_t text_w = Graphics_getStringWidth(&ui_gr_context_landscape, (int8_t *) text[i], MAINMENU_NAME_MAX_LEN);
+            int32_t text_x = rect.xMin + icons[i]->xSize/2 - text_w/2;
+            if (text_x < 0) {
+                text_x = 0;
+            } else if (i == len-1 && text_x + text_w > rect.xMax) {
+                // need to make it so that text_x + text_w == rect.xMax + 2*pad
+                text_x = rect.xMax + 2*pad - text_w;
+            }
+            Graphics_drawString(
                     &ui_gr_context_landscape,
-                    (int8_t *) mainmenu_icon[i],
+                    (int8_t *) text[i],
                     MAINMENU_NAME_MAX_LEN,
-                    rect.xMin+32,
-                    rect.yMax+9,
+                    text_x,
+                    rect.yMax + 1,
                     0
                 );
         } else {
             fadeRectangle(&ui_gr_context_landscape, &rect);
         }
     }
+}
+
+void ui_draw_main_menu_icons() {
+    ui_draw_menu_icons(ui_x_cursor, image_mainmenu_icons, mainmenu_icon, 10, 5, TOPBAR_HEIGHT+8, 4);
 }
 
 void ui_draw_main_menu() {
@@ -420,63 +433,67 @@ void ui_draw_info() {
     Graphics_flushBuffer(&ui_gr_context_landscape);
 }
 
+void ui_draw_mission_icons() {
+    Graphics_Rectangle rect;
+
+    // TODO: Put the agent icon next to a mission if it's being run.
+    for (uint8_t i=0; i<3; i++) {
+        rect.xMin=124;
+        rect.yMin=TOPBAR_HEIGHT+3+i*(TOPBAR_HEIGHT+2);
+        rect.xMax=rect.xMin+TOPBAR_SEG_WIDTH_PADDED*2;
+        rect.yMax=rect.yMin+TOPBAR_HEIGHT;
+        Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+        mission_t mission;
+
+        if (mission_picking && i == ui_y_cursor) {
+            mission = candidate_mission;
+        } else if (!badge_conf.mission_assigned[i]) {
+            continue;
+        } else {
+            mission = badge_conf.missions[i];
+        }
+
+        ui_draw_element(mission.element_types[0], mission.element_levels[0], 5, mission.element_rewards[0], rect.xMin+2, rect.yMin+1);
+
+        Graphics_setFont(&ui_gr_context_portrait, &UI_TEXT_FONT);
+        Graphics_drawString(&ui_gr_context_landscape, "o", 2, rect.xMax, (rect.yMin+rect.yMax)/2, 0);
+
+        if (mission_picking && i == ui_y_cursor) {
+            // If we're mission picking, and this is the relevant mission...
+            // Don't fade it, but DO mark it
+        } else if (mission_picking) {
+            // If we're in mission picking mode, fade out the entire mission
+            //  other than the one we're assigning.
+            fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+1, rect.yMin+1, rect.xMax-1, rect.yMax-1);
+        } else {
+            // In a normal render, fade out the element if it's not equipped:
+            if (badge_conf.element_selected != mission.element_types[0]) {
+                fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+2, rect.yMin+1, rect.xMin+1+TOPBAR_ICON_WIDTH, rect.yMin+1+TOPBAR_ICON_HEIGHT);
+            }
+        }
+
+        // TODO: handle the second one:
+        if (mission.element_types[1] != ELEMENT_COUNT_NONE) {
+            ui_draw_element(mission.element_types[1], mission.element_levels[1], 5, mission.element_rewards[1], rect.xMin+2+TOPBAR_SEG_WIDTH, rect.yMin+1);
+        }
+    }
+}
+
+void ui_draw_mission_menu() {
+    if (mission_picking) {
+        ui_draw_menu_icons(3, image_missionmenu_icons, mission_menu_text, 5, 0, TOPBAR_HEIGHT+8, 2);
+    } else {
+        ui_draw_menu_icons(ui_x_cursor, image_missionmenu_icons, mission_menu_text, 5, 0, TOPBAR_HEIGHT+8, 2);
+    }
+}
+
 void ui_draw_missions() {
     // Clear the buffer.
     Graphics_clearDisplay(&ui_gr_context_landscape);
 
     ui_draw_top_bar();
-
-    Graphics_Rectangle rect;
-
-    // TODO: consider a vertical level bar here instead???
-
-    for (uint8_t i=0; i<3; i++) {
-        if (!badge_conf.mission_assigned[i]) {
-            continue;
-        }
-        mission_t mission = badge_conf.missions[i];
-
-        rect.xMin=124;
-        rect.yMin=TOPBAR_HEIGHT+3+i*(TOPBAR_HEIGHT+2);
-        rect.xMax=rect.xMin+TOPBAR_SEG_WIDTH_PADDED*2;
-        rect.yMax=rect.yMin+TOPBAR_HEIGHT;
-        ui_draw_element(mission.element_types[0], mission.element_levels[0], 5, mission.element_rewards[0], rect.xMin+2, rect.yMin+1);
-        if (mission.element_types[1] != ELEMENT_COUNT_NONE) {
-            ui_draw_element(mission.element_types[1], mission.element_levels[1], 5, mission.element_rewards[1], rect.xMin+2+TOPBAR_SEG_WIDTH, rect.yMin+1);
-        }
-
-        // TODO: Fade if not equipped.
-
-        Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
-
-//        rect.xMin=124+TOPBAR_SEG_WIDTH_PADDED*2+2;
-//        rect.yMin=TOPBAR_HEIGHT+3+i*(TOPBAR_HEIGHT+2);
-//        rect.xMax=rect.xMin+TOPBAR_SEG_WIDTH_PADDED*2;
-//        rect.yMax=rect.yMin+TOPBAR_HEIGHT;
-//        ui_draw_element(rand()%ELEMENT_COUNT_NONE, 1, 1, 5, rect.xMin+2, rect.yMin+1);
-//        ui_draw_element(rand()%ELEMENT_COUNT_NONE, 1, 1, 5, rect.xMin+2+TOPBAR_SEG_WIDTH, rect.yMin+1);
-//        Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
-
-    }
-//
-//    rect.xMin=131;
-//    rect.yMin=38;
-//    rect.xMax=rect.xMin+2*TOPBAR_SEG_WIDTH;
-//    rect.yMax=rect.yMin+TOPBAR_HEIGHT-1;
-//    Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
-//    ui_draw_element(ELEMENT_FLAGS, 1, 1, 5, 136-5, 38);
-//    ui_draw_element(ELEMENT_COCKTAILS, 1, 1, 5, 136-5, 68);
-//    ui_draw_element(ELEMENT_KEYS, 1, 1, 5, 136-5, 98);
-//    ui_draw_element(ELEMENT_FLAGS, 1, 1, 5, 176-5, 38);
-//    ui_draw_element(ELEMENT_COCKTAILS, 1, 1, 5, 176-5, 68);
-//    ui_draw_element(ELEMENT_KEYS, 1, 1, 5, 176-5, 98);
-//
-//    ui_draw_element(ELEMENT_CAMERAS, 1, 1, 5, 216, 38);
-//    ui_draw_element(ELEMENT_COINS, 1, 1, 5, 216, 68);
-//    ui_draw_element(ELEMENT_LOCKS, 1, 1, 5, 216, 98);
-//    ui_draw_element(ELEMENT_CAMERAS, 1, 1, 5, 256, 38);
-//    ui_draw_element(ELEMENT_COINS, 1, 1, 5, 256, 68);
-//    ui_draw_element(ELEMENT_LOCKS, 1, 1, 5, 256, 98);
+    ui_draw_mission_icons();
+    ui_draw_mission_menu();
 
     Graphics_flushBuffer(&ui_gr_context_landscape);
 }
@@ -563,8 +580,9 @@ void ui_transition(uint8_t destination) {
         ui_y_max = 0;
         break;
     case UI_SCREEN_MISSIONS:
-        ui_x_max = MAINMENU_ICON_COUNT-1;
-        ui_y_max = 0;
+        ui_x_max = 1;
+        ui_y_max = 2;
+        mission_picking = 0;
         break;
     case UI_SCREEN_SCAN:
         ui_x_max = MAINMENU_ICON_COUNT-1;
@@ -607,6 +625,9 @@ uint8_t ui_menusystem_do(UInt events) {
         case BTN_BACK:
             if (ui_current == UI_SCREEN_MAINMENU) {
                 ui_transition(UI_SCREEN_IDLE);
+            } else if (ui_current == UI_SCREEN_MISSIONS && mission_picking) {
+                mission_picking = 0;
+                Event_post(ui_event_h, UI_EVENT_REFRESH);
             } else {
                 ui_transition(UI_SCREEN_MAINMENU);
             }
@@ -624,6 +645,22 @@ uint8_t ui_menusystem_do(UInt events) {
                 ui_x_cursor = 0;
             else
                 ui_x_cursor++;
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
+            epd_do_partial = 1;
+            break;
+        case BTN_UP:
+            if (ui_y_cursor == 0)
+                ui_y_cursor = ui_y_max;
+            else
+                ui_y_cursor--;
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
+            epd_do_partial = 1;
+            break;
+        case BTN_DOWN:
+            if (ui_y_cursor == ui_y_max)
+                ui_y_cursor = 0;
+            else
+                ui_y_cursor++;
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             epd_do_partial = 1;
             break;
@@ -689,6 +726,37 @@ void ui_missions_do(UInt events) {
     case UI_EVENT_KB_PRESS:
         switch(kb_active_key_masked) {
         case BTN_OK:
+            if (mission_picking) {
+                // TODO: don't allow it to be done on a mission currently being run.
+                mission_picking = 0;
+                ui_x_cursor = 0;
+                // Copy the candidate mission into the config mission
+                memcpy(&badge_conf.missions[ui_y_cursor], &candidate_mission, sizeof(mission_t));
+                badge_conf.mission_assigned[ui_y_cursor] = 1;
+                write_conf();// and save. // TODO: move
+                epd_do_partial = 1;
+                Event_post(ui_event_h, UI_EVENT_REFRESH);
+            } else {
+                if (ui_x_cursor == 0) {
+                    // TODO: Consider having a cooldown on this
+                    // Handler
+                    // TODO: validate conditions better
+                    if (mission_possible()) {
+                        mission_picking = 1;
+                        candidate_mission = generate_mission();
+                        ui_y_cursor = 0;
+                        epd_do_partial = 1;
+                        Event_post(ui_event_h, UI_EVENT_REFRESH);
+                    }
+                } else {
+                    // Mission
+                    // TODO: validate conditions
+                    // Choose & start a mission
+                    for (uint8_t i=0; i<3; i++) {
+                        // take the first one we qualify for
+                    }
+                }
+            }
             break;
         }
         break;
@@ -775,39 +843,46 @@ void ui_task_fn(UArg a0, UArg a1) {
         } else if (kb_active_key_masked == BTN_ROT) {
         }
 
-        if (events & UI_EVENT_KB_PRESS) {
+        if (events & UI_EVENT_KB_PRESS
+                && (   kb_active_key_masked == BTN_F1_LOCK
+                    || kb_active_key_masked == BTN_F2_COIN
+                    || kb_active_key_masked == BTN_F3_CAMERA)) {
             // NB: Below we are intentionally NOT writing the config.
             //     This isn't a super important configuration option,
             //     so we're not going to waste cycles (CPU and flash)
             //     on saving our whole config every time the user hits
             //     a button. Instead, we'll rely on the periodic save
             //     that writes the current clock to the config.
+
+            // Convert from a button ID to an element enum.
+            element_type next_element;
             switch(kb_active_key_masked) {
             case BTN_F1_LOCK:
-                if (badge_conf.element_selected == ELEMENT_LOCKS) {
-                    badge_conf.element_selected = ELEMENT_COUNT_NONE;
-                } else {
-                    badge_conf.element_selected = ELEMENT_LOCKS;
-                }
-                Event_post(led_event_h, LED_EVENT_FN_LIGHT);
+                next_element = ELEMENT_LOCKS;
                 break;
             case BTN_F2_COIN:
-                if (badge_conf.element_selected == ELEMENT_COINS) {
-                    badge_conf.element_selected = ELEMENT_COUNT_NONE;
-                } else {
-                    badge_conf.element_selected = ELEMENT_COINS;
-                }
-                Event_post(led_event_h, LED_EVENT_FN_LIGHT);
+                next_element = ELEMENT_COINS;
                 break;
             case BTN_F3_CAMERA:
-                if (badge_conf.element_selected == ELEMENT_CAMERAS) {
-                    badge_conf.element_selected = ELEMENT_COUNT_NONE;
-                } else {
-                    badge_conf.element_selected = ELEMENT_CAMERAS;
-                }
-                Event_post(led_event_h, LED_EVENT_FN_LIGHT);
+                next_element = ELEMENT_CAMERAS;
                 break;
             }
+
+            // Allow elements to be deselected so the LED can turn off.
+            if (badge_conf.element_selected == next_element) {
+                badge_conf.element_selected = ELEMENT_COUNT_NONE;
+            } else {
+                badge_conf.element_selected = next_element;
+            }
+
+            // We need to refresh the screen if we're looking at missions,
+            //  because there are UI elements there that depend on the
+            //  selected element button.
+            if (ui_current == UI_SCREEN_MISSIONS) {
+                epd_do_partial = 1;
+                Event_post(ui_event_h, UI_EVENT_REFRESH);
+            }
+            Event_post(led_event_h, LED_EVENT_FN_LIGHT);
         }
 
         if (ui_colorpicking) {

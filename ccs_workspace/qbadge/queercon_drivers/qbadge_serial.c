@@ -226,7 +226,7 @@ void serial_task_fn(UArg a0, UArg a1) {
 
 void serial_init() {
     UART_Params_init(&uart_params);
-    uart_params.baudRate = 9600;
+    uart_params.baudRate = 38400;
     uart_params.readDataMode = UART_DATA_BINARY;
     uart_params.writeDataMode = UART_DATA_BINARY;
     uart_params.readMode = UART_MODE_BLOCKING;

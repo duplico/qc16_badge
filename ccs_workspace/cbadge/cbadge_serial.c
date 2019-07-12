@@ -195,12 +195,12 @@ void init_serial() {
     // 8E2 (Enable parity, even parity, 2 stop bits)
 //    UCA0CTLW0 |= UCSSEL__SMCLK + UCPEN_1 + UCPAR__EVEN + UCSPB_1;
     UCA0CTLW0 |= UCSSEL__SMCLK + UCPEN_0 + UCSPB_0;
-    // Configure the baud rate to 9600.
+    // Configure the baud rate to 38400.
     //  (See page 589 in the family user's guide, SLAU445I)
     // The below is for 1.00 MHz SMCLK:
-    UCA0BR0 = 6;
+    UCA0BR0 = 1;
     UCA0BR1 = 0x00;
-    UCA0MCTLW = 0x2000 | UCOS16 | UCBRF_8;
+    UCA0MCTLW = 0x0000 | UCOS16 | UCBRF_10;
 
     // Activate the UART:
     UCA0CTLW0 &= ~UCSWRST;

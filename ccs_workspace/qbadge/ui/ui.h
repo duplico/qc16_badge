@@ -37,6 +37,7 @@
 #define UI_EVENT_KB_PRESS Event_Id_30
 #define UI_EVENT_KB_RELEASE Event_Id_29
 // and the rest from the bottom:
+#define UI_EVENT_BRIGHTNESS_UPDATE Event_Id_04
 #define UI_EVENT_TEXT_CANCELED Event_Id_04
 #define UI_EVENT_TEXT_READY Event_Id_03
 #define UI_EVENT_BATTERY_UPDATE Event_Id_02
@@ -112,6 +113,9 @@
 // Data
 
 extern uint8_t ui_current;
+extern uint8_t ui_colorpicking;
+extern uint8_t ui_textentry;
+
 extern uint8_t kb_active_key;
 extern Event_Handle ui_event_h;
 extern Graphics_Context ui_gr_context_landscape;
@@ -126,5 +130,6 @@ extern uint8_t ui_colorpicking;
 UInt pop_events(UInt *events_ptr, UInt events_to_check);
 void ui_init();
 uint8_t ui_is_landscape();
+void ui_transition(uint8_t destination);
 
 #endif /* APPLICATION_UI_H_ */

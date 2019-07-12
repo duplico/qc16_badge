@@ -218,14 +218,10 @@ void led_tail_step_swi(UArg a0) {
     Event_post(led_event_h, LED_EVENT_TAIL_STEP);
 }
 
-void led_sidelight_set_level(uint8_t level) {
-    ht16d_all_one_color(0xff, 0xff, 0xff);
-    //    rgbcolor16_t c;
-//    c.r = level << 7;
-//    c.g = level << 7;
-//    c.b = level << 7;
-//    led_sidelight_set_color(&c);
-}
+/// Set the screen sidelight level 0..63
+//void led_sidelight_set_level(uint8_t level) {
+//    ht16d_put_color(12, 12, level << 7); // TODO
+//}
 
 void led_sidelight_set_color(rgbcolor16_t *color) {
     ht16d_put_color(12, 12, color);

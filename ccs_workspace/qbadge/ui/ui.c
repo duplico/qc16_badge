@@ -707,7 +707,6 @@ void ui_textentry_load(char *dest, uint8_t len) {
 
 void ui_textentry_unload(uint8_t save) {
     ui_textentry = 0;
-    Event_post(ui_event_h, UI_EVENT_REFRESH);
     if (save && textentry_buf[0] && textentry_dest) {
         // If we're supposed to copy this back to the destination,
         //  and if text was actually entered, then save it.
@@ -718,33 +717,38 @@ void ui_textentry_unload(uint8_t save) {
     }
 
     free(textentry_buf);
+    // TODO: Is this not happening?
+    Event_post(ui_event_h, UI_EVENT_REFRESH);
 }
 
+// TODO: Declare elsewhere
+extern const tFont g_sFontfixed10x20;
+
 void ui_textentry_draw() {
-    uint16_t entry_width = textentry_len * 6;
+    uint16_t entry_width = textentry_len * 10;
     uint16_t left = 148 - (entry_width/2);
     uint16_t top = 64 - 10;
-    uint16_t bottom = top + 11;
 
     Graphics_Rectangle rect = {
         .xMin = left-2, .yMin = top-2,
-        .xMax = left + entry_width + 1, .yMax = top + 9,
+        .xMax = left + entry_width + 1, .yMax = top + 23,
     };
 
     // Draw a little frame.
     Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
-    rect.xMin++; rect.yMin++; rect.xMax--; rect.yMax--;
+    rect.xMin--; rect.yMin--; rect.xMax++; rect.yMax++;
     Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
 
     // Draw the text itself:
-    Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
+    Graphics_setFont(&ui_gr_context_landscape, &g_sFontfixed10x20);
     Graphics_drawString(&ui_gr_context_landscape, textentry_buf, textentry_len, left, top, 1);
 
     // Now invert and draw the current character:
     Graphics_setBackgroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);
     Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_WHITE);
 
-    Graphics_drawString(&ui_gr_context_landscape, &textentry_buf[textentry_cursor], 1, left + textentry_cursor*6, top, 1);
+    // TODO: the width doesn't seem quite right on this one:
+    Graphics_drawString(&ui_gr_context_landscape, textentry_buf[textentry_cursor] ? &textentry_buf[textentry_cursor] : " ", 1, left + textentry_cursor*8, top, 1);
 
     Graphics_setBackgroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_WHITE);
     Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);

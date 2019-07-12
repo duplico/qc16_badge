@@ -17,6 +17,7 @@
 #include "board.h"
 #include <qc16_serial_common.h>
 #include <queercon_drivers/qbadge_serial.h>
+#include <ui/leds.h>
 
 #define SERIAL_STACKSIZE 1024
 Task_Struct serial_task;
@@ -136,6 +137,13 @@ void serial_timeout() {
     volatile uint8_t i;
     switch(serial_ll_state) {
     case SERIAL_LL_STATE_NC_PRX:
+        // Pin us in PRX mode if we're plugged into a PTX device.
+        // (We're plugged in if we're PRX and DIO1 is high)
+        if (PIN_getInputValue(QC16_PIN_SERIAL_DIO1_PTX)) {
+            // Don't timeout.
+            serial_ll_next_timeout = Clock_getTicks() + (PRX_TIME_MS * 100);
+            break;
+        }
         // Switch UART TX/RX and change timeout.
         UART_close(uart);
         serial_enter_ptx();
@@ -150,6 +158,12 @@ void serial_timeout() {
         serial_send_helo(uart);
         break;
     case SERIAL_LL_STATE_NC_PTX:
+        // Pin us in PTX mode if we're plugged into a PRX device.
+        if (PIN_getInputValue(QC16_PIN_SERIAL_DIO2_PRX)) {
+            // Don't timeout.
+            serial_ll_next_timeout = Clock_getTicks() + (PTX_TIME_MS * 100);
+            break;
+        }
         // Switch UART TX/RX and change timeout.
         UART_close(uart);
         serial_enter_prx();
@@ -162,7 +176,6 @@ void serial_timeout() {
              || (!serial_phy_mode_ptx && !PIN_getInputValue(QC16_PIN_SERIAL_DIO1_PTX))
         ) {
             // We just registered a disconnect signal.
-
             serial_ll_state = SERIAL_LL_STATE_NC_PRX;
             UART_close(uart);
             serial_enter_prx();
@@ -189,7 +202,7 @@ void serial_task_fn(UArg a0, UArg a1) {
         }
 
         // This blocks on a semaphore while waiting to return, so it's safe
-        //  not to have a Task_yield() in this. *I think.*
+        //  not to have a Task_yield() in this.
         result = UART_read(uart, input, 1);
         if (result == 1 && input[0] == SERIAL_PHY_SYNC_WORD) {
             // Got the sync word, now try to read a header:

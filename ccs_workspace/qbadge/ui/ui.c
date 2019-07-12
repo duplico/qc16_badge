@@ -706,7 +706,6 @@ void ui_textentry_load(char *dest, uint8_t len) {
 }
 
 void ui_textentry_unload(uint8_t save) {
-    // TODO: BACK appears to be broken on this...?
     ui_textentry = 0;
     Event_post(ui_event_h, UI_EVENT_REFRESH);
     if (save && textentry_buf[0] && textentry_dest) {

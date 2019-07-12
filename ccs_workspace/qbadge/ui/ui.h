@@ -37,6 +37,8 @@
 #define UI_EVENT_KB_PRESS Event_Id_30
 #define UI_EVENT_KB_RELEASE Event_Id_29
 // and the rest from the bottom:
+#define UI_EVENT_TEXT_CANCELED Event_Id_04
+#define UI_EVENT_TEXT_READY Event_Id_03
 #define UI_EVENT_BATTERY_UPDATE Event_Id_02
 #define UI_EVENT_RADAR_UPDATE Event_Id_01
 #define UI_EVENT_REFRESH Event_Id_00

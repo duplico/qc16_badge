@@ -408,10 +408,6 @@ void put_filename(Graphics_Context *gr, uint8_t *name, uint16_t y) {
 char curr_file_name[SPIFFS_OBJ_NAME_LEN+1] = "";
 
 void put_all_filenames(char *curr_fname) {
-    spiffs_DIR d;
-    struct spiffs_dirent e;
-    struct spiffs_dirent *pe = &e;
-
     int32_t first_file = 0;
     int32_t last_file = 0;
     int32_t file_num = -1;
@@ -431,26 +427,52 @@ void put_all_filenames(char *curr_fname) {
 
     Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
 
-    SPIFFS_opendir(&fs, "/", &d);
-    while ((pe = SPIFFS_readdir(&d, pe)) &&
-            (y+7 < EPD_WIDTH)) {
+    // TODO:
+    for (uint8_t i=0; i<2; i++) {
         file_num++;
+        // TODO: rewrite:
         if (file_num < first_file) {
-            continue;
         } else if (file_num > last_file) {
             break;
-        } else if (first_file + ui_y_cursor == file_num) {
-            // This is the selected file.
-            strncpy(curr_fname, pe->name, SPIFFS_OBJ_NAME_LEN);
+        } else {
+            put_filename(&ui_gr_context_landscape, (int8_t *) dirs[i], y);
+            y+=9;
+            if (first_file + ui_y_cursor == file_num) {
+                // This is the selected file.
+                strncpy(curr_fname, dirs[i], SPIFFS_OBJ_NAME_LEN);
+            }
         }
-        put_filename(&ui_gr_context_landscape, (int8_t *) pe->name, y);
-        y+=9;
+
+        spiffs_DIR d;
+        struct spiffs_dirent e;
+        struct spiffs_dirent *pe = &e;
+        SPIFFS_opendir(&fs, "/", &d);
+        while ((pe = SPIFFS_readdir(&d, pe)) &&
+                (y+7 < EPD_WIDTH)) {
+            if (strncmp(dirs[i], pe->name, 8)) {
+                continue;
+            }
+            if (!strncmp("/colors/.current", pe->name, 16)) {
+                continue;
+            }
+            file_num++;
+            if (file_num < first_file) {
+                continue;
+            } else if (file_num > last_file) {
+                break;
+            } else if (first_file + ui_y_cursor == file_num) {
+                // This is the selected file.
+                strncpy(curr_fname, pe->name, SPIFFS_OBJ_NAME_LEN);
+            }
+            put_filename(&ui_gr_context_landscape, (int8_t *) pe->name, y);
+            y+=9;
+        }
+        SPIFFS_closedir(&d);
     }
-    SPIFFS_closedir(&d);
 
     y = TOPBAR_HEIGHT + 3 + 9*(ui_y_cursor - first_file);
 
-    if (!strncmp("/colors", curr_fname, SPIFFS_OBJ_NAME_LEN) || !strncmp("/photos", curr_fname, SPIFFS_OBJ_NAME_LEN)) {
+    if (!strncmp("/colors/", curr_fname, SPIFFS_OBJ_NAME_LEN) || !strncmp("/photos/", curr_fname, SPIFFS_OBJ_NAME_LEN)) {
         // If this is a "directory heading":
         Graphics_drawString(&ui_gr_context_landscape, "store:", 6, 0, y, 1);
     } else {
@@ -651,6 +673,7 @@ void ui_transition(uint8_t destination) {
         break;
     case UI_SCREEN_FILES:
         ui_x_max = 2;
+        // TODO: set this correctly:
         ui_y_max = 9;
         break;
     }

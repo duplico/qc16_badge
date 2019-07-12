@@ -682,16 +682,144 @@ void ui_transition(uint8_t destination) {
     Event_post(ui_event_h, UI_EVENT_REFRESH);
 }
 
-void ui_textentry_load() {
+uint8_t textentry_len;
+char *textentry_dest;
+char *textentry_buf;
+uint8_t textentry_cursor = 0;
+const char textentry_palette = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789";
 
+void ui_textentry_load(char *dest, uint8_t len) {
+    if (len > 40) {
+        len = 40; // TODO: const/define for this
+    }
+    textentry_len = len;
+    textentry_buf = malloc(len);
+    textentry_dest = dest;
+    memset(textentry_buf, 0x00, len);
+    strncpy(textentry_buf, textentry_dest, textentry_len);
+    ui_textentry = 1;
+
+    // Fade out everything.
+    fadeRectangle_xy(&ui_gr_context_landscape, 0, 0, 295, 127); // TODO: consts
+
+    Event_post(ui_event_h, UI_EVENT_REFRESH);
+}
+
+void ui_textentry_unload(uint8_t save) {
+    // TODO: BACK appears to be broken on this...?
+    ui_textentry = 0;
+    Event_post(ui_event_h, UI_EVENT_REFRESH);
+    if (save && textentry_buf[0] && textentry_dest) {
+        // If we're supposed to copy this back to the destination,
+        //  and if text was actually entered, then save it.
+        strncpy(textentry_dest, textentry_buf, textentry_len);
+        Event_post(ui_event_h, UI_EVENT_TEXT_READY);
+    } else {
+        Event_post(ui_event_h, UI_EVENT_TEXT_CANCELED);
+    }
+
+    free(textentry_buf);
+}
+
+void ui_textentry_draw() {
+    uint16_t entry_width = textentry_len * 6;
+    uint16_t left = 148 - (entry_width/2);
+    uint16_t top = 64 - 10;
+    uint16_t bottom = top + 11;
+
+    Graphics_Rectangle rect = {
+        .xMin = left-2, .yMin = top-2,
+        .xMax = left + entry_width + 1, .yMax = top + 9,
+    };
+
+    // Draw a little frame.
+    Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+    rect.xMin++; rect.yMin++; rect.xMax--; rect.yMax--;
+    Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+
+    // Draw the text itself:
+    Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
+    Graphics_drawString(&ui_gr_context_landscape, textentry_buf, textentry_len, left, top, 1);
+
+    // Now invert and draw the current character:
+    Graphics_setBackgroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);
+    Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_WHITE);
+
+    Graphics_drawString(&ui_gr_context_landscape, &textentry_buf[textentry_cursor], 1, left + textentry_cursor*6, top, 1);
+
+    Graphics_setBackgroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_WHITE);
+    Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);
+    Graphics_flushBuffer(&ui_gr_context_landscape);
 }
 
 void ui_textentry_do(UInt events) {
+    if (pop_events(&events, UI_EVENT_REFRESH)) {
+        ui_textentry_draw();
+        epd_do_partial = 1; // TODO: this?
+    }
 
-}
-
-void ui_textentry_unload() {
-
+    if (pop_events(&events, UI_EVENT_KB_PRESS)) {
+        switch(kb_active_key_masked) {
+        case BTN_RIGHT:
+            // right cursor
+            if (textentry_cursor < strlen(textentry_buf)) {
+                textentry_cursor++;
+                Event_post(ui_event_h, UI_EVENT_REFRESH);
+            }
+            break;
+        case BTN_LEFT:
+            // right cursor
+            if (textentry_cursor) {
+                textentry_cursor--;
+                Event_post(ui_event_h, UI_EVENT_REFRESH);
+            }
+            break;
+        case BTN_DOWN:
+            if (textentry_buf[textentry_cursor] < '0') {
+                // Start with A
+                textentry_buf[textentry_cursor] = 'A';
+            } else if (textentry_buf[textentry_cursor] < '9') {
+                // It's a number, so next number:
+                textentry_buf[textentry_cursor]++;
+            } else if (textentry_buf[textentry_cursor] == '9') {
+                // It's number 9, now use the null term:
+                textentry_buf[textentry_cursor] = 0x00;
+            } else if (textentry_buf[textentry_cursor] < 'Z') {
+                // Capitals:
+                textentry_buf[textentry_cursor]++;
+            } else if (textentry_buf[textentry_cursor] == 'Z') {
+                // It's a Z, so go to a:
+                textentry_buf[textentry_cursor] = 'a';
+            } else if (textentry_buf[textentry_cursor] == 'z') {
+                textentry_buf[textentry_cursor] = '0';
+            }
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
+            break;
+        case BTN_UP:
+            if (textentry_buf[textentry_cursor] == 0) {
+                textentry_buf[textentry_cursor] = '9';
+            } else if (textentry_buf[textentry_cursor] == '0') {
+                textentry_buf[textentry_cursor] = 'z';
+            } else if (textentry_buf[textentry_cursor] >= 'a') {
+                textentry_buf[textentry_cursor]--;
+            } else if (textentry_buf[textentry_cursor] == 'a') {
+                textentry_buf[textentry_cursor] = 'Z';
+            } else if (textentry_buf[textentry_cursor] >= 'A') {
+                textentry_buf[textentry_cursor] = 0x00;
+            }
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
+            break;
+        case BTN_BACK:
+            ui_textentry_unload(0);
+            break;
+        case BTN_OK:
+            ui_textentry_unload(1);
+            break;
+        }
+        // TODO:
+        // Call this if needed:
+        //led_tail_start_anim();
+    }
 }
 
 void ui_screensaver_do(UInt events) {
@@ -873,6 +1001,16 @@ void ui_files_do(UInt events) {
     case UI_EVENT_KB_PRESS:
         switch(kb_active_key_masked) {
         case BTN_OK:
+            if (!strncmp("/colors/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
+                // Color SAVE request
+                ui_textentry_load(curr_file_name, 12);
+            } else if (!strncmp("/photos/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
+                // Photo SAVE request (wat)
+                // TODO: nothing doing...
+            } else if (!strncmp("/colors/", curr_file_name, 8)) {
+
+            } else if (!strncmp("/photos/", curr_file_name, 8)) {
+            }
             break;
         }
         break;
@@ -896,8 +1034,9 @@ void ui_task_fn(UArg a0, UArg a1) {
             if (ui_colorpicking) {
                 ui_colorpicking_unload();
             } else if (ui_textentry) {
-                ui_textentry_unload();
+                ui_textentry_unload(0);
             } else if (ui_current == UI_SCREEN_IDLE) {
+                // TODO: don't:?
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
             } else {
                 ui_transition(UI_SCREEN_IDLE);

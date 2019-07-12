@@ -73,6 +73,13 @@ void serial_ll_timeout() {
             serial_ll_timeout_ms = PRX_TIME_MS;
             break; // If we're not active, we never leave PRX.
         }
+
+        // Pin us in PRX mode if the PTX input is asserted.
+        if (SERIAL_DIO_IN & SERIAL_DIO1_PTX) {
+            serial_ll_timeout_ms = PRX_TIME_MS;
+            break;
+        }
+
         serial_enter_ptx();
 
         serial_ll_state = SERIAL_LL_STATE_NC_PTX;
@@ -84,6 +91,12 @@ void serial_ll_timeout() {
         serial_send_start();
         break;
     case SERIAL_LL_STATE_NC_PTX:
+        // Pin us in PTX mode if the PRX input is asserted.
+        if (SERIAL_DIO_IN & SERIAL_DIO2_PRX) {
+            serial_ll_timeout_ms = PTX_TIME_MS;
+            break;
+        }
+
         serial_enter_prx();
 
         serial_ll_state = SERIAL_LL_STATE_NC_PRX;

@@ -25,6 +25,7 @@
 #include <ui/images.h>
 #include <ui/graphics.h>
 #include <board.h>
+#include "overlays.h"
 
 uint8_t ui_colorpicker_cursor_pos = 0;
 uint8_t ui_colorpicker_cursor_anim = 0;

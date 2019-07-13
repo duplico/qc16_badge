@@ -17,5 +17,9 @@ void qc16gr_drawImage(const Graphics_Context *context,
                       const Graphics_Image *bitmap,
                       int16_t x,
                       int16_t y);
+void qc16gr_drawImageFromFile(const Graphics_Context *context,
+                              char *pathname,
+                              int16_t x,
+                              int16_t y);
 uint16_t qc16gr_get_image_size(const Graphics_Image *bitmap);
 #endif /* UI_GRAPHICS_H_ */

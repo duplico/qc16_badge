@@ -43,6 +43,7 @@ void ui_textentry_load(char *dest, uint8_t len) {
     textentry_len = len;
     textentry_buf = malloc(len);
     textentry_dest = dest;
+    textentry_cursor = 0;
     memset(textentry_buf, 0x00, len);
     strncpy(textentry_buf, textentry_dest, textentry_len);
     ui_textentry = 1;
@@ -66,37 +67,49 @@ void ui_textentry_unload(uint8_t save) {
 
     free(textentry_buf);
     // TODO: Is this not happening?
+    // It's not, because of the wrong thing we're doing with switching rather than popping
     Event_post(ui_event_h, UI_EVENT_REFRESH);
 }
 
 // TODO: Declare elsewhere
 extern const tFont g_sFontfixed10x20;
 
+// TODO: Add instructions?
+
 void ui_textentry_draw() {
     uint16_t entry_width = textentry_len * 10;
-    uint16_t left = 148 - (entry_width/2);
-    uint16_t top = 64 - 10;
+    uint16_t txt_left = 148 - (entry_width/2);
+    uint16_t txt_top = 64 - 10;
 
     Graphics_Rectangle rect = {
-        .xMin = left-2, .yMin = top-2,
-        .xMax = left + entry_width + 1, .yMax = top + 23,
+        .xMin = txt_left-3, .yMin = txt_top-3,
+        .xMax = txt_left + entry_width + 3, .yMax = txt_top + 22,
     };
 
+    // TODO: Fix frame layout:
     // Draw a little frame.
     Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
-    rect.xMin--; rect.yMin--; rect.xMax++; rect.yMax++;
+    rect.xMin++; rect.yMin++; rect.xMax--; rect.yMax--;
     Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+    rect.xMin++; rect.yMin++; rect.xMax--; rect.yMax--;
+
+    // Clear text area:
+    Graphics_setBackgroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);
+    Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_WHITE);
+    fillRectangle(&ui_gr_context_landscape, &rect);
+    Graphics_setBackgroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_WHITE);
+    Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);
 
     // Draw the text itself:
     Graphics_setFont(&ui_gr_context_landscape, &g_sFontfixed10x20);
-    Graphics_drawString(&ui_gr_context_landscape, (int8_t *)textentry_buf, textentry_len, left, top, 1);
+    Graphics_drawString(&ui_gr_context_landscape, (int8_t *)textentry_buf, textentry_len, txt_left, txt_top, 1);
 
     // Now invert and draw the current character:
     Graphics_setBackgroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);
     Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_WHITE);
 
-    // TODO: the width doesn't seem quite right on this one:
-    Graphics_drawString(&ui_gr_context_landscape, textentry_buf[textentry_cursor] ? (int8_t *) &textentry_buf[textentry_cursor] : " ", 1, left + textentry_cursor*8, top, 1);
+    Graphics_drawString(&ui_gr_context_landscape, textentry_buf[textentry_cursor] ? (int8_t *) &textentry_buf[textentry_cursor] : " ", 1, txt_left +
+            Graphics_getStringWidth(&ui_gr_context_landscape, textentry_buf, textentry_cursor), txt_top, 1);
 
     Graphics_setBackgroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_WHITE);
     Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);
@@ -143,19 +156,27 @@ void ui_textentry_do(UInt events) {
                 textentry_buf[textentry_cursor] = 'a';
             } else if (textentry_buf[textentry_cursor] == 'z') {
                 textentry_buf[textentry_cursor] = '0';
+            } else {
+                textentry_buf[textentry_cursor] = 0x00;
             }
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             break;
         case BTN_UP:
-            if (textentry_buf[textentry_cursor] == 0) {
+            if (textentry_buf[textentry_cursor] < '0') {
                 textentry_buf[textentry_cursor] = '9';
-            } else if (textentry_buf[textentry_cursor] == '0') {
-                textentry_buf[textentry_cursor] = 'z';
-            } else if (textentry_buf[textentry_cursor] >= 'a') {
+            } else if (textentry_buf[textentry_cursor] > 'a') {
                 textentry_buf[textentry_cursor]--;
             } else if (textentry_buf[textentry_cursor] == 'a') {
                 textentry_buf[textentry_cursor] = 'Z';
-            } else if (textentry_buf[textentry_cursor] >= 'A') {
+            } else if (textentry_buf[textentry_cursor] > 'A') {
+                textentry_buf[textentry_cursor]--;
+            } else if (textentry_buf[textentry_cursor] == 'A') {
+                textentry_buf[textentry_cursor] = 0x00;
+            } else if (textentry_buf[textentry_cursor] > '0') {
+                textentry_buf[textentry_cursor]--;
+            } else if (textentry_buf[textentry_cursor] == '0') {
+                textentry_buf[textentry_cursor] = 'z';
+            } else {
                 textentry_buf[textentry_cursor] = 0x00;
             }
             Event_post(ui_event_h, UI_EVENT_REFRESH);

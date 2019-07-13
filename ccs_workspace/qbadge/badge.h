@@ -46,8 +46,8 @@ uint8_t badge_connected(uint16_t id);
 uint8_t set_badge_seen(uint16_t id, char *name);
 uint8_t set_badge_connected(uint16_t id, char *handle);
 void write_anim_curr();
-void write_anim_curr_to_name(char *fname);
 void save_anim(char *name);
+void load_anim_abs(char *pathname);
 void load_anim(char *name);
 
 #endif /* BADGE_H_ */

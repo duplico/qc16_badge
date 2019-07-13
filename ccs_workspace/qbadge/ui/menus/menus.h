@@ -14,5 +14,6 @@ void ui_missions_do(UInt events);
 void ui_scan_do(UInt events);
 void ui_files_do(UInt events);
 void ui_info_do(UInt events);
+uint32_t file_disp_count();
 
 #endif /* UI_MENUS_MENUS_H_ */

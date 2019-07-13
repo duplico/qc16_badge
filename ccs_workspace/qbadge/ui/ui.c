@@ -168,8 +168,7 @@ void ui_transition(uint8_t destination) {
         break;
     case UI_SCREEN_FILES:
         ui_x_max = 2;
-        // TODO: set this correctly:
-        ui_y_max = 9;
+        // NB: ui_y_max will be set in the do_ function, so no need here.
         break;
     }
 

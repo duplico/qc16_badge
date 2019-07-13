@@ -331,29 +331,26 @@ void write_conf() {
     storage_overwrite_file("/qbadge/seen_q", (uint8_t *) qbadges_seen, QBADGE_BITFIELD_LONGS*4);
 }
 
-void write_anim_curr_to_name(char *fname) {
-    char path[SPIFFS_OBJ_NAME_LEN] = "/colors/";
-    strncpy(&path[8], fname, 14); // TODO: Extract constant, max len file name
-    storage_overwrite_file(path, (uint8_t *) &led_tail_anim_current, sizeof(led_tail_anim_t));
-}
-
 void write_anim_curr() {
-    write_anim_curr_to_name(".current");
+    save_anim(".current");
 }
 
-// TODO: undupliate.
 void save_anim(char *name) {
     char pathname[SPIFFS_OBJ_NAME_LEN] = "/colors/";
-    strcpy(&pathname[8], name);
+    strncpy(&pathname[8], name, 14); // TODO: Extract constant, max len file name
     storage_overwrite_file(pathname, (uint8_t *) &led_tail_anim_current, sizeof(led_tail_anim_t));
+}
+
+void load_anim_abs(char *pathname) {
+    storage_read_file(pathname, (uint8_t *) &led_tail_anim_current, sizeof(led_tail_anim_t));
+    storage_overwrite_file("/colors/.current", (uint8_t *) &led_tail_anim_current, sizeof(led_tail_anim_t));
+    led_tail_start_anim();
 }
 
 void load_anim(char *name) {
     char pathname[SPIFFS_OBJ_NAME_LEN] = "/colors/";
     strcpy(&pathname[8], name);
-    storage_read_file(pathname, (uint8_t *) &led_tail_anim_current, sizeof(led_tail_anim_t));
-    storage_overwrite_file("/colors/.current", (uint8_t *) &led_tail_anim_current, sizeof(led_tail_anim_t));
-    led_tail_start_anim();
+    load_anim_abs(pathname);
 }
 
 void generate_config() {

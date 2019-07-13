@@ -35,6 +35,10 @@
 
 char curr_file_name[SPIFFS_OBJ_NAME_LEN+1] = "";
 
+#define FILE_LOAD 0
+#define FILE_DELETE 1
+#define FILE_RENAME 2
+
 void put_filename(Graphics_Context *gr, int8_t *name, uint16_t y) {
     Graphics_drawString(gr, name, SPIFFS_OBJ_NAME_LEN, FILES_LEFT_X, y, 1);
 }
@@ -104,23 +108,30 @@ void put_all_filenames(char *curr_fname) {
 
     y = TOPBAR_HEIGHT + 3 + 9*(ui_y_cursor - first_file);
 
-    if (!strncmp("/colors/", curr_fname, SPIFFS_OBJ_NAME_LEN) || !strncmp("/photos/", curr_fname, SPIFFS_OBJ_NAME_LEN)) {
+    if (!strncmp("/colors/", curr_fname, SPIFFS_OBJ_NAME_LEN)) {
         // If this is a "directory heading":
         Graphics_drawString(&ui_gr_context_landscape, "store:", 6, 0, y, 1);
+        // TODO: Consider allowing collapse/expand
+    } else if (!strncmp("/photos/", curr_fname, SPIFFS_OBJ_NAME_LEN)) {
+        // If this is a "directory heading":
+        Graphics_drawString(&ui_gr_context_landscape, " info:", 6, 0, y, 1);
+        // TODO: Consider allowing collapse/expand
+    } else if (!strncmp("/photos/", curr_fname, 8)) {
+        Graphics_drawString(&ui_gr_context_landscape, " load:", 6, 0, y, 1);
     } else {
+        // This is a color
         switch(ui_x_cursor) {
-        case 0:
+        case FILE_LOAD:
             Graphics_drawString(&ui_gr_context_landscape, " load:", 6, 0, y, 1);
             break;
-        case 1:
+        case FILE_DELETE:
             Graphics_drawString(&ui_gr_context_landscape, "delet:", 6, 0, y, 1);
             break;
-        case 2:
+        case FILE_RENAME:
             Graphics_drawString(&ui_gr_context_landscape, "renam:", 6, 0, y, 1);
             break;
         }
     }
-
 }
 
 void ui_draw_files() {
@@ -128,8 +139,7 @@ void ui_draw_files() {
     Graphics_clearDisplay(&ui_gr_context_landscape);
 
     ui_draw_top_bar();
-    // TODO: draw the files we actually want...
-    // TODO: allow to scroll
+    // TODO: load correct number
     put_all_filenames(curr_file_name);
 
     Graphics_flushBuffer(&ui_gr_context_landscape);
@@ -139,29 +149,59 @@ void ui_draw_files() {
 #define FILES_TEXT_USE_RENAME 1
 #define FILES_TEXT_USE_SAVE_COLOR 2
 
+uint32_t file_disp_count() {
+    // TODO: implement a count of files:
+    return 10;
+}
+
 void ui_files_do(UInt events) {
     static uint8_t text_use = 0;
     static char *text;
+
+    ui_y_max = file_disp_count();
 
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
         case BTN_OK:
             if (!strncmp("/colors/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
                 // Color SAVE request
-                text_use = FILES_TEXT_USE_SAVE_COLOR;
-                text = malloc(13);
+                text = malloc(13); // TODO: Extract constants for all three here
                 memset(text, 0x00, 13);
+                text_use = FILES_TEXT_USE_SAVE_COLOR;
                 ui_textentry_load(text, 12);
             } else if (!strncmp("/photos/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
-                // Photo SAVE request (wat)
-                // TODO: nothing doing...
+                // This is an "info" request for the photos.
+                // TODO: Change, if we don't get the infobox working.
             } else if (!strncmp("/colors/", curr_file_name, 8)) {
                 // Selected color
-                // TODO: If we're renaming, malloc +8 characters and prepend with /colors/
-                //       but only send &[8] to textentry_load.
+                switch(ui_x_cursor) {
+                case FILE_DELETE:
+                    SPIFFS_remove(&fs, curr_file_name);
+                    ui_y_cursor--;
+                    // TODO: do we like the full refresh here to convey the enormity of the deletion?
+                    Event_post(ui_event_h, UI_EVENT_REFRESH);
+                    break;
+                case FILE_RENAME:
+                    // Allocate space for the entire path, but only expose
+                    //  the file name part to textentry.
+                    // NB: SPIFFS_OBJ_NAME_LEN includes the null term.
+                    text = malloc(SPIFFS_OBJ_NAME_LEN);
+                    strncpy(text, curr_file_name, SPIFFS_OBJ_NAME_LEN);
+                    text_use = FILES_TEXT_USE_RENAME;
+                    ui_textentry_load(&text[8], 12); // TODO: max len
+                    // TODO: do we like the full refresh here?
+                    Event_post(ui_event_h, UI_EVENT_REFRESH);
+                    break;
+                case FILE_LOAD:
+                    // Load this animation:
+                    load_anim_abs(curr_file_name);
+                    // TODO: do we like the full refresh here?
+                    Event_post(ui_event_h, UI_EVENT_REFRESH);
+                }
+                load_anim(text);
             } else if (!strncmp("/photos/", curr_file_name, 8)) {
-                // TODO: Consider not allowing deletion or renaming of these
-                // Selected photo
+                // Selected photo. Only "load" is allowed.
+                // TODO: load photo
             }
             break;
         }
@@ -178,11 +218,13 @@ void ui_files_do(UInt events) {
         switch(text_use) {
         case FILES_TEXT_USE_RENAME:
             // Rename curr_file_name to text
-            SPIFFS_rename(&fs, curr_file_name, text);
+            volatile int32_t stat;
+            stat = SPIFFS_rename(&fs, curr_file_name, text);
+            stat;
             break;
         case FILES_TEXT_USE_SAVE_COLOR:
             // Save current colors as text
-            write_anim_curr_to_name(text);
+            save_anim(text);
             break;
         }
 

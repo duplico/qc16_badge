@@ -10,6 +10,9 @@
 
 #define QC16_BADGE_NAME_LEN 9
 
+#define QC16_PHOTO_NAME_LEN 16
+#define QC16_COLOR_NAME_LEN 16
+
 typedef enum {
     ELEMENT_LOCKS = 0,
     ELEMENT_COINS,
@@ -48,6 +51,7 @@ typedef struct {
     element_type element_selected;
     uint8_t mission_assigned[3];
     mission_t missions[3];
+    char current_photo[QC16_PHOTO_NAME_LEN+1];
     char handle[QC16_BADGE_NAME_LEN + 1];
 } qbadge_conf_t;
 

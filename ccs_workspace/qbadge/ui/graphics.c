@@ -218,6 +218,93 @@ void qc16gr_drawImage(const Graphics_Context *context,
     }
 }
 
+uint16_t qc16gr_get_image_size(const Graphics_Image *bitmap)
+{
+    int16_t bPP, width, height;
+    const uint8_t *image;
+
+    //
+    // Check the arguments.
+    //
+    assert(bitmap);
+
+    //
+    // Get the image format from the image data.
+    //
+    bPP = bitmap->bPP;
+
+    assert((bPP & 0x0f) == 1);
+
+    width = bitmap->xSize;
+    height = bitmap->ySize;
+
+    //
+    // Get the image pixels from the image data.
+    //
+    image = bitmap->pPixel;
+
+    if(!(bPP & 0xF0))
+    {
+        if (width % 8) {
+            return height * (width+1) / 8;
+        } else {
+            return (height * width) / 8;
+        }
+    }
+    else
+    {
+        //
+        // The image is compressed with RLE4, RLE7 or RLE8 Algorithm
+        //
+
+        uint16_t img_size = 0;
+
+        const uint8_t *pucData = image;
+        uint8_t ucRunLength, rleType;
+
+        rleType = (bPP >> 4) & 0x0F;
+        bPP &= 0x0F;
+
+        uint16_t x_offset = 0;
+        uint16_t y_offset = 0;
+
+        do {
+            if(rleType == 8)   // RLE 8 bit encoding
+            {
+                // Read Run Length
+                ucRunLength = *pucData++;
+            }
+            else if(rleType == 7)     // RLE 7 bit encoding
+            {
+                // Read Run Length
+                ucRunLength = (*pucData++) >> 1;
+            }
+            else  // rleType = 4; RLE 4 bit encoding
+            {
+                // Read Run Length
+                ucRunLength = (*pucData++) >> 4;
+            }
+            img_size++;
+            // 0 = 1 pixel; 15 = 16, etc:
+            ucRunLength++;
+
+            while (ucRunLength--) {
+                x_offset++;
+                if (x_offset == width) {
+                    x_offset = 0;
+                    y_offset++;
+                    if (y_offset == height) {
+                        // done.
+                        break;
+                    }
+                }
+            }
+
+        } while (y_offset < height);
+        return img_size;
+    }
+}
+
 void fadeRectangle(Graphics_Context *gr_context, Graphics_Rectangle *rect) {
     uint32_t fg_prev;
     fg_prev = gr_context->foreground;

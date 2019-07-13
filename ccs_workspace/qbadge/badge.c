@@ -396,7 +396,8 @@ void generate_config() {
     // TODO: write_anim_curr()
 
     // Initialize the first photo:
-    save_photo(&img_example_photo, "Tower");
+    save_photo(&img_example_photo, "handdrawn");
+    save_photo(&img_city, "Tower");
     strcpy(badge_conf.current_photo, "Tower");
 
     // TODO: Initialize the current animation persistence.

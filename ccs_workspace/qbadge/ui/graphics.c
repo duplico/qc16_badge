@@ -5,10 +5,13 @@
  *      Author: george
  */
 
+#include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
 #include <grlib/grlib.h>
 #include "graphics.h"
+#include <spiffs.h>
+#include <queercon_drivers/storage.h>
 
 // Derived from TI grlib: // TODO: license
 void qc16gr_drawImage(const Graphics_Context *context,
@@ -216,6 +219,217 @@ void qc16gr_drawImage(const Graphics_Context *context,
 
         } while (y_offset < height);
     }
+}
+
+// Derived from TI grlib: // TODO: license
+void qc16gr_drawImageFromFile(const Graphics_Context *context,
+                              char *pathname,
+                              int16_t x,
+                              int16_t y)
+{
+    Graphics_Image bitmap;
+
+    int16_t bPP, width, height, x0, x1, x2;
+    const uint32_t palette[2] = {0, 1}; // TODO: account for bg/fg
+
+    uint8_t *image;
+
+    spiffs_file fd;
+    fd = SPIFFS_open(&fs, pathname, SPIFFS_O_RDONLY, 0);
+    // TODO: assert lengths
+    SPIFFS_read(&fs, fd, &bitmap, sizeof(Graphics_Image));
+
+    //
+    // Check the arguments.
+    //
+    assert(context);
+
+    //
+    // Get the image format from the image data.
+    //
+    bPP = bitmap.bPP;
+
+    assert((bPP & 0x0f) == 1);
+
+    //
+    // Get the image width from the image data.
+    //
+    width = bitmap.xSize;
+
+    //
+    // Get the image height from the image data.
+    //
+    height = bitmap.ySize;
+
+    //
+    // Return without doing anything if the entire image lies outside the
+    // current clipping region.
+    //
+    if((x > context->clipRegion.xMax) ||
+       ((x + width - 1) < context->clipRegion.xMin) ||
+       (y > context->clipRegion.yMax) ||
+       ((y + height - 1) < context->clipRegion.yMin))
+    {
+        return;
+    }
+
+    //
+    // Get the starting X offset within the image based on the current clipping
+    // region.
+    //
+    if(x < context->clipRegion.xMin)
+    {
+        x0 = context->clipRegion.xMin - x;
+    }
+    else
+    {
+        x0 = 0;
+    }
+
+    //
+    // Get the ending X offset within the image based on the current clipping
+    // region.
+    //
+    if((x + width - 1) > context->clipRegion.xMax)
+    {
+        x2 = context->clipRegion.xMax - x;
+    }
+    else
+    {
+        x2 = width - 1;
+    }
+
+    //
+    // Reduce the height of the image, if required, based on the current
+    // clipping region.
+    //
+    if((y + height - 1) > context->clipRegion.yMax)
+    {
+        height = context->clipRegion.yMax - y + 1;
+    }
+
+    //Check if palette is not valid
+    if(!palette)
+    {
+        return;
+    }
+
+    //
+    // Check if the image is not compressed.
+    //
+    if(!(bPP & 0xF0))
+    {
+        image = malloc(((width * bPP) + 7) / 8);
+        //
+        // The image is not compressed.  See if the top portion of the image
+        // lies above the clipping region.
+        //
+        if(y < context->clipRegion.yMin)
+        {
+            //
+            // Determine the number of rows that lie above the clipping region.
+            //
+            x1 = context->clipRegion.yMin - y;
+
+            //
+            // Skip past the data for the rows that lie above the clipping
+            // region.
+            //
+            SPIFFS_lseek(&fs, fd, (((width * bPP) + 7) / 8) * x1, SPIFFS_SEEK_CUR);
+
+            //
+            // Decrement the image height by the number of skipped rows.
+            //
+            height -= x1;
+
+            //
+            // Increment the starting Y coordinate by the number of skipped
+            // rows.
+            //
+            y += x1;
+        }
+
+        while(height--)
+        {
+            // Load an entire row (possibly outside of clipping area)
+            SPIFFS_read(&fs, fd, image, ((width * bPP) + 7) / 8);
+
+            // Draw the part of that row inside the clipping area:
+            Graphics_drawMultiplePixelsOnDisplay(context->display, x + x0, y,
+                                                 x0 & 7, x2 - x0 + 1, bPP,
+                                                 image + ((x0 * bPP) / 8),
+                                                 palette);
+
+            //
+            // Increment the Y coordinate.
+            //
+            y++;
+        }
+        free(image);
+    }
+    else
+    {
+        //
+        // The image is compressed with RLE4, RLE7 or RLE8 Algorithm
+        //
+
+        uint8_t img_byte;
+        uint8_t ucRunLength, rleType;
+        uint16_t uiColor;
+
+        rleType = (bPP >> 4) & 0x0F;
+        bPP &= 0x0F;
+
+        uint16_t x_offset = 0;
+        uint16_t y_offset = 0;
+
+        do {
+            SPIFFS_read(&fs, fd, &img_byte, 1);
+            if(rleType == 8)   // RLE 8 bit encoding
+            {
+                // Read Run Length
+                ucRunLength = img_byte;
+                // Read Color
+                SPIFFS_read(&fs, fd, &img_byte, 1);
+                uiColor = img_byte;
+            }
+            else if(rleType == 7)     // RLE 7 bit encoding
+            {
+                // Read Run Length
+                ucRunLength = img_byte >> 1;
+                // Read Color Pointer
+                uiColor = img_byte & 0x01;
+            }
+            else  // rleType = 4; RLE 4 bit encoding
+            {
+                // Read Run Length
+                ucRunLength = img_byte >> 4;
+                // Read Color Pointer
+                uiColor = img_byte & 0x0F;
+            }
+            uiColor = (uint16_t) palette[uiColor];
+
+            // 0 = 1 pixel; 15 = 16, etc:
+            ucRunLength++;
+
+            while (ucRunLength--) {
+                Graphics_drawPixelOnDisplay(context->display, x+x_offset, y+y_offset, uiColor);
+
+                x_offset++;
+
+                if (x_offset == width) {
+                    x_offset = 0;
+                    y_offset++;
+                    if (y_offset == height) {
+                        // done.
+                        break;
+                    }
+                }
+            }
+
+        } while (y_offset < height);
+    }
+    SPIFFS_close(&fs, fd);
 }
 
 uint16_t qc16gr_get_image_size(const Graphics_Image *bitmap)

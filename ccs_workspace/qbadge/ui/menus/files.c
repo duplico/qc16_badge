@@ -201,7 +201,7 @@ void ui_files_do(UInt events) {
                 load_anim(text);
             } else if (!strncmp("/photos/", curr_file_name, 8)) {
                 // Selected photo. Only "load" is allowed.
-                // TODO: load photo
+                strncpy(badge_conf.current_photo, &curr_file_name[8], QC16_PHOTO_NAME_LEN);
             }
             break;
         }

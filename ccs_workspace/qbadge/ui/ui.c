@@ -106,16 +106,6 @@ void ui_draw_screensaver() {
             0
     );
 
-    Graphics_setFont(&ui_gr_context_portrait, &g_sFontCmss48b);
-    Graphics_drawStringCentered(
-            &ui_gr_context_portrait,
-            "UBER",
-            4,
-            64,
-            UI_IDLE_BLOCK1_TOP_PX + (UI_IDLE_BLOCK1_HEIGHT_PX / 2),
-            0
-    );
-
     Graphics_setFont(&ui_gr_context_portrait, &g_sFontCmtt28);
     Graphics_drawStringCentered(
             &ui_gr_context_portrait,
@@ -129,7 +119,11 @@ void ui_draw_screensaver() {
     Graphics_drawLineH(&ui_gr_context_portrait, 0, 128, UI_IDLE_PHOTO_TOP-2);
     Graphics_drawLineH(&ui_gr_context_portrait, 0, 128, UI_IDLE_PHOTO_TOP-1);
 
-    qc16gr_drawImage(&ui_gr_context_portrait, &img_city, 0, UI_IDLE_PHOTO_TOP);
+//    qc16gr_drawImage(&ui_gr_context_portrait, &img_city, 0, UI_IDLE_PHOTO_TOP);
+
+    char pathname[SPIFFS_OBJ_NAME_LEN] = "/photos/";
+    strcpy(&pathname[8], badge_conf.current_photo);
+    qc16gr_drawImageFromFile(&ui_gr_context_portrait, pathname, 0, UI_IDLE_PHOTO_TOP);
 
 
     // TODO:

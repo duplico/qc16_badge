@@ -24,7 +24,8 @@ SPIFFSNVS_Data   spiffsnvs;
 void storage_read_file(char *fname, uint8_t *dest, uint16_t size) {
     spiffs_file fd;
     fd = SPIFFS_open(&fs, fname, SPIFFS_O_RDONLY, 0);
-    SPIFFS_read(&fs, fd, dest, size);
+    volatile int32_t stat;
+    stat = SPIFFS_read(&fs, fd, dest, size);
     SPIFFS_close(&fs, fd);
 }
 
@@ -55,6 +56,9 @@ void storage_init() {
             spiffsReadWriteCache, sizeof(spiffsReadWriteCache), NULL);
     }
 
+    SPIFFS_check(&fs);
+
+    // TODO:
     spiffs_stat stat;
     status = SPIFFS_stat(&fs, "testfile", &stat);
 

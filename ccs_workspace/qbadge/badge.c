@@ -331,10 +331,17 @@ void write_conf() {
     storage_overwrite_file("/qbadge/seen_q", (uint8_t *) qbadges_seen, QBADGE_BITFIELD_LONGS*4);
 }
 
-void write_anim_curr() {
-    storage_overwrite_file("/colors/.current", (uint8_t *) &led_tail_anim_current, sizeof(led_tail_anim_t));
+void write_anim_curr_to_name(char *fname) {
+    char path[SPIFFS_OBJ_NAME_LEN] = "/colors/";
+    strncpy(&path[8], fname, 14); // TODO: Extract constant, max len file name
+    storage_overwrite_file(path, (uint8_t *) &led_tail_anim_current, sizeof(led_tail_anim_t));
 }
 
+void write_anim_curr() {
+    write_anim_curr_to_name(".current");
+}
+
+// TODO: undupliate.
 void save_anim(char *name) {
     char pathname[SPIFFS_OBJ_NAME_LEN] = "/colors/";
     strcpy(&pathname[8], name);
@@ -372,6 +379,8 @@ void generate_config() {
     srand(badge_conf.badge_id);
 
     // TODO: Set the selected element
+
+    // TODO: write_anim_curr()
 
     // TODO: Initialize the current animation persistence.
     write_conf();

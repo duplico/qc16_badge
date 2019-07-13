@@ -16,6 +16,8 @@
 #include <qc16.h>
 
 #include "queercon_drivers/storage.h"
+#include <ui/graphics.h>
+#include <ui/images.h>
 #include <ui/ui.h>
 #include <ui/leds.h>
 #include <qc16_serial_common.h>
@@ -337,7 +339,8 @@ void write_anim_curr() {
 
 void save_anim(char *name) {
     char pathname[SPIFFS_OBJ_NAME_LEN] = "/colors/";
-    strncpy(&pathname[8], name, 14); // TODO: Extract constant, max len file name
+    // TODO: ensure null term
+    strncpy(&pathname[8], name, QC16_PHOTO_NAME_LEN);
     storage_overwrite_file(pathname, (uint8_t *) &led_tail_anim_current, sizeof(led_tail_anim_t));
 }
 
@@ -351,6 +354,19 @@ void load_anim(char *name) {
     char pathname[SPIFFS_OBJ_NAME_LEN] = "/colors/";
     strcpy(&pathname[8], name);
     load_anim_abs(pathname);
+}
+
+void save_photo(Graphics_Image *image, char *name) {
+    spiffs_file fd;
+    char pathname[SPIFFS_OBJ_NAME_LEN] = "/photos/";
+    strcpy(&pathname[8], name);
+    fd = SPIFFS_open(&fs, pathname, SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);
+    SPIFFS_write(&fs, fd, image, sizeof(Graphics_Image));
+    // TODO:
+    volatile uint16_t size;
+    size = qc16gr_get_image_size(image);
+    SPIFFS_write(&fs, fd, image->pPixel, size);
+    SPIFFS_close(&fs, fd);
 }
 
 void generate_config() {
@@ -378,6 +394,10 @@ void generate_config() {
     // TODO: Set the selected element
 
     // TODO: write_anim_curr()
+
+    // Initialize the first photo:
+    save_photo(&img_example_photo, "Tower");
+    strcpy(badge_conf.current_photo, "Tower");
 
     // TODO: Initialize the current animation persistence.
     write_conf();

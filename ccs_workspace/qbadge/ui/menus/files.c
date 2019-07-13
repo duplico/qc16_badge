@@ -165,8 +165,8 @@ void ui_files_do(UInt events) {
         case BTN_OK:
             if (!strncmp("/colors/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
                 // Color SAVE request
-                text = malloc(13); // TODO: Extract constants for all three here
-                memset(text, 0x00, 13);
+                text = malloc(QC16_PHOTO_NAME_LEN+1);
+                memset(text, 0x00, QC16_PHOTO_NAME_LEN+1);
                 text_use = FILES_TEXT_USE_SAVE_COLOR;
                 ui_textentry_load(text, 12);
             } else if (!strncmp("/photos/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
@@ -188,7 +188,7 @@ void ui_files_do(UInt events) {
                     text = malloc(SPIFFS_OBJ_NAME_LEN);
                     strncpy(text, curr_file_name, SPIFFS_OBJ_NAME_LEN);
                     text_use = FILES_TEXT_USE_RENAME;
-                    ui_textentry_load(&text[8], 12); // TODO: max len
+                    ui_textentry_load(&text[8], QC16_PHOTO_NAME_LEN);
                     // TODO: do we like the full refresh here?
                     Event_post(ui_event_h, UI_EVENT_REFRESH);
                     break;
@@ -217,11 +217,14 @@ void ui_files_do(UInt events) {
     if (pop_events(&events, UI_EVENT_TEXT_READY)) {
         switch(text_use) {
         case FILES_TEXT_USE_RENAME:
+        {
             // Rename curr_file_name to text
+            // TODO: Cleanup:
             volatile int32_t stat;
             stat = SPIFFS_rename(&fs, curr_file_name, text);
             stat;
             break;
+        }
         case FILES_TEXT_USE_SAVE_COLOR:
             // Save current colors as text
             save_anim(text);

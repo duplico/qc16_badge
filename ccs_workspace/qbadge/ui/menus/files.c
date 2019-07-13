@@ -135,26 +135,61 @@ void ui_draw_files() {
     Graphics_flushBuffer(&ui_gr_context_landscape);
 }
 
+// TODO: move
+#define FILES_TEXT_USE_RENAME 1
+#define FILES_TEXT_USE_SAVE_COLOR 2
+
 void ui_files_do(UInt events) {
-    switch(events) {
-    case UI_EVENT_REFRESH:
-        ui_draw_files();
-        break;
-    case UI_EVENT_KB_PRESS:
+    static uint8_t text_use = 0;
+    static char *text;
+
+    if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
         case BTN_OK:
             if (!strncmp("/colors/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
                 // Color SAVE request
-                ui_textentry_load(curr_file_name, 12);
+                text_use = FILES_TEXT_USE_SAVE_COLOR;
+                text = malloc(13);
+                memset(text, 0x00, 13);
+                ui_textentry_load(text, 12);
             } else if (!strncmp("/photos/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
                 // Photo SAVE request (wat)
                 // TODO: nothing doing...
             } else if (!strncmp("/colors/", curr_file_name, 8)) {
-
+                // Selected color
+                // TODO: If we're renaming, malloc +8 characters and prepend with /colors/
+                //       but only send &[8] to textentry_load.
             } else if (!strncmp("/photos/", curr_file_name, 8)) {
+                // TODO: Consider not allowing deletion or renaming of these
+                // Selected photo
             }
             break;
         }
-        break;
+    }
+
+    if (pop_events(&events, UI_EVENT_TEXT_CANCELED)) {
+        // dooo noooooothiiiiing
+        // except prevent a memory leak:
+        free(text);
+        // TODO: What if we get plugged in before this is done?
+    }
+
+    if (pop_events(&events, UI_EVENT_TEXT_READY)) {
+        switch(text_use) {
+        case FILES_TEXT_USE_RENAME:
+            // Rename curr_file_name to text
+            SPIFFS_rename(&fs, curr_file_name, text);
+            break;
+        case FILES_TEXT_USE_SAVE_COLOR:
+            // Save current colors as text
+            write_anim_curr_to_name(text);
+            break;
+        }
+
+        free(text);
+    }
+
+    if (pop_events(&events, UI_EVENT_REFRESH)) {
+        ui_draw_files();
     }
 }

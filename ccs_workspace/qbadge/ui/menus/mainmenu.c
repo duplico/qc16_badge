@@ -55,11 +55,11 @@ void ui_draw_main_menu() {
 }
 
 void ui_mainmenu_do(UInt events) {
-    switch(events) {
-    case UI_EVENT_REFRESH:
+    if (pop_events(&events, UI_EVENT_REFRESH)) {
         ui_draw_main_menu();
-        break;
-    case UI_EVENT_KB_PRESS:
+    }
+
+    if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
         case BTN_OK:
             switch(ui_x_cursor) {
@@ -78,6 +78,5 @@ void ui_mainmenu_do(UInt events) {
             }
             break;
         }
-        break;
     }
 }

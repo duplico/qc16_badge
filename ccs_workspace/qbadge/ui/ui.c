@@ -179,8 +179,7 @@ void ui_screensaver_do(UInt events) {
 // TODO: Rewrite doc header
 /// Do basic menu system stuff, returning 1 if we should return after calling.
 uint8_t ui_menusystem_do(UInt events) {
-    switch(events) {
-    case UI_EVENT_KB_PRESS:
+    if (events & UI_EVENT_KB_PRESS) {
         switch(kb_active_key_masked) {
         case BTN_BACK:
             if (ui_current == UI_SCREEN_MAINMENU) {
@@ -225,43 +224,36 @@ uint8_t ui_menusystem_do(UInt events) {
             epd_do_partial = 1;
             break;
         }
-        break;
-    case UI_EVENT_BATTERY_UPDATE:
-    case UI_EVENT_RADAR_UPDATE:
+    }
+    if (events & UI_EVENT_BATTERY_UPDATE || events & UI_EVENT_RADAR_UPDATE) {
         // Do a partial redraw with the new numbers:
         Event_post(ui_event_h, UI_EVENT_REFRESH);
         epd_do_partial = 1;
-        break;
     }
     return 0;
 }
 
 void ui_info_do(UInt events) {
-    switch(events) {
-    case UI_EVENT_REFRESH:
+    if (pop_events(&events, UI_EVENT_REFRESH)) {
         ui_draw_info();
-        break;
-    case UI_EVENT_KB_PRESS:
+    }
+    if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
         case BTN_OK:
             break;
         }
-        break;
     }
 }
 
 void ui_scan_do(UInt events) {
-    // TODO: Combine some of the shared code here.
-    switch(events) {
-    case UI_EVENT_REFRESH:
+    if (pop_events(&events, UI_EVENT_REFRESH)) {
         ui_draw_scan();
-        break;
-    case UI_EVENT_KB_PRESS:
+    }
+    if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
         case BTN_OK:
             break;
         }
-        break;
     }
 }
 

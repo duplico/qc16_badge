@@ -83,17 +83,17 @@ void serial_ll_timeout() {
         serial_enter_ptx();
 
         serial_ll_state = SERIAL_LL_STATE_NC_PTX;
-
-        serial_header_out.from_id = my_conf.badge_id;
-        serial_header_out.opcode = SERIAL_OPCODE_HELO;
-        serial_header_out.payload_len = 0;
-        serial_header_out.to_id = SERIAL_ID_ANY;
-        serial_send_start();
         break;
     case SERIAL_LL_STATE_NC_PTX:
         // Pin us in PTX mode if the PRX input is asserted.
         if (SERIAL_DIO_IN & SERIAL_DIO2_PRX) {
             serial_ll_timeout_ms = PTX_TIME_MS;
+
+            serial_header_out.from_id = my_conf.badge_id;
+            serial_header_out.opcode = SERIAL_OPCODE_HELO;
+            serial_header_out.payload_len = 0;
+            serial_header_out.to_id = SERIAL_ID_ANY;
+            serial_send_start();
             break;
         }
 

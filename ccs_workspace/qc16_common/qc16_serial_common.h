@@ -35,6 +35,8 @@
 #define SERIAL_LL_STATE_NC_PRX 0
 #define SERIAL_LL_STATE_NC_PTX 1
 #define SERIAL_LL_STATE_C_IDLE 2
+#define SERIAL_LL_STATE_C_FILE_RX 3
+#define SERIAL_LL_STATE_C_FILE_TX 4
 
 // Shared struct and functions:
 

@@ -495,7 +495,6 @@ static void UBLEBcastScan_scan_stateChangeCB(ugapObserverScan_State_t newState)
 static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
                                             uint8_t *pPayload)
 {
-    volatile static char  *devAddr;
     volatile static uint8  chan;
     volatile static uint32 timeStamp;
 
@@ -578,6 +577,7 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
         //     0xD3
         //     0x04
         //    followed by our beacon struct, whatever that is.
+        uint8_t rssi = *(uint8_t *)(pPayload + len - 6);
         char *name;
         qc16_ble_t *badge_frame;
         // the MAC address is 6 bytes at pPayload[2]

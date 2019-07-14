@@ -120,7 +120,7 @@ void init_conf() {
     if (!my_conf.initialized) {
         // this is first boot.
         my_conf.initialized=1;
-        my_conf.badge_id=1001;
+        my_conf.badge_id=CBADGE_ID_UNASSIGNED;
         my_conf.activated=0;
     }
     my_conf.active=0;

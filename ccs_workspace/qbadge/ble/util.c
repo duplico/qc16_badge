@@ -61,7 +61,7 @@
 #endif
 
 #include "bcomdef.h"
-#include "util.h"
+#include <ble/util.h>
 
 // RTOS queue for profile/app messages.
 typedef struct _queueRec_

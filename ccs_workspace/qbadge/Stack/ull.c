@@ -63,8 +63,7 @@
 #include <ti/drivers/rf/RF.h>
 #include <ll_common.h>
 #include <bcomdef.h>
-#include <util.h>
-
+#include <ble/util.h>
 #include <port.h>
 #include <uble.h>
 #include <urfi.h>

@@ -47,13 +47,12 @@
 /*********************************************************************
  * INCLUDES
  */
+#include <ble/util.h>
 #include <string.h>
 
 #include <icall.h>
 
 #include "bcomdef.h"
-#include "util.h"
-
 #include "port.h"
 #include "uble.h"
 #include "ull.h"

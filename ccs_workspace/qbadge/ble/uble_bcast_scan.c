@@ -16,7 +16,7 @@
 #include "board.h"
 
 #ifdef USE_RCOSC
-#include "rcosc_calibration.h"
+#include <ble/rcosc_calibration.h>
 #endif // USE_RCOSC
 
 // DriverLib
@@ -25,10 +25,10 @@
 #include "ugap.h"
 #include "urfc.h"
 
-#include "util.h"
+#include <ble/util.h>
 #include "gap.h"
 
-#include "uble_bcast_scan.h"
+#include <ble/uble_bcast_scan.h>
 
 #include <badge.h>
 #include <qc16.h>

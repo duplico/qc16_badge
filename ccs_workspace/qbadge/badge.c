@@ -116,25 +116,7 @@ mission_t generate_mission() {
     // handler, which is available to assign low-level missions at
     // a configurable time interval.
 
-    if (!handler_nearby()) {
-        // TODO: constant config for this timing:
-        // 10-20 minutes
-        badge_conf.vhandler_return_time = Seconds_get() + 600 + rand() % 600;
-        badge_conf.vhandler_present = 0;
-        // The vhandler always hands out a primary element of qtype.
-        new_mission.element_types[0] = (element_type) (rand() % 3);
-
-        // TODO: extract constant:
-        // The vhandler has a max level it can assign:
-        new_mission.element_levels[0] = rand() % 3;
-
-        if (!(rand() % 3)) {
-            // There's a chance to assign a second element.
-            // TODO: Extract constant
-            // A second element is needed. We'll assign it totally randomly.
-            new_mission.element_types[1] = (element_type) (rand() % 6);
-        }
-    } else {
+    if (handler_nearby()) {
         // Human handler. No cooldown.
         // TODO: We sure about no cooldown?
         // We use the one with the highest RSSI
@@ -158,6 +140,24 @@ mission_t generate_mission() {
             // TODO: this needs to be after the original is adjusted:
             //       maybe???
             new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
+        }
+    } else if (badge_conf.vhandler_present) {
+        // TODO: constant config for this timing:
+        // 10-20 minutes
+        badge_conf.vhandler_return_time = Seconds_get() + 600 + rand() % 600;
+        badge_conf.vhandler_present = 0;
+        // The vhandler always hands out a primary element of qtype.
+        new_mission.element_types[0] = (element_type) (rand() % 3);
+
+        // TODO: extract constant:
+        // The vhandler has a max level it can assign:
+        new_mission.element_levels[0] = rand() % 3;
+
+        if (!(rand() % 3)) {
+            // There's a chance to assign a second element.
+            // TODO: Extract constant
+            // A second element is needed. We'll assign it totally randomly.
+            new_mission.element_types[1] = (element_type) (rand() % 6);
         }
     }
 

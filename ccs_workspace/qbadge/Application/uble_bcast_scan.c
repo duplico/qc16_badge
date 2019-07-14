@@ -112,7 +112,7 @@ uint8 advertData[30] =
    0x04, // Company ID - Fixed (queercon)
    0x00, // Badge ID MSB //.22 // TODO: confirm msb/lsb here
    0x00, // Badge ID LSB //.23
-   0x00, // SPARE
+   0x00, // TYPE FLAG (BIT7=UBER; BIT6=HANDLER; BIT5-0=ELEMENT)
    0x00, // SPARE
    0x00, // SPARE
    0x00, // SPARE

@@ -97,6 +97,19 @@ void ui_draw_mission_menu() {
     } else {
         ui_draw_menu_icons(ui_x_cursor, image_missionmenu_icons, mission_menu_text, 5, 0, TOPBAR_HEIGHT+8, 2);
     }
+
+    if (!mission_possible()) {
+        // There are no handlers nearby (not even the vhandler)
+        // Put an X over the mission-getting icon
+        Graphics_drawLine(&ui_gr_context_landscape, 0, TOPBAR_HEIGHT+8, 0+image_missionmenu_icons[0]->xSize, TOPBAR_HEIGHT+8+image_missionmenu_icons[0]->ySize);
+    }
+
+    if (!badge_conf.agent_present) {
+        // Agent is currently on a mission.
+        // Put an X over the mission-doing icon
+        uint16_t x=0+image_missionmenu_icons[0]->xSize+5;
+        Graphics_drawLine(&ui_gr_context_landscape, x, TOPBAR_HEIGHT+8, x+image_missionmenu_icons[1]->xSize, TOPBAR_HEIGHT+8+image_missionmenu_icons[1]->ySize);
+    }
 }
 
 void ui_draw_missions() {

@@ -141,20 +141,6 @@ typedef enum QC16_ADCBuf0ChannelName {
 } QC16_ADCBuf0ChannelName;
 
 /*!
- *  @def    QC16_ADCName
- *  @brief  Enum of ADCs
- */
-typedef enum QC16_ADCName {
-    QC16_ADC_VBAT = 0,
-    QC16_ADC_LIGHT,
-    QC16_ADCDCOUPL,
-    QC16_ADCVSS,
-    QC16_ADCVDDS,
-
-    QC16_ADCCOUNT
-} QC16_ADCName;
-
-/*!
  *  @def    QC16_GPIOName
  *  @brief  Enum of GPIO names
  */
@@ -217,23 +203,6 @@ typedef enum QC16_NVSName {
 
     QC16_NVSCOUNT
 } QC16_NVSName;
-
-/*!
- *  @def    QC16_PWM
- *  @brief  Enum of PWM outputs
- */
-typedef enum QC16_PWMName {
-    QC16_PWM0 = 0,
-    QC16_PWM1,
-    QC16_PWM2,
-    QC16_PWM3,
-    QC16_PWM4,
-    QC16_PWM5,
-    QC16_PWM6,
-    QC16_PWM7,
-
-    QC16_PWMCOUNT
-} QC16_PWMName;
 
 /*!
  *  @def    QC16_SPIName

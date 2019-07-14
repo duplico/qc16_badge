@@ -154,14 +154,15 @@ void serial_timeout() {
         // This will either return gibberish (if we're unplugged),
         //  or it will time out after PTX_TIME_MS ms.
         UART_read(uart, &i, 1);
-        // Also, since this is now the TX mode, we need to send a HELO.
-        serial_send_helo(uart);
+        // NB: The next timeout, once we're pinned, will take care of the HELO.
         break;
     case SERIAL_LL_STATE_NC_PTX:
         // Pin us in PTX mode if we're plugged into a PRX device.
         if (PIN_getInputValue(QC16_PIN_SERIAL_DIO2_PRX)) {
             // Don't timeout.
             serial_ll_next_timeout = Clock_getTicks() + (PTX_TIME_MS * 100);
+            // Re-send our HELO:
+            serial_send_helo(uart);
             break;
         }
         // Switch UART TX/RX and change timeout.

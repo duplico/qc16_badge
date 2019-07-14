@@ -61,72 +61,6 @@ const ADCBuf_Config ADCBuf_config[QC16_ADCBUFCOUNT] = {
 const uint_least8_t ADCBuf_count = QC16_ADCBUFCOUNT;
 
 /*
- *  =============================== ADC ===============================
- */
-#include <ti/drivers/ADC.h>
-#include <ti/drivers/adc/ADCCC26XX.h>
-
-ADCCC26XX_Object adcCC26xxObjects[QC16_ADCCOUNT];
-
-const ADCCC26XX_HWAttrs adcCC26xxHWAttrs[QC16_ADCCOUNT] = {
-    {
-        .adcDIO              = VBAT_IO_ANALOG,
-        .adcCompBInput       = ADC_COMPB_IN_AUXIO7,
-        .refSource           = ADCCC26XX_FIXED_REFERENCE,
-        .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
-        .inputScalingEnabled = true,
-        .triggerSource       = ADCCC26XX_TRIGGER_MANUAL,
-        .returnAdjustedVal   = false
-    },
-    {
-        .adcDIO              = LIGHT_IO_ANALOG,
-        .adcCompBInput       = ADC_COMPB_IN_AUXIO0,
-        .refSource           = ADCCC26XX_FIXED_REFERENCE,
-        .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
-        .inputScalingEnabled = true,
-        .triggerSource       = ADCCC26XX_TRIGGER_MANUAL,
-        .returnAdjustedVal   = false
-    },
-    {
-        .adcDIO              = PIN_UNASSIGNED,
-        .adcCompBInput       = ADC_COMPB_IN_DCOUPL,
-        .refSource           = ADCCC26XX_FIXED_REFERENCE,
-        .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
-        .inputScalingEnabled = true,
-        .triggerSource       = ADCCC26XX_TRIGGER_MANUAL,
-        .returnAdjustedVal   = false
-    },
-    {
-        .adcDIO              = PIN_UNASSIGNED,
-        .adcCompBInput       = ADC_COMPB_IN_VSS,
-        .refSource           = ADCCC26XX_FIXED_REFERENCE,
-        .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
-        .inputScalingEnabled = true,
-        .triggerSource       = ADCCC26XX_TRIGGER_MANUAL,
-        .returnAdjustedVal   = false
-    },
-    {
-        .adcDIO              = PIN_UNASSIGNED,
-        .adcCompBInput       = ADC_COMPB_IN_VDDS,
-        .refSource           = ADCCC26XX_FIXED_REFERENCE,
-        .samplingDuration    = ADCCC26XX_SAMPLING_DURATION_2P7_US,
-        .inputScalingEnabled = true,
-        .triggerSource       = ADCCC26XX_TRIGGER_MANUAL,
-        .returnAdjustedVal   = false
-    }
-};
-
-const ADC_Config ADC_config[QC16_ADCCOUNT] = {
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC_VBAT], &adcCC26xxHWAttrs[QC16_ADC_VBAT]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADC_LIGHT], &adcCC26xxHWAttrs[QC16_ADC_LIGHT]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADCDCOUPL], &adcCC26xxHWAttrs[QC16_ADCDCOUPL]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADCVSS], &adcCC26xxHWAttrs[QC16_ADCVSS]},
-    {&ADCCC26XX_fxnTable, &adcCC26xxObjects[QC16_ADCVDDS], &adcCC26xxHWAttrs[QC16_ADCVDDS]},
-};
-
-const uint_least8_t ADC_count = QC16_ADCCOUNT;
-
-/*
  *  =============================== PIN ===============================
  */
 #include <ti/drivers/PIN.h>
@@ -362,39 +296,6 @@ const PowerCC26XX_Config PowerCC26XX_config = {
 #endif
 #endif
 };
-
-/*
- *  =============================== PWM ===============================
- *  Remove unused entries to reduce flash usage both in Board.c and Board.h
- */
-#include <ti/drivers/PWM.h>
-#include <ti/drivers/pwm/PWMTimerCC26XX.h>
-
-PWMTimerCC26XX_Object pwmtimerCC26xxObjects[QC16_PWMCOUNT];
-
-const PWMTimerCC26XX_HwAttrs pwmtimerCC26xxHWAttrs[QC16_PWMCOUNT] = {
-    { .pwmPin = QC16_PWMPIN0, .gpTimerUnit = QC16_GPTIMER0A },
-    { .pwmPin = QC16_PWMPIN1, .gpTimerUnit = QC16_GPTIMER0B },
-    { .pwmPin = QC16_PWMPIN2, .gpTimerUnit = QC16_GPTIMER1A },
-    { .pwmPin = QC16_PWMPIN3, .gpTimerUnit = QC16_GPTIMER1B },
-    { .pwmPin = QC16_PWMPIN4, .gpTimerUnit = QC16_GPTIMER2A },
-    { .pwmPin = QC16_PWMPIN5, .gpTimerUnit = QC16_GPTIMER2B },
-    { .pwmPin = QC16_PWMPIN6, .gpTimerUnit = QC16_GPTIMER3A },
-    { .pwmPin = QC16_PWMPIN7, .gpTimerUnit = QC16_GPTIMER3B },
-};
-
-const PWM_Config PWM_config[QC16_PWMCOUNT] = {
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM0], &pwmtimerCC26xxHWAttrs[QC16_PWM0] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM1], &pwmtimerCC26xxHWAttrs[QC16_PWM1] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM2], &pwmtimerCC26xxHWAttrs[QC16_PWM2] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM3], &pwmtimerCC26xxHWAttrs[QC16_PWM3] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM4], &pwmtimerCC26xxHWAttrs[QC16_PWM4] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM5], &pwmtimerCC26xxHWAttrs[QC16_PWM5] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM6], &pwmtimerCC26xxHWAttrs[QC16_PWM6] },
-    { &PWMTimerCC26XX_fxnTable, &pwmtimerCC26xxObjects[QC16_PWM7], &pwmtimerCC26xxHWAttrs[QC16_PWM7] },
-};
-
-const uint_least8_t PWM_count = QC16_PWMCOUNT;
 
 /*
  *  =============================== RF Driver ===============================

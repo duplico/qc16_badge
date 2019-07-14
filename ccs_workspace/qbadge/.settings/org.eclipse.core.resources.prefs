@@ -1,6 +1,4 @@
 eclipse.preferences.version=1
-encoding//MultiMode_FlashOnly/Application/subdir_rules.mk=UTF-8
-encoding//MultiMode_FlashOnly/Application/subdir_vars.mk=UTF-8
 encoding//MultiMode_FlashOnly/HAL/Common/subdir_rules.mk=UTF-8
 encoding//MultiMode_FlashOnly/HAL/Common/subdir_vars.mk=UTF-8
 encoding//MultiMode_FlashOnly/Stack/subdir_rules.mk=UTF-8
@@ -11,6 +9,8 @@ encoding//MultiMode_FlashOnly/TOOLS/src/sysbios/subdir_rules.mk=UTF-8
 encoding//MultiMode_FlashOnly/TOOLS/src/sysbios/subdir_vars.mk=UTF-8
 encoding//MultiMode_FlashOnly/TOOLS/subdir_rules.mk=UTF-8
 encoding//MultiMode_FlashOnly/TOOLS/subdir_vars.mk=UTF-8
+encoding//MultiMode_FlashOnly/ble/subdir_rules.mk=UTF-8
+encoding//MultiMode_FlashOnly/ble/subdir_vars.mk=UTF-8
 encoding//MultiMode_FlashOnly/extrafonts/fonts/subdir_rules.mk=UTF-8
 encoding//MultiMode_FlashOnly/extrafonts/fonts/subdir_vars.mk=UTF-8
 encoding//MultiMode_FlashOnly/makefile=UTF-8

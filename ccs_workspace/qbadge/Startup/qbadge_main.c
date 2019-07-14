@@ -18,9 +18,6 @@
 #include <hal_assert.h>
 #include <bcomdef.h>
 
-#include "uble_bcast_scan.h"
-
-/* Header files required to enable instruction fetch cache */
 #include <inc/hw_memmap.h>
 #include <driverlib/vims.h>
 #include <queercon_drivers/qbadge_serial.h>
@@ -30,6 +27,7 @@
 #include "qbadge.h"
 #include <qc16.h>
 #include <badge.h>
+#include <ble/uble_bcast_scan.h>
 
 #include "ui/ui.h"
 #include "ui/leds.h"

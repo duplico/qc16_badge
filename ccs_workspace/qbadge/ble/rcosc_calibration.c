@@ -56,8 +56,8 @@
 
 #include "hci.h"
 
-#include "util.h"
-#include "rcosc_calibration.h"
+#include <ble/util.h>
+#include <ble/rcosc_calibration.h>
 
 /*********************************************************************
  * LOCAL VARIABLES

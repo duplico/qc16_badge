@@ -179,7 +179,7 @@ void init_serial() {
         //  DIO1_PTX and DIO2_PRX are asserted (and we have those
         //  set as inputs with pull-down resistors)
         my_conf.active = 0;
-    } else {
+    } else if (my_conf.badge_id != CBADGE_ID_UNASSIGNED) {
         // We are under our own power.
         if (!my_conf.activated) {
             my_conf.activated = 1;

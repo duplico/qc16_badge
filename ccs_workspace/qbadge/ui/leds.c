@@ -15,8 +15,10 @@
 
 #include <qc16.h>
 #include <badge.h>
+#include <qbadge.h>
 #include "queercon_drivers/ht16d35b.h"
-#include "ui/leds.h"
+#include <ui/leds.h>
+#include <ui/adc.h>
 
 led_tail_anim_t led_tail_anim_current = {
     .type=LED_TAIL_ANIM_TYPE_CYCLE,
@@ -42,6 +44,23 @@ const uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT] = {
     3,  //    LED_TAIL_ANIM_TYPE_BUBBLE,
     1,  //    LED_TAIL_ANIM_TYPE_FLASH,
     1,  //    LED_TAIL_ANIM_TYPE_FIRE,
+};
+
+const uint16_t BRIGHTNESS_STEPS[LED_NUM_BRIGHTNESS_STEPS][2] = {
+    {600, 1},
+    {700, 5},
+    {800, 10},
+    {900, 15},
+    {1000, 20},
+    {1100, 25},
+    {1200, 30},
+    {1300, 35},
+    {1400, 40},
+    {1500, 45},
+    {1600, 50},
+    {1700, 55},
+    {1800, 60},
+    {1900, 63},
 };
 
 rgbcolor16_t led_tail_src[6];
@@ -241,6 +260,19 @@ void led_element_light() {
     ht16d_put_color(24+(1+(uint8_t)badge_conf.element_selected)%3, 1, &led_fn_colors[(uint8_t)badge_conf.element_selected]);
 }
 
+void led_adjust_brightness() {
+    ht16d_set_global_brightness(BRIGHTNESS_STEPS[brightness][1]);
+    if (brightness < BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH) {
+        // Dim enough that we want to turn on the sidelights.
+        // TODO: Turn them on
+        // TODO: Unless we're animating them
+    } else {
+        // Bright enough that we want to turn off the sidelights.
+        // TODO: Turn them off
+        // TODO: Unless we're animating them
+    }
+}
+
 void led_task_fn(UArg a0, UArg a1) {
     UInt events;
     led_event_h = Event_create(NULL, NULL);
@@ -270,6 +302,10 @@ void led_task_fn(UArg a0, UArg a1) {
 
         if (events & LED_EVENT_FN_LIGHT) {
             led_element_light();
+        }
+
+        if (events & LED_EVENT_BRIGHTNESS) {
+            led_adjust_brightness();
         }
     }
 }

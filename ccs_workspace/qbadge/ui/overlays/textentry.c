@@ -109,7 +109,7 @@ void ui_textentry_draw() {
     Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_WHITE);
 
     Graphics_drawString(&ui_gr_context_landscape, textentry_buf[textentry_cursor] ? (int8_t *) &textentry_buf[textentry_cursor] : " ", 1, txt_left +
-            Graphics_getStringWidth(&ui_gr_context_landscape, textentry_buf, textentry_cursor), txt_top, 1);
+            Graphics_getStringWidth(&ui_gr_context_landscape, (const int8_t *) textentry_buf, textentry_cursor), txt_top, 1);
 
     Graphics_setBackgroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_WHITE);
     Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);

@@ -14,8 +14,9 @@
 // App-level configuration elements:
 #define UI_AUTOREFRESH_TIMEOUT 6000000
 #define UI_CLOCK_MS 15
-#define LED_BRIGHTNESS_INTERVAL 12500 // TODO: rename
+#define ADC_INTERVAL 12500 // TODO: rename
 #define UI_TEXT_FONT g_sFontCmss16
+#define BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH 5
 
 // Hardware/driver-level configuration:
 

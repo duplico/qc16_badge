@@ -119,8 +119,6 @@ void ui_draw_screensaver() {
     Graphics_drawLineH(&ui_gr_context_portrait, 0, 128, UI_IDLE_PHOTO_TOP-2);
     Graphics_drawLineH(&ui_gr_context_portrait, 0, 128, UI_IDLE_PHOTO_TOP-1);
 
-//    qc16gr_drawImage(&ui_gr_context_portrait, &img_city, 0, UI_IDLE_PHOTO_TOP);
-
     char pathname[SPIFFS_OBJ_NAME_LEN] = "/photos/";
     strcpy(&pathname[8], badge_conf.current_photo);
     qc16gr_drawImageFromFile(&ui_gr_context_portrait, pathname, 0, UI_IDLE_PHOTO_TOP);

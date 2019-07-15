@@ -234,6 +234,11 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
 
     uint8_t *image;
 
+    uint32_t img_size = 0;
+    spiffs_stat stat;
+    SPIFFS_stat(&fs, pathname, &stat);
+    img_size = stat.size - sizeof(Graphics_Image);
+
     spiffs_file fd;
     fd = SPIFFS_open(&fs, pathname, SPIFFS_O_RDONLY, 0);
     // TODO: assert lengths
@@ -366,14 +371,14 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
             y++;
         }
         free(image);
-    }
-    else
-    {
-        //
+    } else {
+        // TODO:
+#define RLE_BATCH_READ_SIZE 38
         // The image is compressed with RLE4, RLE7 or RLE8 Algorithm
-        //
+        image = malloc(RLE_BATCH_READ_SIZE);
+        uint8_t read_len = 0;
+        uint8_t img_index = read_len;
 
-        uint8_t img_byte;
         uint8_t ucRunLength, rleType;
         uint16_t uiColor;
 
@@ -384,28 +389,36 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
         uint16_t y_offset = 0;
 
         do {
-            SPIFFS_read(&fs, fd, &img_byte, 1);
+            if (img_index == read_len) {
+                if (img_size < RLE_BATCH_READ_SIZE) {
+                    read_len = img_size;
+                } else {
+                    read_len = RLE_BATCH_READ_SIZE;
+                }
+                img_index = 0;
+                SPIFFS_read(&fs, fd, &image, read_len);
+            }
+
             if(rleType == 8)   // RLE 8 bit encoding
             {
                 // Read Run Length
-                ucRunLength = img_byte;
+                ucRunLength = image[img_index++];
                 // Read Color
-                SPIFFS_read(&fs, fd, &img_byte, 1);
-                uiColor = img_byte;
+                uiColor = image[img_index++];
             }
             else if(rleType == 7)     // RLE 7 bit encoding
             {
                 // Read Run Length
-                ucRunLength = img_byte >> 1;
+                ucRunLength = image[img_index] >> 1;
                 // Read Color Pointer
-                uiColor = img_byte & 0x01;
+                uiColor = image[img_index++] & 0x01;
             }
             else  // rleType = 4; RLE 4 bit encoding
             {
                 // Read Run Length
-                ucRunLength = img_byte >> 4;
+                ucRunLength = image[img_index] >> 4;
                 // Read Color Pointer
-                uiColor = img_byte & 0x0F;
+                uiColor = image[img_index++] & 0x0F;
             }
             uiColor = (uint16_t) palette[uiColor];
 
@@ -428,6 +441,7 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
             }
 
         } while (y_offset < height);
+        free(image);
     }
     SPIFFS_close(&fs, fd);
 }

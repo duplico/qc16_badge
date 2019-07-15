@@ -117,7 +117,7 @@ uint8 advertData[30] =
    0x00, // SPARE
    0x00, // SPARE
    0x00, // CHECK // .28
-   0x00, // CHECK // .39
+   0x00, // CHECK // .29
 };
 
 typedef struct {

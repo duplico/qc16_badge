@@ -264,7 +264,6 @@ void ui_task_fn(UArg a0, UArg a1) {
     init_config();
 
     ui_transition(UI_SCREEN_MAINMENU);
-    uint8_t brightness = 0x10;
 
     while (1) {
         events = Event_pend(ui_event_h, Event_Id_NONE, ~Event_Id_NONE,  UI_AUTOREFRESH_TIMEOUT);

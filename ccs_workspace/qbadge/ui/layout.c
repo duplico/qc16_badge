@@ -66,8 +66,6 @@ void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capaci
     }
     Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
 
-    // TODO: handle >999
-    //       like: 1k, 2k, 3k...
     char amt[4];
     if (number < 999) {
         sprintf(amt, "%d", number);
@@ -89,13 +87,26 @@ void ui_draw_top_bar_local_element_icons() {
     }
 }
 
+/// Draw the agent-present, handler-available, and radar icons.
 void ui_draw_top_bar_qbadge_headsup_icons() {
-    // TODO: consider making this a global or heap var that we share everywhere.
     Graphics_Rectangle rect;
 
-    char cnt[5]; // TODO
+    // TODO: The following, but properly:
+    //  We need a part-height agent icon, with a progress bar or countdown
+    //          a handler icon, with name
+    //          a radar icon, with count
+//    // TODO: Let's say I've got 128 px to do this in.
+//
+//    uint16_t x_offset = 0;
+//
+//    // First, agent present:
+//    if (badge_conf.agent_present) {
+//
+//    }
+//
+//
 
-    // TODO: Add a pad here, explicitly:
+    char cnt[5]; // TODO: wat? account for proper length? lol.
 
     for (uint8_t i=0; i<3; i++) {
         uint16_t icon_x = TOPBAR_HEADSUP_START + i*TOPBAR_SEG_WIDTH_PADDED;
@@ -110,14 +121,13 @@ void ui_draw_top_bar_qbadge_headsup_icons() {
             icon_img = &img_agent;
             if (!badge_conf.agent_present) {
                 fade = 1;
-                // TODO: progress bar for returning...?
             }
             break;
         case 1: // handlers
             icon_img = &img_handler;
-            // TODO: count:
-            // TODO: are any here?
-            fade = 1;
+            if (!mission_possible()) {
+                fade = 1;
+            }
             break;
         case 2: // scan
             icon_img = &img_radar;

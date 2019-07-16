@@ -144,7 +144,7 @@ mission_t generate_mission() {
     } else if (badge_conf.vhandler_present) {
         // TODO: constant config for this timing:
         // 10-20 minutes
-        badge_conf.vhandler_return_time = Seconds_get() + 600 + rand() % 600;
+        badge_conf.vhandler_return_time = Seconds_get() + 10 + rand() % 20;
         badge_conf.vhandler_present = 0;
         // The vhandler always hands out a primary element of qtype.
         new_mission.element_types[0] = (element_type) (rand() % 3);

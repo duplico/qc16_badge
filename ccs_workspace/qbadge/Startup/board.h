@@ -50,7 +50,7 @@ extern const PIN_Config qc16_pin_init_table[];
  *      <board signal alias>                  <pin mapping>
  */
 
-// ADC - analog outputs
+// ADC - analog inputs
 #define VBAT_IO_ANALOG  IOID_23
 #define LIGHT_IO_ANALOG IOID_30
 

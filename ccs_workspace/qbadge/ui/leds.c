@@ -47,20 +47,12 @@ const uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT] = {
 };
 
 const uint16_t BRIGHTNESS_STEPS[LED_NUM_BRIGHTNESS_STEPS][2] = {
-    {600, 1},
-    {700, 5},
-    {800, 10},
-    {900, 15},
-    {1000, 20},
-    {1100, 25},
-    {1200, 30},
-    {1300, 35},
-    {1400, 40},
-    {1500, 45},
-    {1600, 50},
-    {1700, 55},
-    {1800, 60},
-    {1900, 63},
+    {0, 16},
+    {50, 40},
+    {55, 45},
+    {60, 50},
+    {65, 55},
+    {70, 63}, // "full brightness" (w/ bezel)
 };
 
 rgbcolor16_t led_tail_src[6];
@@ -100,6 +92,7 @@ rgbcolor16_t led_fn_colors[3] = {
 
 rgbcolor16_t led_off = {0, 0, 0};
 rgbcolor16_t led_white = {0xfff, 0xfff, 0xfff};
+rgbcolor16_t led_white_full = {0xffff, 0xffff, 0xffff};
 
 uint8_t led_tail_anim_type_is_valid(led_tail_anim_type t) {
     return t < 3;
@@ -247,6 +240,14 @@ void led_sidelight_set_color(rgbcolor16_t *color) {
     Event_post(led_event_h, LED_EVENT_FLUSH);
 }
 
+void led_sidelight_activate() {
+    led_sidelight_set_color(&led_white_full);
+}
+
+void led_sidelight_deactivate() {
+    led_sidelight_set_color(&led_off);
+}
+
 void led_element_light() {
     ht16d_put_color(24, 3, &led_off);
 
@@ -266,10 +267,12 @@ void led_adjust_brightness() {
         // Dim enough that we want to turn on the sidelights.
         // TODO: Turn them on
         // TODO: Unless we're animating them
+        led_sidelight_activate();
     } else {
         // Bright enough that we want to turn off the sidelights.
         // TODO: Turn them off
         // TODO: Unless we're animating them
+        led_sidelight_deactivate();
     }
 }
 
@@ -306,6 +309,14 @@ void led_task_fn(UArg a0, UArg a1) {
 
         if (events & LED_EVENT_BRIGHTNESS) {
             led_adjust_brightness();
+        }
+
+        if (events & LED_EVENT_SIDE_ON) {
+            led_sidelight_activate();
+        }
+
+        if (events & LED_EVENT_SIDE_ON) {
+            led_sidelight_deactivate();
         }
     }
 }

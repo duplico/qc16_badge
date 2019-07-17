@@ -20,7 +20,7 @@
 
 uint16_t vbat_raw;
 uint16_t brightness_raw;
-uint8_t brightness = 0x10;
+uint8_t brightness = 0;
 Clock_Handle adc_clock_h;
 
 ADCBuf_Handle adc_buf_h;
@@ -48,8 +48,10 @@ void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
             else
                 brightness--;
 
+            // TODO: pin it for a while if we're at a brightness level where our sidelights are on.
+
             // TODO: Event flag to the LED system
-            if (brightness == LED_NUM_BRIGHTNESS_STEPS - 1) {
+            if (brightness_raw > 3000) {
                 // TODO: unlock something for it being very bright.
             }
 
@@ -81,6 +83,7 @@ void adc_timer_fn(UArg a0)
         next_conversion.sampleBuffer = &vbat_raw;
         next_conversion.samplesRequestedCount = 1;
         curr_channel = ADCBUF_CH_LIGHT;
+        ht16d_put_color(12, 12, &led_off);
     }
 
     res = ADCBuf_convert(adc_buf_h, &next_conversion, 1);

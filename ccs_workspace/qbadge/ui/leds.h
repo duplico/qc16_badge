@@ -18,6 +18,8 @@
 #define LED_EVENT_TAIL_STEP     Event_Id_04
 #define LED_EVENT_FN_LIGHT      Event_Id_05
 #define LED_EVENT_FN_STEP       Event_Id_06
+#define LED_EVENT_SIDE_ON       Event_Id_07
+#define LED_EVENT_SIDE_OFF      Event_Id_08
 
 typedef enum {
     LED_TAIL_ANIM_TYPE_OFF = 0,
@@ -57,7 +59,7 @@ typedef struct {
     int_fast16_t b;
 } rgbdelta_t;
 
-#define LED_NUM_BRIGHTNESS_STEPS 14
+#define LED_NUM_BRIGHTNESS_STEPS 6
 
 extern Event_Handle led_event_h;
 extern led_tail_anim_t led_tail_anim_current;

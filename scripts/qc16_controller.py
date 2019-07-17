@@ -78,7 +78,7 @@ def connect_poll(ser):
         return False
     return True
 
-def disconnect():
+def disconnect(ser):
     send_message(ser, SERIAL_OPCODE_DISCON)
 
 def main():
@@ -88,10 +88,6 @@ def main():
     #   Send image
     #   Send animation
     #   Set handle (cbadge only)
-
-    # parser.add_argument('--name', '-n', default='', help="What to name the image.")
-    # parser.add_argument('--show', '-s', default=False, action='store_true')
-    # parser.add_argument('--landscape', '-l', default=False, action='store_true')
     
     parser.add_argument('--timeout', '-t', default=1, type=int, help="Connection timeout in seconds.")
 
@@ -107,7 +103,7 @@ def main():
     # Send the message requested by the user
 
     # Send DC signal
-    disconnect()
+    disconnect(ser)
 
     # Exit
 

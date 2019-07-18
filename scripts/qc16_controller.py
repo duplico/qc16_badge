@@ -6,9 +6,11 @@ import argparse
 
 import serial
 
+from image_reformer import QcImage
+
 HEADER_FMT_NOCRCs   = '<BBHH'
 CRC_FMT = '<H'
-IMG_META_FMT = '<xBHHHII'
+IMG_META_FMT = '<BxHHHII'
 
 SERIAL_OPCODE_HELO=0x01
 SERIAL_OPCODE_ACK=0x02
@@ -53,6 +55,10 @@ def validate_header(header):
         raise ValueError()
     # TODO: Additional validation
 
+def await_ack(ser):
+    resp = ser.read(11)
+    validate_header(resp)
+
 def send_message(ser, opcode, payload=b'', src_id=CONTROLLER_ID, dst_id=SERIAL_ID_ANY):
     msg = struct.pack(HEADER_FMT_NOCRCs, opcode, len(payload), src_id, dst_id)
     msg += struct.pack(CRC_FMT, crc16_buf(payload) if payload else 0x00) # No payload.
@@ -67,8 +73,7 @@ def connect(ser):
     Raises all errors that `validate_header` can raise.
     """
     send_message(ser, SERIAL_OPCODE_HELO)
-    resp = ser.read(11)
-    validate_header(resp)
+    await_ack(ser)
 
 def connect_poll(ser):
     """Attempt to connect to a badge, returning True if successful and False on timeout."""
@@ -81,26 +86,91 @@ def connect_poll(ser):
 def disconnect(ser):
     send_message(ser, SERIAL_OPCODE_DISCON)
 
+def send_qcimage(ser, image, payload_len=256):
+    curr_start = 0 # Inclusive
+    curr_end = curr_start + payload_len # Exclusive
+    txbuf = b''
+    img_header = struct.pack(IMG_META_FMT, image.compression_type_number, image.width, image.height, 2, 0, 0)
+
+    # Send the name in a PUTFILE
+    name = bytes(image.name) + b'\x00' # Add the required null term
+    send_message(ser, SERIAL_OPCODE_PUTFILE, payload=name)
+
+    # Wait for an ACK
+    await_ack(ser)
+
+    # Put the image header in the txbuf
+    txbuf += img_header
+    #  Adjust curr_end
+    curr_end -= len(txbuf)
+
+    while True:
+        if curr_start == len(image.bytes):
+            break
+
+        if curr_end > len(image.bytes):
+            curr_end = len(image.bytes)
+
+        txbuf += image.bytes[curr_start:curr_end]
+
+        # TODO: The following retry approach requires a seqnum
+        # tries = 3
+        # while tries:
+        #     try:
+        #         send_message(ser, SERIAL_OPCODE_APPFILE, payload=txbuf)
+        #         await_ack(ser)
+        #         break
+        #     except TimeoutError:
+        #         if tries:
+        #             print(tries)
+        #             tries-=1
+        #         else:
+        #             raise
+        
+        # Just crash if we miss an ACK:
+        send_message(ser, SERIAL_OPCODE_APPFILE, payload=txbuf)
+        await_ack(ser)
+
+        curr_start = curr_end
+        curr_end = curr_start + payload_len
+        txbuf = b''
+    
+    # Now that we're down here, it means that we finished sending the file.
+    send_message(ser, SERIAL_OPCODE_ENDFILE)
+    await_ack(ser)
+
 def main():
     parser = argparse.ArgumentParser(prog='qc16_controller.py')
+
+    parser.add_argument('--timeout', '-t', default=1, type=int, help="Connection timeout in seconds.")
+    parser.add_argument('port', help="The serial port to use for this connection.")
+    
+    cmd_parsers = parser.add_subparsers(dest='command')
+    # cmd_parsers.required = True
     # Commands:
     #   Set ID
     #   Send image
+    image_parser = cmd_parsers.add_parser('image')
+    image_parser.add_argument('--name', '-n', type=str, help="The alphanumeric filename for the image") # TODO: Validate
+    image_parser.add_argument('path', type=str, help="Path to the image to place on the badge")
+    image_parser.add_argument('--landscape', action='store_true')
     #   Send animation
     #   Set handle (cbadge only)
-    
-    parser.add_argument('--timeout', '-t', default=1, type=int, help="Connection timeout in seconds.")
+    #   Make handler
+    #   Make uber
 
-    parser.add_argument('port', help="The serial port to use for this connection.")    
+
     args = parser.parse_args()
 
     # pyserial object, with a 1 second timeout on reads.
     ser = serial.Serial(args.port, 38400, parity=serial.PARITY_NONE, timeout=args.timeout)
-
     # Make the initial LL handshake with the badge:
     connect(ser)
 
     # Send the message requested by the user
+    if args.command == 'image':
+        img = QcImage(path=args.path, name=args.name.encode('utf-8'), landscape=args.landscape)
+        send_qcimage(ser, img, payload_len=32)
 
     # Send DC signal
     disconnect(ser)

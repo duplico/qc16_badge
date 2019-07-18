@@ -14,9 +14,12 @@
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/Task.h>
 
+#include <spiffs.h>
+
 #include "board.h"
 #include <qc16_serial_common.h>
 #include <queercon_drivers/qbadge_serial.h>
+#include <queercon_drivers/storage.h>
 #include <ui/leds.h>
 
 #define SERIAL_STACKSIZE 1024
@@ -33,6 +36,8 @@ uint8_t serial_phy_mode_ptx = 0;
 uint8_t serial_ll_state;
 uint32_t serial_ll_next_timeout;
 Clock_Handle serial_timeout_clock_h;
+
+spiffs_file serial_fd;
 
 const PIN_Config serial_gpio_prx[] = {
     QC16_PIN_SERIAL_DIO1_PTX | PIN_INPUT_EN | PIN_PULLDOWN,
@@ -60,7 +65,7 @@ void serial_send_helo(UART_Handle uart) {
     UART_write(uart, (uint8_t *)(&header_out), sizeof(serial_header_t));
 }
 
-void serial_send_ack(UART_Handle uart) {
+void serial_send_ack() {
     serial_header_t header_out;
     header_out.from_id = 1;
     header_out.opcode = SERIAL_OPCODE_ACK;
@@ -114,7 +119,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         // We are expecting a HELO.
         if (header->opcode == SERIAL_OPCODE_HELO) {
             // Send an ACK, set connected.
-            serial_send_ack(uart);
+            serial_send_ack();
 
             serial_enter_c_idle();
             serial_ll_state = SERIAL_LL_STATE_C_IDLE;
@@ -128,7 +133,38 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         }
         break;
     case SERIAL_LL_STATE_C_IDLE:
+        if (header->opcode == SERIAL_OPCODE_PUTFILE) {
+            // We're putting a file!
+            // TODO: Check to see if we would be clobbering a file, and if so,
+            //       append numbers to it until we won't be.
+            // TODO: Assert that there is a null terminator in payload.
+            // TODO: Assert that it startswith '/photos/' or '/colors/' or comes from the controller.
+            // TODO: Consider writing a GETFILE
+            serial_fd = SPIFFS_open(&fs, payload, SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);
+            if (serial_fd > 0) {
+                // The open worked properly...
+                serial_ll_state = SERIAL_LL_STATE_C_FILE_RX;
+                serial_send_ack();
+            } else {
+                // TODO: Signal problem?
+            }
+        }
         break;
+    case SERIAL_LL_STATE_C_FILE_RX:
+        if (header->opcode == SERIAL_OPCODE_ENDFILE) {
+            // Save the file.
+            SPIFFS_close(&fs, serial_fd);
+            serial_send_ack();
+            serial_ll_state = SERIAL_LL_STATE_C_IDLE;
+        } else if (header->opcode == SERIAL_OPCODE_APPFILE) {
+            // TODO: Assert that payload_len is < our max len
+            if (SPIFFS_write(&fs, serial_fd, payload, header->payload_len) == header->payload_len) {
+                serial_send_ack();
+            } else {
+                // broken, go to timeout...
+                // TODO
+            }
+        }
 //    default:
     }
 }
@@ -176,7 +212,7 @@ void serial_timeout() {
                  (serial_phy_mode_ptx && !PIN_getInputValue(QC16_PIN_SERIAL_DIO2_PRX))
              || (!serial_phy_mode_ptx && !PIN_getInputValue(QC16_PIN_SERIAL_DIO1_PTX))
         ) {
-            // We just registered a disconnect signal.
+            // We just registered a PHY disconnect signal.
             serial_ll_state = SERIAL_LL_STATE_NC_PRX;
             UART_close(uart);
             serial_enter_prx();

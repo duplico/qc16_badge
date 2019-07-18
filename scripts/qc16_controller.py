@@ -172,8 +172,14 @@ def main():
         img = QcImage(path=args.path, name=args.name.encode('utf-8'), landscape=args.landscape)
         send_qcimage(ser, img, payload_len=32)
 
-    # Send DC signal
-    disconnect(ser)
+    # ID
+    # Handle
+    # Uber?
+    # Handler?
+    # Element qty, level, progress
+    # cb connected
+    # qb seen
+    # qb connected
 
     # Exit
 

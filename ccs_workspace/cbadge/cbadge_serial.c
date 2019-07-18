@@ -101,25 +101,26 @@ void serial_ll_timeout() {
 
         serial_ll_state = SERIAL_LL_STATE_NC_PRX;
         break;
-//    default:
+    default:
+        if (
+                (serial_phy_mode_ptx && !(SERIAL_DIO_IN & SERIAL_DIO2_PRX))
+                || (!serial_phy_mode_ptx && !(SERIAL_DIO_IN & SERIAL_DIO1_PTX))
+        ) {
+            // TODO: Flag a disconnection.
+            // We read connection-sense LOW, so we're unplugged.
+            serial_enter_prx();
+            serial_ll_state = SERIAL_LL_STATE_NC_PRX;
+            // TODO: send a flag to the event loop.
+        } else {
+            serial_ll_timeout_ms = SERIAL_C_DIO_POLL_MS;
+        }
+        break;
     }
 }
 
 /// Call this every 1 ms
 void serial_ll_ms_tick() {
     serial_ll_timeout_ms--;
-
-    if (serial_ll_state == SERIAL_LL_STATE_C_IDLE) {
-        if (
-                 (serial_phy_mode_ptx && !(SERIAL_DIO_IN & SERIAL_DIO2_PRX))
-             || (!serial_phy_mode_ptx && !(SERIAL_DIO_IN & SERIAL_DIO1_PTX))
-        ) {
-            // We read connection-sense LOW, so we're unplugged.
-            serial_enter_prx();
-            serial_ll_state = SERIAL_LL_STATE_NC_PRX;
-            // TODO: send a flag to the event loop.
-        }
-    }
 
     if (!serial_ll_timeout_ms) {
         serial_ll_timeout();
@@ -139,6 +140,7 @@ void serial_ll_handle_rx() {
             serial_send_start();
             // Once that completes, we'll be connected.
             serial_ll_state = SERIAL_LL_STATE_C_IDLE;
+            serial_ll_timeout_ms = SERIAL_C_DIO_POLL_MS;
             s_serial_ll = 1;
         }
         break;
@@ -146,10 +148,15 @@ void serial_ll_handle_rx() {
         // We sent a HELO when we entered this state, so we need an ACK.
         if (serial_header_in.opcode == SERIAL_OPCODE_ACK) {
             serial_ll_state = SERIAL_LL_STATE_C_IDLE;
+            serial_ll_timeout_ms = SERIAL_C_DIO_POLL_MS;
             s_serial_ll = 1;
         }
         break;
     case SERIAL_LL_STATE_C_IDLE:
+        serial_ll_timeout_ms = SERIAL_C_DIO_POLL_MS;
+        if (serial_header_in.opcode == SERIAL_OPCODE_DISCON) {
+            // TODO: Flag a disconnection.
+        }
         break;
     }
 }

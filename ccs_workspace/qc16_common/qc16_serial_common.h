@@ -4,9 +4,9 @@
 #include <stdint.h>
 
 // Configuration
-// TODO: it appears we need to up the bitrate?
-#define PTX_TIME_MS 100 // TODO: shorten?
+#define PTX_TIME_MS 100
 #define PRX_TIME_MS 1000
+#define SERIAL_C_DIO_POLL_MS 10
 
 // Serial protocol details
 #define QC16_CRC_SEED 0xB68F

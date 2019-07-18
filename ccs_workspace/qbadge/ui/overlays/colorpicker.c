@@ -134,22 +134,22 @@ void ui_colorpicking_colorbutton() {
 
     // If the button we pressed corresponds to
     switch(kb_active_key_masked) {
-    case BTN_RED:
+    case KB_RED:
         color_index = 0;
         break;
-    case BTN_ORG:
+    case KB_ORG:
         color_index = 1;
         break;
-    case BTN_YEL:
+    case KB_YEL:
         color_index = 2;
         break;
-    case BTN_GRN:
+    case KB_GRN:
         color_index = 3;
         break;
-    case BTN_BLU:
+    case KB_BLU:
         color_index = 4;
         break;
-    case BTN_PUR:
+    case KB_PUR:
         color_index = 5;
         break;
     }
@@ -184,19 +184,19 @@ void ui_colorpicking_do(UInt events) {
             // Animation selection is highlighted
 
             switch(kb_active_key_masked) {
-            case BTN_RIGHT:
+            case KB_RIGHT:
                 led_tail_anim_type_next();
                 ui_colorpicker_cursor_pos = 0;
                 Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
-            case BTN_LEFT:
+            case KB_LEFT:
                 led_tail_anim_type_prev();
                 ui_colorpicker_cursor_pos = 0;
                 Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
-            case BTN_DOWN:
+            case KB_DOWN:
                 if (led_tail_anim_color_counts[led_tail_anim_current.type]) {
                     ui_colorpicker_cursor_anim = 0;
                     Event_post(ui_event_h, UI_EVENT_REFRESH);
@@ -209,29 +209,29 @@ void ui_colorpicking_do(UInt events) {
 
             switch(kb_active_key_masked) {
 
-            case BTN_RED:
-            case BTN_ORG:
-            case BTN_YEL:
-            case BTN_GRN:
-            case BTN_BLU:
-            case BTN_PUR:
+            case KB_RED:
+            case KB_ORG:
+            case KB_YEL:
+            case KB_GRN:
+            case KB_BLU:
+            case KB_PUR:
                 // Any color button:
                 ui_colorpicking_colorbutton();
                 break;
-            case BTN_RIGHT:
+            case KB_RIGHT:
                 if (ui_colorpicker_cursor_pos == led_tail_anim_color_counts[led_tail_anim_current.type])
                     ui_colorpicker_cursor_pos = 0;
                 else
                     ui_colorpicker_cursor_pos++; // TODO: this can overrun if max==1
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
-            case BTN_LEFT:
+            case KB_LEFT:
                 if (ui_colorpicker_cursor_pos == 0)
                     ui_colorpicker_cursor_pos = led_tail_anim_color_counts[led_tail_anim_current.type];
                 ui_colorpicker_cursor_pos--; // TODO: this can overrun if max==1
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
-            case BTN_UP:
+            case KB_UP:
                 ui_colorpicker_cursor_anim = 1;
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
@@ -240,16 +240,16 @@ void ui_colorpicking_do(UInt events) {
 
         // Universal ones:
         switch(kb_active_key_masked) {
-        case BTN_BACK:
+        case KB_BACK:
             ui_colorpicking_unload();
             break;
-        case BTN_F1_LOCK:
+        case KB_F1_LOCK:
             break;
-        case BTN_F2_COIN:
+        case KB_F2_COIN:
             break;
-        case BTN_F3_CAMERA:
+        case KB_F3_CAMERA:
             break;
-        case BTN_OK:
+        case KB_OK:
             break;
         }
         // TODO:

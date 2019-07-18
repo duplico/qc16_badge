@@ -129,7 +129,7 @@ void ui_missions_do(UInt events) {
     }
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
-        case BTN_OK:
+        case KB_OK:
             if (mission_picking) {
                 // TODO: don't allow it to be done on a mission currently being run.
                 mission_picking = 0;

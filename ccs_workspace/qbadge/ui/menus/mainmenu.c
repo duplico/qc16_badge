@@ -61,7 +61,7 @@ void ui_mainmenu_do(UInt events) {
 
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
-        case BTN_OK:
+        case KB_OK:
             switch(ui_x_cursor) {
             case 0:
                 ui_transition(UI_SCREEN_INFO);

@@ -14,6 +14,7 @@
 #include <third_party/spiffs/spiffs.h>
 
 #include <qc16.h>
+#include <qbadge.h>
 
 #include "queercon_drivers/storage.h"
 #include <ui/graphics.h>
@@ -142,20 +143,16 @@ mission_t generate_mission() {
             new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
         }
     } else if (badge_conf.vhandler_present) {
-        // TODO: constant config for this timing:
-        // 10-20 minutes
-        badge_conf.vhandler_return_time = Seconds_get() + 10 + rand() % 20;
+        badge_conf.vhandler_return_time = Seconds_get() + VHANDLER_COOLDOWN_MIN_SECONDS + rand() % (VHANDLER_COOLDOWN_MAX_SECONDS - VHANDLER_COOLDOWN_MIN_SECONDS);
         badge_conf.vhandler_present = 0;
         // The vhandler always hands out a primary element of qtype.
         new_mission.element_types[0] = (element_type) (rand() % 3);
 
-        // TODO: extract constant:
         // The vhandler has a max level it can assign:
-        new_mission.element_levels[0] = rand() % 3;
+        new_mission.element_levels[0] = rand() % (VHANDLER_MAX_LEVEL-1);
 
-        if (!(rand() % 3)) {
+        if (!(rand() % VHANDLER_SECOND_ELEMENT_ONE_IN)) {
             // There's a chance to assign a second element.
-            // TODO: Extract constant
             // A second element is needed. We'll assign it totally randomly.
             new_mission.element_types[1] = (element_type) (rand() % 6);
         }

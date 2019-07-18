@@ -20,8 +20,8 @@
 
 Clock_Handle kb_debounce_clock_h;
 PIN_Handle kb_pin_h;
-PIN_State btn_state;
-PIN_Config btn_row_scan[] = {
+PIN_State KB_state;
+PIN_Config KB_row_scan[] = {
     QC16_PIN_KP_ROW_1 | PIN_INPUT_EN | PIN_PULLDOWN,
     QC16_PIN_KP_ROW_2 | PIN_INPUT_EN | PIN_PULLDOWN,
     QC16_PIN_KP_ROW_3 | PIN_INPUT_EN | PIN_PULLDOWN,
@@ -34,15 +34,15 @@ PIN_Config btn_row_scan[] = {
     PIN_TERMINATE
 };
 
-uint8_t kb_active_key = BTN_NONE;
+uint8_t kb_active_key = KB_NONE;
 
 void kb_clock_swi(UArg a0) {
-    static uint8_t button_press = BTN_NONE;
-    static uint8_t button_press_prev = BTN_NONE;
+    static uint8_t button_press = KB_NONE;
+    static uint8_t button_press_prev = KB_NONE;
     static uint8_t kb_mashed;
 
     button_press_prev = button_press;
-    button_press = BTN_NONE;
+    button_press = KB_NONE;
     kb_mashed = 0;
 
     // Set all columns high.
@@ -61,7 +61,7 @@ void kb_clock_swi(UArg a0) {
 
         if (PIN_getInputValue(pin_to_read)) {
             // high => pressed
-            if (button_press & BTN_ROW_MASK) {
+            if (button_press & KB_ROW_MASK) {
                 // another row already pressed, kb is mashed.
                 // give up. a mashed keyboard helps nobody.
                 kb_mashed = 1;
@@ -81,7 +81,7 @@ void kb_clock_swi(UArg a0) {
                 PIN_setOutputValue(kb_pin_h, QC16_PIN_KP_COL_1 + c - 1, 1);
                 if (PIN_getInputValue(pin_to_read)) {
                     // If the relevant row reads high, this col,row is pressed.
-                    if (button_press & BTN_COL_MASK) {
+                    if (button_press & KB_COL_MASK) {
                         // if multiple columns are pressed already, then
                         // we have a mashing situation on our hands.
                         kb_mashed = 1;
@@ -95,34 +95,34 @@ void kb_clock_swi(UArg a0) {
 
     // If the row bits and col bits aren't BOTH populated with a value,
     //  then we got a malformed press (row without col, or col without row),
-    //  and we should force it to be BTN_NONE.
-    if (!((button_press & BTN_ROW_MASK) && (button_press & BTN_COL_MASK))) {
-        button_press = BTN_NONE;
+    //  and we should force it to be KB_NONE.
+    if (!((button_press & KB_ROW_MASK) && (button_press & KB_COL_MASK))) {
+        button_press = KB_NONE;
     }
 
     // If there is currently an active key signaled, and EITHER
     //  the keypad is mashed OR a key-release has been debounced,
     //  then that's a release!
-    if ((kb_active_key & BTN_PRESSED)
+    if ((kb_active_key & KB_PRESSED)
             && (kb_mashed || (!button_press && !button_press_prev))) {
-        kb_active_key &= ~BTN_PRESSED;
+        kb_active_key &= ~KB_PRESSED;
         Event_post(ui_event_h, UI_EVENT_KB_RELEASE);
-    } else if (!(kb_active_key & BTN_PRESSED) && button_press && button_press == button_press_prev) {
+    } else if (!(kb_active_key & KB_PRESSED) && button_press && button_press == button_press_prev) {
         // A button is pressed.
         kb_active_key = button_press;
         if (!ui_is_landscape()) {
             switch(button_press) {
-            case BTN_UP:
-                kb_active_key = BTN_RIGHT;
+            case KB_UP:
+                kb_active_key = KB_RIGHT;
                 break;
-            case BTN_DOWN:
-                kb_active_key = BTN_LEFT;
+            case KB_DOWN:
+                kb_active_key = KB_LEFT;
                 break;
-            case BTN_LEFT:
-                kb_active_key = BTN_UP;
+            case KB_LEFT:
+                kb_active_key = KB_UP;
                 break;
-            case BTN_RIGHT:
-                kb_active_key = BTN_DOWN;
+            case KB_RIGHT:
+                kb_active_key = KB_DOWN;
                 break;
             }
         } else if (!epd_upside_down) {
@@ -130,29 +130,29 @@ void kb_clock_swi(UArg a0) {
             //  so everything is backwards. Lulz.
             // TODO: fix, if we have time.
             switch(button_press) {
-            case BTN_UP:
-                kb_active_key = BTN_DOWN;
+            case KB_UP:
+                kb_active_key = KB_DOWN;
                 break;
-            case BTN_DOWN:
-                kb_active_key = BTN_UP;
+            case KB_DOWN:
+                kb_active_key = KB_UP;
                 break;
-            case BTN_LEFT:
-                kb_active_key = BTN_RIGHT;
+            case KB_LEFT:
+                kb_active_key = KB_RIGHT;
                 break;
-            case BTN_RIGHT:
-                kb_active_key = BTN_LEFT;
+            case KB_RIGHT:
+                kb_active_key = KB_LEFT;
                 break;
             }
             // We COULD adjust so that "left" is "up"
 
         }
-        kb_active_key |= BTN_PRESSED;
+        kb_active_key |= KB_PRESSED;
         Event_post(ui_event_h, UI_EVENT_KB_PRESS);
     }
 }
 
 void kb_init() {
-    kb_pin_h = PIN_open(&btn_state, btn_row_scan);
+    kb_pin_h = PIN_open(&KB_state, KB_row_scan);
 
     Clock_Params clockParams;
     Clock_Params_init(&clockParams);

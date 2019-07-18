@@ -124,21 +124,21 @@ void ui_textentry_do(UInt events) {
 
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
-        case BTN_RIGHT:
+        case KB_RIGHT:
             // right cursor
             if (textentry_cursor < strlen(textentry_buf)) {
                 textentry_cursor++;
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
             }
             break;
-        case BTN_LEFT:
+        case KB_LEFT:
             // right cursor
             if (textentry_cursor) {
                 textentry_cursor--;
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
             }
             break;
-        case BTN_DOWN:
+        case KB_DOWN:
             if (textentry_buf[textentry_cursor] < '0') {
                 // Start with A
                 textentry_buf[textentry_cursor] = 'A';
@@ -161,7 +161,7 @@ void ui_textentry_do(UInt events) {
             }
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             break;
-        case BTN_UP:
+        case KB_UP:
             if (textentry_buf[textentry_cursor] < '0') {
                 textentry_buf[textentry_cursor] = '9';
             } else if (textentry_buf[textentry_cursor] > 'a') {
@@ -181,10 +181,10 @@ void ui_textentry_do(UInt events) {
             }
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             break;
-        case BTN_BACK:
+        case KB_BACK:
             ui_textentry_unload(0);
             break;
-        case BTN_OK:
+        case KB_OK:
             ui_textentry_unload(1);
             break;
         }

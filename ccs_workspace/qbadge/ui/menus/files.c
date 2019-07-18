@@ -156,7 +156,7 @@ void ui_files_do(UInt events) {
 
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
-        case BTN_OK:
+        case KB_OK:
             if (!strncmp("/colors/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
                 // Color SAVE request
                 text = malloc(QC16_PHOTO_NAME_LEN+1);

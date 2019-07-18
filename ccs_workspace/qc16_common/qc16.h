@@ -8,6 +8,19 @@
 #ifndef QC16_H_
 #define QC16_H_
 
+#define EXP_PER_LEVEL0 1
+#define EXP_PER_LEVEL1 2
+#define EXP_PER_LEVEL2 4
+#define EXP_PER_LEVEL3 8
+#define EXP_PER_LEVEL4 16
+#define EXP_PER_LEVEL5 0
+
+#define MISSIONS_TO_LEVEL1 2
+#define MISSIONS_TO_LEVEL2 4
+#define MISSIONS_TO_LEVEL3 8
+#define MISSIONS_TO_LEVEL4 8
+#define MISSIONS_TO_LEVEL5 8
+
 #define QC16_BADGE_NAME_LEN 9
 
 #define QC16_PHOTO_NAME_LEN 16
@@ -24,7 +37,6 @@ typedef enum {
 } element_type;
 
 typedef struct {
-    // TODO: name?
     element_type element_types[2];
     uint8_t element_levels[2];
     uint8_t element_rewards[2];
@@ -42,7 +54,7 @@ typedef struct {
     uint16_t qbadges_connected_count;
     uint16_t cbadges_connected_count;
     uint32_t last_clock;
-    uint8_t clock_is_set; // TODO: Determine whether we're even doing a time virus.
+    uint8_t clock_is_set;
     uint8_t agent_present;
     uint8_t agent_mission_id;
     uint8_t vhandler_present;
@@ -72,10 +84,10 @@ typedef struct {
 #define CBADGE_QTY_PLUS4    500
 
 #define QBADGE_ID_START 0
-#define QBADGE_ID_UNASSIGNED 999 // TODO
-#define QBADGES_IN_SYSTEM 650 // TODO
+#define QBADGES_IN_SYSTEM 650
+#define QBADGE_ID_UNASSIGNED 999
 #define CBADGE_ID_START 1000
-#define CBADGES_IN_SYSTEM 1500 // TODO
+#define CBADGES_IN_SYSTEM 1550
 #define CBADGE_ID_UNASSIGNED 9999
 
 #define CONTROLLER_ID 22222

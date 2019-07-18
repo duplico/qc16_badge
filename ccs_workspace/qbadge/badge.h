@@ -30,7 +30,7 @@ extern mission_t missions[3];
 uint8_t mission_possible();
 /// Generate and return a new mission.
 mission_t generate_mission();
-void begin_mission_id(uint8_t mission_id);
+void mission_begin_by_id(uint8_t mission_id);
 /// Complete and receive rewards from a mission.
 void complete_mission(mission_t *mission);
 /// Complete and receive rewards from mission id.
@@ -40,7 +40,7 @@ uint8_t mission_qualifies(uint8_t mission_id);
 
 void load_conf();
 void write_conf();
-void init_config();
+void config_init();
 uint8_t badge_seen(uint16_t id);
 uint8_t badge_connected(uint16_t id);
 uint8_t set_badge_seen(uint16_t id, char *name);

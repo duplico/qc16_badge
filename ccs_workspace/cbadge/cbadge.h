@@ -18,9 +18,6 @@
 
 #define KEY_LVL (1000 * TICKS_PER_MS) // Should be about 1000 per ms
 
-// TODO: Persistence:
-//  Handle
-
 #define SERIAL_BUFFER_LEN 32
 // Currently ticks are about 2ms:
 // And, at 9600 baud a header takes about 7ms to send.

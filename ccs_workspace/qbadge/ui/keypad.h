@@ -8,8 +8,6 @@
 #ifndef UI_KEYPAD_H_
 #define UI_KEYPAD_H_
 
-// TODO: Rename all this to KB_
-
 #define KB_STAT_MASK   0300
 #define KB_RC_MASK     0077
 #define KB_ROW_MASK    0070

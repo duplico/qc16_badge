@@ -18,22 +18,19 @@
 
 #include <board.h>
 #include <qbadge.h>
+#include <badge.h>
+
 #include <queercon_drivers/epd.h>
 #include <queercon_drivers/ht16d35b.h>
 #include <queercon_drivers/storage.h>
-
-#include "queercon_drivers/storage.h"
-
-// TODO: Clean up these imports:
-#include "graphics.h"
-#include "images.h"
-#include "overlays/overlays.h"
-#include "menus/menus.h"
-#include "leds.h"
-#include "ui.h"
-#include "keypad.h"
-#include <badge.h>
-#include "layout.h"
+#include <ui/graphics.h>
+#include <ui/images.h>
+#include <ui/overlays/overlays.h>
+#include <ui/menus/menus.h>
+#include <ui/leds.h>
+#include <ui/ui.h>
+#include <ui/keypad.h>
+#include <ui/layout.h>
 
 Event_Handle ui_event_h;
 Graphics_Context ui_gr_context_landscape;
@@ -52,7 +49,7 @@ uint8_t ui_y_cursor = 0;
 uint8_t ui_x_max = 0;
 uint8_t ui_y_max = 0;
 
-// TODO: write draw_top_bar_remote_element_icons()
+
 
 uint8_t ui_is_landscape() {
     if (ui_colorpicking) {
@@ -124,12 +121,6 @@ void ui_draw_screensaver() {
     qc16gr_drawImageFromFile(&ui_gr_context_portrait, pathname, 0, UI_IDLE_PHOTO_TOP);
 
 
-    // TODO:
-    char timestr [10];
-    sprintf(timestr, "%d", Seconds_get());
-    Graphics_setFont(&ui_gr_context_portrait, &UI_TEXT_FONT);
-    Graphics_drawString(&ui_gr_context_portrait, (int8_t *) timestr, 10, 0, 0, 1);
-
     Graphics_flushBuffer(&ui_gr_context_portrait);
 }
 
@@ -139,7 +130,7 @@ void ui_transition(uint8_t destination) {
     }
     ui_x_cursor = 0;
     ui_y_cursor = 0;
-    // TODO: Set these correctly:
+
     switch(destination) {
     case UI_SCREEN_MAINMENU:
         ui_x_max = MAINMENU_ICON_COUNT-1;
@@ -174,12 +165,11 @@ void ui_screensaver_do(UInt events) {
     }
 }
 
-// TODO: Rewrite doc header
-/// Do basic menu system stuff, returning 1 if we should return after calling.
+/// Do basic menu system, returning 1 if we should skip the expected do function.
 uint8_t ui_menusystem_do(UInt events) {
     if (events & UI_EVENT_KB_PRESS) {
         switch(kb_active_key_masked) {
-        case BTN_BACK:
+        case KB_BACK:
             if (ui_current == UI_SCREEN_MAINMENU) {
                 ui_transition(UI_SCREEN_IDLE);
             } else if (ui_current == UI_SCREEN_MISSIONS && mission_picking) {
@@ -189,7 +179,7 @@ uint8_t ui_menusystem_do(UInt events) {
                 ui_transition(UI_SCREEN_MAINMENU);
             }
             return 1;
-        case BTN_LEFT:
+        case KB_LEFT:
             if (ui_x_cursor == 0)
                 ui_x_cursor = ui_x_max;
             else
@@ -197,7 +187,7 @@ uint8_t ui_menusystem_do(UInt events) {
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             epd_do_partial = 1;
             break;
-        case BTN_RIGHT:
+        case KB_RIGHT:
             if (ui_x_cursor == ui_x_max)
                 ui_x_cursor = 0;
             else
@@ -205,7 +195,7 @@ uint8_t ui_menusystem_do(UInt events) {
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             epd_do_partial = 1;
             break;
-        case BTN_UP:
+        case KB_UP:
             if (ui_y_cursor == 0)
                 ui_y_cursor = ui_y_max;
             else
@@ -213,7 +203,7 @@ uint8_t ui_menusystem_do(UInt events) {
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             epd_do_partial = 1;
             break;
-        case BTN_DOWN:
+        case KB_DOWN:
             if (ui_y_cursor == ui_y_max)
                 ui_y_cursor = 0;
             else
@@ -223,7 +213,7 @@ uint8_t ui_menusystem_do(UInt events) {
             break;
         }
     }
-    if (events & UI_EVENT_BATTERY_UPDATE || events & UI_EVENT_RADAR_UPDATE) {
+    if (events & UI_EVENT_HUD_UPDATE) {
         // Do a partial redraw with the new numbers:
         Event_post(ui_event_h, UI_EVENT_REFRESH);
         epd_do_partial = 1;
@@ -237,7 +227,7 @@ void ui_info_do(UInt events) {
     }
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
-        case BTN_OK:
+        case KB_OK:
             break;
         }
     }
@@ -249,7 +239,7 @@ void ui_scan_do(UInt events) {
     }
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
-        case BTN_OK:
+        case KB_OK:
             break;
         }
     }
@@ -259,7 +249,7 @@ void ui_task_fn(UArg a0, UArg a1) {
     UInt events;
 
     storage_init();
-    init_config();
+    config_init();
 
     ui_transition(UI_SCREEN_MAINMENU);
 
@@ -273,8 +263,6 @@ void ui_task_fn(UArg a0, UArg a1) {
             } else if (ui_textentry) {
                 ui_textentry_unload(0);
             } else if (ui_current == UI_SCREEN_IDLE) {
-                // TODO: don't:?
-                Event_post(ui_event_h, UI_EVENT_REFRESH);
             } else {
                 ui_transition(UI_SCREEN_IDLE);
             }
@@ -285,7 +273,7 @@ void ui_task_fn(UArg a0, UArg a1) {
         }
 
         // NB: This order is very important:
-        if (kb_active_key_masked == BTN_F4_PICKER
+        if (kb_active_key_masked == KB_F4_PICKER
                 && pop_events(&events, UI_EVENT_KB_PRESS)) {
             if (ui_colorpicking) {
                 ui_colorpicking_unload();
@@ -294,25 +282,23 @@ void ui_task_fn(UArg a0, UArg a1) {
             }
         }
 
-        // TODO: just have a flag that tracks whether we're portrait or landscape
-        if (kb_active_key_masked == BTN_ROT
-                && ui_current != UI_SCREEN_IDLE
-                && !ui_colorpicking
+        if (kb_active_key_masked == KB_ROT
+                && ui_is_landscape()
                 && pop_events(&events, UI_EVENT_KB_PRESS)) {
             // The rotate button is pressed, and we're NOT in one of the
             //  portrait modes:
             epd_flip();
             Graphics_flushBuffer(&ui_gr_context_landscape);
-        } else if (kb_active_key_masked == BTN_ROT) {
+        } else if (kb_active_key_masked == KB_ROT) {
         }
 
         // NB: We only process element changes if the agent is present,
         //     because if the agent is absent we're set in that element
         //     on a mission!
         if (events & UI_EVENT_KB_PRESS && badge_conf.agent_present
-                && (   kb_active_key_masked == BTN_F1_LOCK
-                    || kb_active_key_masked == BTN_F2_COIN
-                    || kb_active_key_masked == BTN_F3_CAMERA)) {
+                && (   kb_active_key_masked == KB_F1_LOCK
+                    || kb_active_key_masked == KB_F2_COIN
+                    || kb_active_key_masked == KB_F3_CAMERA)) {
             // NB: Below we are intentionally NOT writing the config.
             //     This isn't a super important configuration option,
             //     so we're not going to waste cycles (CPU and flash)
@@ -323,13 +309,13 @@ void ui_task_fn(UArg a0, UArg a1) {
             // Convert from a button ID to an element enum.
             element_type next_element;
             switch(kb_active_key_masked) {
-            case BTN_F1_LOCK:
+            case KB_F1_LOCK:
                 next_element = ELEMENT_LOCKS;
                 break;
-            case BTN_F2_COIN:
+            case KB_F2_COIN:
                 next_element = ELEMENT_COINS;
                 break;
-            case BTN_F3_CAMERA:
+            case KB_F3_CAMERA:
                 next_element = ELEMENT_CAMERAS;
                 break;
             }
@@ -359,9 +345,9 @@ void ui_task_fn(UArg a0, UArg a1) {
             // If neither of our "overlay" options are in use, then we follow
             //  a normal state flow:
             if (ui_current == UI_SCREEN_IDLE) {
-                if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == BTN_UP) {
-                } else if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == BTN_DOWN) {
-                } else if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == BTN_OK) {
+                if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == KB_UP) {
+                } else if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == KB_DOWN) {
+                } else if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == KB_OK) {
                     ui_transition(UI_SCREEN_MAINMENU);
                 }
                 ui_screensaver_do(events);
@@ -389,6 +375,10 @@ void ui_task_fn(UArg a0, UArg a1) {
             }
         }
     }
+}
+
+uint8_t post() {
+    return 1;
 }
 
 void ui_init() {

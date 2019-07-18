@@ -116,7 +116,6 @@ uint8_t is_cbadge(uint16_t id) {
 }
 
 uint8_t badge_type(uint16_t id) {
-    // TODO: implement
     if (is_cbadge(id))
         return BADGE_TYPE_CBADGE_NORMAL;
     if (is_qbadge(id))

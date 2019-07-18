@@ -138,12 +138,19 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             // We're putting a file!
             // Assure that there is a null terminator in payload.
             payload[header->payload_len-1] = 0;
-            // TODO: Assert that it startswith '/photos/' or '/colors/' or comes from the controller.
-            // TODO: Consider writing a GETFILE
-
+            if (strncmp("/photos/", payload, 8)
+                    && strncmp("/colors/", payload, 8)
+                    && header->from_id != CONTROLLER_ID) {
+                // If this isn't in /photos/ or /colors/,
+                //  and it's not from the controller, which is the only
+                //  thing allowed to send us other files...
+                break;
+                // ignore it. no ack.
+            }
 
             // Check to see if we would be clobbering a file, and if so,
             //   append numbers to it until we won't be.
+            // (we give up once we get to 99)
             char fname[SPIFFS_OBJ_NAME_LEN] = {0,};
             strncpy(fname, payload, header->payload_len);
 
@@ -159,7 +166,6 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
                 serial_ll_state = SERIAL_LL_STATE_C_FILE_RX;
                 serial_send_ack();
             } else {
-                // TODO: Signal problem?
             }
         }
 
@@ -178,12 +184,9 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             serial_send_ack();
             serial_ll_state = SERIAL_LL_STATE_C_IDLE;
         } else if (header->opcode == SERIAL_OPCODE_APPFILE) {
-            // TODO: Assert that payload_len is < our max len
             if (SPIFFS_write(&fs, serial_fd, payload, header->payload_len) == header->payload_len) {
                 serial_send_ack();
             } else {
-                // broken, go to timeout...
-                // TODO
             }
         }
 //    default:

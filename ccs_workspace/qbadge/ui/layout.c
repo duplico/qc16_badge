@@ -33,10 +33,15 @@
 #include <ui/layout.h>
 
 void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capacity, uint16_t number, uint16_t x, uint16_t y) {
-    // TODO: consider making this a global or heap var that we share everywhere.
+    // NB: We don't do much bounds checking, because none of the parameters
+    //     meaningfully address anything.
+
     Graphics_Rectangle rect;
-    // TODO: assert on element
-    // TODO: bounds checking
+
+    if (element >= ELEMENT_COUNT_NONE) {
+        // invalid call, trap (because something terrible may have happened)
+        while (1);
+    }
 
     uint16_t text_x = x+TOPBAR_ICON_WIDTH;
     uint16_t text_y = y+4;
@@ -73,7 +78,7 @@ void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capaci
         // <100k
         sprintf(amt, "%dk", number/1000);
     } else {
-        // TODO: lots!
+        sprintf(amt, "99k");
     }
     amt[3] = 0x00;
     Graphics_drawString(&ui_gr_context_landscape, (int8_t *)amt, 3, text_x, text_y, 0);
@@ -85,6 +90,10 @@ void ui_draw_top_bar_local_element_icons() {
         uint16_t icon_y = 0;
         ui_draw_element((element_type) i, badge_conf.element_level[i], badge_conf.element_level_max[i], badge_conf.element_qty[i], icon_x, icon_y);
     }
+}
+
+void ui_draw_top_bar_remote_element_icons() {
+
 }
 
 /// Draw the agent-present, handler-available, and radar icons.
@@ -106,7 +115,7 @@ void ui_draw_top_bar_qbadge_headsup_icons() {
 //
 //
 
-    char cnt[5]; // TODO: wat? account for proper length? lol.
+    char cnt[5];
 
     for (uint8_t i=0; i<3; i++) {
         uint16_t icon_x = TOPBAR_HEADSUP_START + i*TOPBAR_SEG_WIDTH_PADDED;
@@ -140,8 +149,6 @@ void ui_draw_top_bar_qbadge_headsup_icons() {
                     icon_x + TOPBAR_SEG_WIDTH/2,
                     TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1,
                     0);
-            // TODO: count:
-
             break;
         }
 
@@ -191,7 +198,6 @@ void ui_draw_top_bar_battery_life() {
     rect.yMax = BATTERY_ANODE1_Y0 + BATTERY_ANODE_HEIGHT;
     Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
 
-    // TODO: change this font:
     Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
     char bat_text[5] = "3.0V";
     sprintf(bat_text, "%d.%dV", vbat_out_uvolts/1000000, (vbat_out_uvolts/100000) % 10);
@@ -239,16 +245,13 @@ void ui_draw_top_bar_battery_life() {
         fillRectangle(&ui_gr_context_landscape, &rect);
     }
     if (vbat_out_uvolts/1000000 < 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 < VBAT_LOW_2DOT)) {
-        // ABOUT TO RUN OUT!!!
-        // TODO
-//        Graphics_drawString(&ui_gr_context_landscape, ":-(", 3, BATTERY_X+2, BATTERY_BODY_Y0+4, 0);
+        Graphics_drawString(&ui_gr_context_landscape, "LOW!", 4, BATTERY_X+2, BATTERY_BODY_Y0+4, 0);
 
     }
 }
 
 void ui_draw_top_bar() {
     // Draw the top bar.
-    // TODO: do we prefer this?:
     Graphics_drawLine(&ui_gr_context_landscape, 0, TOPBAR_HEIGHT, 295, TOPBAR_HEIGHT);
     Graphics_drawLine(&ui_gr_context_landscape, 0, TOPBAR_HEIGHT+1, 295, TOPBAR_HEIGHT+1);
     Graphics_Rectangle rect;

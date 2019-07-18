@@ -5,6 +5,7 @@
  *      Author: george
  */
 #include <string.h>
+#include <stdio.h>
 
 #include <xdc/runtime/Error.h>
 #include <ti/drivers/UART.h>
@@ -135,12 +136,24 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
     case SERIAL_LL_STATE_C_IDLE:
         if (header->opcode == SERIAL_OPCODE_PUTFILE) {
             // We're putting a file!
-            // TODO: Check to see if we would be clobbering a file, and if so,
-            //       append numbers to it until we won't be.
-            // TODO: Assert that there is a null terminator in payload.
+            // Assure that there is a null terminator in payload.
+            payload[header->payload_len-1] = 0;
             // TODO: Assert that it startswith '/photos/' or '/colors/' or comes from the controller.
             // TODO: Consider writing a GETFILE
-            serial_fd = SPIFFS_open(&fs, payload, SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);
+
+
+            // Check to see if we would be clobbering a file, and if so,
+            //   append numbers to it until we won't be.
+            char fname[SPIFFS_OBJ_NAME_LEN] = {0,};
+            strncpy(fname, payload, header->payload_len);
+
+            uint8_t append=1;
+            spiffs_stat stat;
+            while (!SPIFFS_stat(&fs, fname, &stat) && append < 99) {
+                sprintf(&fname[header->payload_len]-1, "%d", append++);
+            }
+
+            serial_fd = SPIFFS_open(&fs, fname, SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);
             if (serial_fd > 0) {
                 // The open worked properly...
                 serial_ll_state = SERIAL_LL_STATE_C_FILE_RX;

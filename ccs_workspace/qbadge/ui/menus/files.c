@@ -34,7 +34,7 @@
 #include <board.h>
 #include <ui/layout.h>
 
-char curr_file_name[SPIFFS_OBJ_NAME_LEN+1] = "";
+char curr_file_name[SPIFFS_OBJ_NAME_LEN+1] = {0,};
 
 #define FILE_LOAD 0
 #define FILE_DELETE 1
@@ -77,6 +77,7 @@ void put_all_filenames(char *curr_fname) {
             if (first_file + ui_y_cursor == file_num) {
                 // This is the selected file.
                 strncpy(curr_fname, dirs[i], SPIFFS_OBJ_NAME_LEN);
+                put_filename(&ui_gr_context_landscape, "SEL", y);
             }
         }
 
@@ -93,13 +94,13 @@ void put_all_filenames(char *curr_fname) {
                 continue;
             }
             file_num++;
-            if (file_num < first_file) {
+            if (file_num < first_file || file_num > last_file) {
                 continue;
-            } else if (file_num > last_file) {
-                break;
-            } else if (first_file + ui_y_cursor == file_num) {
+            }
+            if (ui_y_cursor == file_num) {
                 // This is the selected file.
                 strncpy(curr_fname, (char *) pe->name, SPIFFS_OBJ_NAME_LEN);
+                put_filename(&ui_gr_context_landscape, "SEL", y);
             }
             put_filename(&ui_gr_context_landscape, (int8_t *) pe->name, y);
             y+=9;

@@ -17,6 +17,8 @@
 
 #include <spiffs.h>
 
+#include <qc16.h>
+
 #include "board.h"
 #include <qc16_serial_common.h>
 #include <queercon_drivers/qbadge_serial.h>

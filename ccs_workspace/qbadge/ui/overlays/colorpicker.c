@@ -75,13 +75,11 @@ void ui_colorpicking_wireframe() {
     }
 
     // Draw the icon for the animation type currently selected:
-    // TODO: Make sure there can't be an overrun here:
     qc16gr_drawImage(&ui_gr_context_portrait, image_anim_type_buttons[led_tail_anim_current.type], 32, UI_PICKER_TOP+4);
 
     if (ui_colorpicker_cursor_anim) {
         // If we have the animation type selected, draw a box around its area:
         // It's approx 64x64
-        // TODO: change this representation.
         rect = (Graphics_Rectangle){10,UI_PICKER_TOP+4, EPD_WIDTH-11,UI_PICKER_TOP+4+64};
         Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
     }

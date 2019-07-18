@@ -157,7 +157,7 @@ void ui_missions_do(UInt events) {
                     for (uint8_t i=0; i<3; i++) {
                         // take the first one we qualify for
                         if (mission_qualifies(i)) {
-                            begin_mission_id(i);
+                            mission_begin_by_id(i);
                             Event_post(ui_event_h, UI_EVENT_REFRESH);
                             break;
                         }

@@ -75,9 +75,7 @@ uint8 ubsTaskStack[UBS_TASK_STACK_SIZE];
 
 static bool UBLEBcastScan_initObserver(void);
 
-// TODO: Clean up this next part here:
-// GAP - Advertisement data (max size = 31 bytes, though this is
-// best kept short to conserve power while advertisting)
+// GAP - Advertisement data (31 byte max)
 uint8 advertData[30] =
 {
  // Flags; this sets the device to use limited discoverable
@@ -95,7 +93,7 @@ uint8 advertData[30] =
 
  // complete name
  QC16_BADGE_NAME_LEN+1, // index 7   // length of this data
- GAP_ADTYPE_LOCAL_NAME_COMPLETE, // TODO: is it ok that there is no null term?
+ GAP_ADTYPE_LOCAL_NAME_COMPLETE,
  'D',
  'U',
  'P',
@@ -110,7 +108,7 @@ uint8 advertData[30] =
    GAP_ADTYPE_MANUFACTURER_SPECIFIC, // manufacturer specific adv data type // 0xff
    0xD3, // Company ID - Fixed (queercon)
    0x04, // Company ID - Fixed (queercon)
-   0x00, // Badge ID MSB //.22 // TODO: confirm msb/lsb here
+   0x00, // Badge ID MSB //.22
    0x00, // Badge ID LSB //.23
    0x00, // TYPE FLAG (BIT7=UBER; BIT6=HANDLER; BIT5-0=ELEMENT)
    0x00, // SPARE
@@ -327,7 +325,6 @@ static void UBLEBcastScan_bcast_stateChangeCB(ugapBcastState_t newState)
  * @return  None.
  */
 static void UBLEBcastScan_bcast_advPrepareCB(void) {
-    // TODO: Elsewhere this may have problems without a null term, like on the receiving end...
     char *name = (char *) &advertData[9];
     qc16_ble_t *badge_frame = (qc16_ble_t *) &advertData[22];
     memcpy(name, badge_conf.handle, QC16_BADGE_NAME_LEN);
@@ -568,7 +565,6 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
     if (status == SUCCESS)
     {
         // We want: pPayload[0] == 0x02; (non-connectable non-scannable)
-        // TODO: What do DC Furs badges look like?
         // pPayload[1] == length
         // Now, look for:
         //  1. GAP_ADTYPE_LOCAL_NAME_COMPLETE
@@ -604,24 +600,15 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
             i += section_len+1;
         }
         if (i >= len-8-6) {
-            // TODO
+            // oops
+            while (1);
+            // TODO: not this.
         }
 
         if (seems_queercon == 0xFF) {
-            // TODO: validate CRC
             // this looks like a badge.
             set_badge_seen(badge_frame->badge_id, name);
         }
-
-        // TODO: clean up:
-//        devAddr = Util_convertBdAddr2Str(pPayload + 2);
-//        chan = (*(pPayload + len - 5) & 0x3F);
-//        timeStamp = *(uint32 *)(pPayload + len - 4);
-        // We got a message!
-    }
-    else
-    {
-        /* Rx buffer is full */
     }
 }
 

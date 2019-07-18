@@ -164,8 +164,7 @@ void ui_files_do(UInt events) {
                 text_use = FILES_TEXT_USE_SAVE_COLOR;
                 ui_textentry_load(text, 12);
             } else if (!strncmp("/photos/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
-                // This is an "info" request for the photos.
-                // TODO: Change, if we don't get the infobox working.
+                // Nothing happens here.
             } else {
                 // This is a file. (colors or photos)
 

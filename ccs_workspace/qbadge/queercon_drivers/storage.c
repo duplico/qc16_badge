@@ -30,7 +30,6 @@ void storage_read_file(char *fname, uint8_t *dest, uint16_t size) {
 }
 
 void storage_overwrite_file(char *fname, uint8_t *src, uint16_t size) {
-    // TODO: Error handling.
     spiffs_file fd;
     fd = SPIFFS_open(&fs, fname, SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);
     SPIFFS_write(&fs, fd, src, size);
@@ -58,7 +57,6 @@ void storage_init() {
 
     SPIFFS_check(&fs);
 
-    // TODO:
     spiffs_stat stat;
     status = SPIFFS_stat(&fs, "testfile", &stat);
 

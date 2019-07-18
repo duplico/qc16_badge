@@ -151,7 +151,11 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         }
 
         if (header->opcode == SERIAL_OPCODE_DISCON) {
-            // TODO: Event flag
+            if (serial_phy_mode_ptx) {
+                serial_ll_state = SERIAL_LL_STATE_NC_PTX;
+            } else {
+                serial_ll_state = SERIAL_LL_STATE_NC_PRX;
+            }
         }
         break;
     case SERIAL_LL_STATE_C_FILE_RX:

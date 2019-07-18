@@ -181,6 +181,8 @@ def main():
     # qb seen
     # qb connected
 
+    disconnect(ser)
+
     # Exit
 
 

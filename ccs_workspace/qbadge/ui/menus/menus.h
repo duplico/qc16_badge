@@ -8,6 +8,9 @@
 #ifndef UI_MENUS_MENUS_H_
 #define UI_MENUS_MENUS_H_
 
+#define FILES_TEXT_USE_RENAME 1
+#define FILES_TEXT_USE_SAVE_COLOR 2
+
 extern uint8_t mission_picking;
 void ui_mainmenu_do(UInt events);
 void ui_missions_do(UInt events);

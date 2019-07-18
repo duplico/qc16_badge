@@ -28,6 +28,7 @@
 #include "ui/images.h"
 #include "ui/keypad.h"
 #include <ui/overlays/overlays.h>
+#include <ui/menus/menus.h>
 
 #include <badge.h>
 #include <board.h>
@@ -41,6 +42,10 @@ char curr_file_name[SPIFFS_OBJ_NAME_LEN+1] = "";
 
 void put_filename(Graphics_Context *gr, int8_t *name, uint16_t y) {
     Graphics_drawString(gr, name, SPIFFS_OBJ_NAME_LEN, FILES_LEFT_X, y, 1);
+}
+
+void put_filecursor(Graphics_Context *gr, int8_t *text, uint16_t y) {
+    Graphics_drawString(gr, text, 7, FILES_LEFT_X-44, y, 1);
 }
 
 void put_all_filenames(char *curr_fname) {
@@ -59,17 +64,13 @@ void put_all_filenames(char *curr_fname) {
                       "/photos/",
     };
 
-    uint8_t y=TOPBAR_HEIGHT + 3;
+    uint8_t y=TOPBAR_HEIGHT + 6;
 
     Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
 
-    // TODO:
     for (uint8_t i=0; i<2; i++) {
         file_num++;
-        // TODO: rewrite:
-        if (file_num < first_file) {
-        } else if (file_num > last_file) {
-            break;
+        if (file_num < first_file || file_num > last_file) {
         } else {
             put_filename(&ui_gr_context_landscape, (int8_t *) dirs[i], y);
             y+=9;
@@ -106,29 +107,33 @@ void put_all_filenames(char *curr_fname) {
         SPIFFS_closedir(&d);
     }
 
-    y = TOPBAR_HEIGHT + 3 + 9*(ui_y_cursor - first_file);
+    ui_y_max = file_num;
+
+    y = TOPBAR_HEIGHT + 6 + 9*(ui_y_cursor - first_file);
 
     if (!strncmp("/colors/", curr_fname, SPIFFS_OBJ_NAME_LEN)) {
         // If this is a "directory heading":
-        Graphics_drawString(&ui_gr_context_landscape, "store:", 6, 0, y, 1);
-        // TODO: Consider allowing collapse/expand
+        put_filecursor(&ui_gr_context_landscape, " store:", y);
     } else if (!strncmp("/photos/", curr_fname, SPIFFS_OBJ_NAME_LEN)) {
         // If this is a "directory heading":
-        Graphics_drawString(&ui_gr_context_landscape, " info:", 6, 0, y, 1);
-        // TODO: Consider allowing collapse/expand
-    } else if (!strncmp("/photos/", curr_fname, 8)) {
-        Graphics_drawString(&ui_gr_context_landscape, " load:", 6, 0, y, 1);
+        put_filecursor(&ui_gr_context_landscape, "   dir:", y);
+    } else if (!strncmp("/photos/", curr_file_name, 8)
+            && !strncmp(badge_conf.current_photo, &curr_file_name[8], QC16_PHOTO_NAME_LEN)) {
+        // This is the CURRENT photo
+        // We can't do anything with it.
+        put_filecursor(&ui_gr_context_landscape, "in use:", y);
     } else {
-        // This is a color
+        // This is any other file:
+
         switch(ui_x_cursor) {
         case FILE_LOAD:
-            Graphics_drawString(&ui_gr_context_landscape, " load:", 6, 0, y, 1);
+            put_filecursor(&ui_gr_context_landscape, "  load:", y);
             break;
         case FILE_DELETE:
-            Graphics_drawString(&ui_gr_context_landscape, "delet:", 6, 0, y, 1);
+            put_filecursor(&ui_gr_context_landscape, "delete:", y);
             break;
         case FILE_RENAME:
-            Graphics_drawString(&ui_gr_context_landscape, "renam:", 6, 0, y, 1);
+            put_filecursor(&ui_gr_context_landscape, "rename:", y);
             break;
         }
     }
@@ -139,26 +144,14 @@ void ui_draw_files() {
     Graphics_clearDisplay(&ui_gr_context_landscape);
 
     ui_draw_top_bar();
-    // TODO: load correct number
     put_all_filenames(curr_file_name);
 
     Graphics_flushBuffer(&ui_gr_context_landscape);
 }
 
-// TODO: move
-#define FILES_TEXT_USE_RENAME 1
-#define FILES_TEXT_USE_SAVE_COLOR 2
-
-uint32_t file_disp_count() {
-    // TODO: implement a count of files:
-    return 10;
-}
-
 void ui_files_do(UInt events) {
     static uint8_t text_use = 0;
     static char *text;
-
-    ui_y_max = file_disp_count();
 
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
@@ -172,13 +165,20 @@ void ui_files_do(UInt events) {
             } else if (!strncmp("/photos/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
                 // This is an "info" request for the photos.
                 // TODO: Change, if we don't get the infobox working.
-            } else if (!strncmp("/colors/", curr_file_name, 8)) {
-                // Selected color
+            } else {
+                // This is a file. (colors or photos)
+
+                if (!strncmp("/photos/", curr_file_name, 8)
+                        && !strncmp(badge_conf.current_photo, &curr_file_name[8], QC16_PHOTO_NAME_LEN)) {
+                    // This is the CURRENT photo
+                    // We can't do anything with it.
+                    break;
+                }
+
                 switch(ui_x_cursor) {
                 case FILE_DELETE:
                     SPIFFS_remove(&fs, curr_file_name);
                     ui_y_cursor--;
-                    // TODO: do we like the full refresh here to convey the enormity of the deletion?
                     Event_post(ui_event_h, UI_EVENT_REFRESH);
                     break;
                 case FILE_RENAME:
@@ -189,19 +189,18 @@ void ui_files_do(UInt events) {
                     strncpy(text, curr_file_name, SPIFFS_OBJ_NAME_LEN);
                     text_use = FILES_TEXT_USE_RENAME;
                     ui_textentry_load(&text[8], QC16_PHOTO_NAME_LEN);
-                    // TODO: do we like the full refresh here?
                     Event_post(ui_event_h, UI_EVENT_REFRESH);
                     break;
                 case FILE_LOAD:
                     // Load this animation:
-                    load_anim_abs(curr_file_name);
-                    // TODO: do we like the full refresh here?
+                    if (!strncmp("/colors/", curr_file_name, 8)) {
+                        load_anim_abs(curr_file_name);
+                    } else {
+                        // photo
+                        strncpy(badge_conf.current_photo, &curr_file_name[8], QC16_PHOTO_NAME_LEN);
+                    }
                     Event_post(ui_event_h, UI_EVENT_REFRESH);
                 }
-                load_anim(text);
-            } else if (!strncmp("/photos/", curr_file_name, 8)) {
-                // Selected photo. Only "load" is allowed.
-                strncpy(badge_conf.current_photo, &curr_file_name[8], QC16_PHOTO_NAME_LEN);
             }
             break;
         }
@@ -211,7 +210,6 @@ void ui_files_do(UInt events) {
         // dooo noooooothiiiiing
         // except prevent a memory leak:
         free(text);
-        // TODO: What if we get plugged in before this is done?
     }
 
     if (pop_events(&events, UI_EVENT_TEXT_READY)) {
@@ -219,10 +217,8 @@ void ui_files_do(UInt events) {
         case FILES_TEXT_USE_RENAME:
         {
             // Rename curr_file_name to text
-            // TODO: Cleanup:
-            volatile int32_t stat;
-            stat = SPIFFS_rename(&fs, curr_file_name, text);
-            stat;
+            SPIFFS_rename(&fs, curr_file_name, text);
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
             break;
         }
         case FILES_TEXT_USE_SAVE_COLOR:

@@ -251,7 +251,7 @@ uint8_t conf_file_exists() {
     } else if (status == SPIFFS_OK) {
         // wrong size:
         status = SPIFFS_remove(&fs, "/qbadge/conf");
-    }.
+    }
     return 0;
 }
 
@@ -305,8 +305,7 @@ void save_photo(Graphics_Image *image, char *name) {
     strcpy(&pathname[8], name);
     fd = SPIFFS_open(&fs, pathname, SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);
     SPIFFS_write(&fs, fd, image, sizeof(Graphics_Image));
-    qc16gr_get_image_size(image);
-    SPIFFS_write(&fs, fd, image->pPixel, size);
+    SPIFFS_write(&fs, fd, image->pPixel, qc16gr_get_image_size(image));
     SPIFFS_close(&fs, fd);
 }
 

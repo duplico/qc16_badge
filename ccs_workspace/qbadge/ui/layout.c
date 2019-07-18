@@ -245,7 +245,7 @@ void ui_draw_top_bar_battery_life() {
         fillRectangle(&ui_gr_context_landscape, &rect);
     }
     if (vbat_out_uvolts/1000000 < 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 < VBAT_LOW_2DOT)) {
-        Graphics_drawString(&ui_gr_context_landscape, "LOW!", 4, BATTERY_X+2, BATTERY_BODY_Y0+4, 0);
+        Graphics_drawStringCentered(&ui_gr_context_landscape, "LOW!", 4, BATTERY_X + TOPBAR_ICON_WIDTH/2, TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1, 0);
 
     }
 }

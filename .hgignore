@@ -23,3 +23,4 @@ ccs_workspace/tirtos_builds_CC2640R2_LAUNCHXL_release_ccs
 ccs_workspace/adcbufcontinuous_CC2640R2_LAUNCHXL_tirtos_ccs
 art/twotone/
 art/DefaultIcon
+*.pyc

@@ -372,7 +372,7 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
         }
         free(image);
     } else {
-        // TODO:
+        // TODO: move
 #define RLE_BATCH_READ_SIZE 38
         // The image is compressed with RLE4, RLE7 or RLE8 Algorithm
         image = malloc(RLE_BATCH_READ_SIZE);
@@ -396,7 +396,7 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
                     read_len = RLE_BATCH_READ_SIZE;
                 }
                 img_index = 0;
-                SPIFFS_read(&fs, fd, &image, read_len);
+                SPIFFS_read(&fs, fd, image, read_len);
             }
 
             if(rleType == 8)   // RLE 8 bit encoding

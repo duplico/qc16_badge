@@ -149,6 +149,10 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
                 // TODO: Signal problem?
             }
         }
+
+        if (header->opcode == SERIAL_OPCODE_DISCON) {
+            // TODO: Event flag
+        }
         break;
     case SERIAL_LL_STATE_C_FILE_RX:
         if (header->opcode == SERIAL_OPCODE_ENDFILE) {
@@ -206,7 +210,7 @@ void serial_timeout() {
         serial_enter_prx();
         serial_ll_state = SERIAL_LL_STATE_NC_PRX;
         break;
-    case SERIAL_LL_STATE_C_IDLE:
+    default:
         serial_ll_next_timeout = Clock_getTicks() + (SERIAL_C_DIO_POLL_MS * 100);
         if (
                  (serial_phy_mode_ptx && !PIN_getInputValue(QC16_PIN_SERIAL_DIO2_PRX))
@@ -241,6 +245,7 @@ void serial_task_fn(UArg a0, UArg a1) {
         // This blocks on a semaphore while waiting to return, so it's safe
         //  not to have a Task_yield() in this.
         result = UART_read(uart, input, 1);
+
         if (result == 1 && input[0] == SERIAL_PHY_SYNC_WORD) {
             // Got the sync word, now try to read a header:
             result = UART_read(uart, &header_in, sizeof(serial_header_t));

@@ -36,9 +36,11 @@ char *textentry_dest;
 char *textentry_buf;
 uint8_t textentry_cursor = 0;
 
+extern const tFont g_sFontfixed10x20;
+
 void ui_textentry_load(char *dest, uint8_t len) {
-    if (len > 40) {
-        len = 40; // TODO: const/define for this
+    if (len > TEXTENTRY_MAX_LEN) {
+        len = TEXTENTRY_MAX_LEN;
     }
     textentry_len = len;
     textentry_buf = malloc(len);
@@ -49,7 +51,7 @@ void ui_textentry_load(char *dest, uint8_t len) {
     ui_textentry = 1;
 
     // Fade out everything.
-    fadeRectangle_xy(&ui_gr_context_landscape, 0, 0, 295, 127); // TODO: consts
+    fadeRectangle_xy(&ui_gr_context_landscape, 0, 0, EPD_HEIGHT-1, EPD_WIDTH-1);
 
     Event_post(ui_event_h, UI_EVENT_REFRESH);
 }
@@ -66,15 +68,8 @@ void ui_textentry_unload(uint8_t save) {
     }
 
     free(textentry_buf);
-    // TODO: Is this not happening?
-    // It's not, because of the wrong thing we're doing with switching rather than popping
     Event_post(ui_event_h, UI_EVENT_REFRESH);
 }
-
-// TODO: Declare elsewhere
-extern const tFont g_sFontfixed10x20;
-
-// TODO: Add instructions?
 
 void ui_textentry_draw() {
     uint16_t entry_width = textentry_len * 10;
@@ -86,7 +81,6 @@ void ui_textentry_draw() {
         .xMax = txt_left + entry_width + 3, .yMax = txt_top + 22,
     };
 
-    // TODO: Fix frame layout:
     // Draw a little frame.
     Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
     rect.xMin++; rect.yMin++; rect.xMax--; rect.yMax--;
@@ -119,7 +113,7 @@ void ui_textentry_draw() {
 void ui_textentry_do(UInt events) {
     if (pop_events(&events, UI_EVENT_REFRESH)) {
         ui_textentry_draw();
-        epd_do_partial = 1; // TODO: this?
+        epd_do_partial = 1;
     }
 
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
@@ -188,8 +182,5 @@ void ui_textentry_do(UInt events) {
             ui_textentry_unload(1);
             break;
         }
-        // TODO:
-        // Call this if needed:
-        //led_tail_start_anim();
     }
 }

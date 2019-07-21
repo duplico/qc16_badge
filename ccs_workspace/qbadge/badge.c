@@ -54,7 +54,7 @@ uint8_t handler_nearby() {
 }
 
 /// Returns true if it is possible to call generate_mission().
-uint8_t mission_possible() {
+uint8_t mission_getting_possible() {
     return handler_nearby() || badge_conf.vhandler_present;
 }
 
@@ -141,17 +141,63 @@ mission_t generate_mission() {
     return new_mission;
 }
 
-uint8_t mission_qualifies(uint8_t mission_id) {
-    if (!badge_conf.agent_present) {
-        return 0; // can't do a mission without the agent.
+uint8_t mission_qualified_for_element_id(mission_t *mission, uint8_t element_position) {
+    if (element_position > 1) {
+        // Invalid element ID
+        return 0;
     }
 
-    if (badge_conf.missions[mission_id].element_levels[0] <= badge_conf.element_level[badge_conf.missions[mission_id].element_types[0]] && badge_conf.element_selected == badge_conf.missions[mission_id].element_types[0]) {
-        // mission is at or below our level for the element selected
+    if (mission->element_types[element_position] > 2) {
+        // Not a qbadge element, or not an element at all.
+        return 0;
+    }
+
+    if (badge_conf.element_selected != mission->element_types[element_position]) {
+        // My element isn't the same as the required one.
+        return 0;
+    }
+
+    if (mission->element_levels[element_position] <= badge_conf.element_level[mission->element_types[element_position]]) {
+        // I am of sufficient level. Accept!
         return 1;
     }
 
     return 0;
+}
+
+/// In the provided mission, which element ID do we fulfill?
+/**
+ ** This, importantly, does not verification that the mission is doable.
+ ** That is, if  the mission is do-able, this will return the index of the
+ ** element that we fulfill in it. But, if the mission is not do-able,
+ ** then this function's return value is not meaningful.
+ */
+uint8_t mission_element_id_we_fill(mission_t *mission) {
+    // TODO: If we're paired...
+
+    // Otherwise, if we're solo, see if we only qualify for one of them:
+    if (mission_qualified_for_element_id(mission, 0) && !mission_qualified_for_element_id(mission, 1)) {
+        return 0;
+    }
+    if (mission_qualified_for_element_id(mission, 1) && !mission_qualified_for_element_id(mission, 0)) {
+        return 1;
+    }
+    // If we qualify for both, pick the first one:
+    return 0;
+}
+
+/// Is a local-only mission complete-able by our badge?
+uint8_t mission_solo_qualifies(uint8_t mission_id) {
+    if (!badge_conf.agent_present) {
+        return 0; // can't do a mission without the agent.
+    }
+
+    // Is this not a local-only mission?
+    if (badge_conf.missions[mission_id].element_types[1] != ELEMENT_COUNT_NONE) {
+        return 0;
+    }
+
+    return mission_qualified_for_element_id(&badge_conf.missions[mission_id], 0);
 }
 
 void mission_begin_by_id(uint8_t mission_id) {

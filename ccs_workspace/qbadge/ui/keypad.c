@@ -128,7 +128,6 @@ void kb_clock_swi(UArg a0) {
         } else if (!epd_upside_down) {
             // Apparently, these are coded for when it's actually upside down,
             //  so everything is backwards. Lulz.
-            // TODO: fix, if we have time.
             switch(button_press) {
             case KB_UP:
                 kb_active_key = KB_DOWN;

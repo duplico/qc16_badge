@@ -103,7 +103,7 @@ void led_tail_anim_type_next() {
     do {
         next_type += 1;
         if (next_type >= LED_TAIL_ANIM_TYPE_COUNT)
-            next_type = (led_tail_anim_type) 0; // TODO: cast
+            next_type = (led_tail_anim_type) 0;
     } while (!led_tail_anim_type_is_valid(next_type));
     led_tail_anim_current.type = next_type;
     led_tail_start_anim();
@@ -190,7 +190,7 @@ void led_tail_timestep() {
         Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
     }
 
-    Clock_setTimeout(led_tail_clock_h, 100000/led_tail_steps_per_frame); // TODO: this is just 1 second for now.
+    Clock_setTimeout(led_tail_clock_h, 100000/led_tail_steps_per_frame);
     Clock_start(led_tail_clock_h);
 }
 
@@ -222,7 +222,7 @@ void led_tail_start_anim() {
 
     led_tail_frame_setup();
 
-    Clock_setTimeout(led_tail_clock_h, 100000/led_tail_steps_per_frame); // TODO: this is just 1 second per frame now.
+    Clock_setTimeout(led_tail_clock_h, 100000/led_tail_steps_per_frame);
     Clock_start(led_tail_clock_h);
 }
 
@@ -230,14 +230,10 @@ void led_tail_step_swi(UArg a0) {
     Event_post(led_event_h, LED_EVENT_TAIL_STEP);
 }
 
-/// Set the screen sidelight level 0..63
-//void led_sidelight_set_level(uint8_t level) {
-//    ht16d_put_color(12, 12, level << 7); // TODO
-//}
-
 void led_sidelight_set_color(rgbcolor16_t *color) {
     ht16d_put_color(12, 12, color);
-    Event_post(led_event_h, LED_EVENT_FLUSH);
+    ht16d_send_gray();
+//    Event_post(led_event_h, LED_EVENT_FLUSH);
 }
 
 void led_sidelight_activate() {
@@ -265,26 +261,25 @@ void led_adjust_brightness() {
     ht16d_set_global_brightness(BRIGHTNESS_STEPS[brightness][1]);
     if (brightness < BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH) {
         // Dim enough that we want to turn on the sidelights.
-        // TODO: Turn them on
-        // TODO: Unless we're animating them
         led_sidelight_activate();
     } else {
         // Bright enough that we want to turn off the sidelights.
-        // TODO: Turn them off
-        // TODO: Unless we're animating them
         led_sidelight_deactivate();
     }
 }
 
 void led_task_fn(UArg a0, UArg a1) {
     UInt events;
-    led_event_h = Event_create(NULL, NULL);
 
     ht16d_init();
     ht16d_all_one_color(0,0,0);
 
     while (1) {
         events = Event_pend(led_event_h, Event_Id_NONE, ~Event_Id_NONE,  BIOS_WAIT_FOREVER);
+
+        if (events & LED_EVENT_FLUSH) {
+            led_flush();
+        }
 
         if (events & LED_EVENT_SHOW_UPCONF) {
             led_show_curr_colors();
@@ -295,9 +290,6 @@ void led_task_fn(UArg a0, UArg a1) {
             Event_post(led_event_h, LED_EVENT_FLUSH);
         }
 
-        if (events & LED_EVENT_FLUSH) {
-            led_flush();
-        }
 
         if (events & LED_EVENT_TAIL_STEP) {
             led_tail_timestep();
@@ -315,13 +307,21 @@ void led_task_fn(UArg a0, UArg a1) {
             led_sidelight_activate();
         }
 
-        if (events & LED_EVENT_SIDE_ON) {
+        if (events & LED_EVENT_SIDE_OFF) {
             led_sidelight_deactivate();
+        }
+
+        if (events & LED_EVENT_SIDE_OFF_AND_TRIGGER_ADC) {
+            ht16d_put_color(12, 12, &led_off);
+            ht16d_send_gray();
+            adc_trigger_light();
         }
     }
 }
 
 void led_init() {
+    led_event_h = Event_create(NULL, NULL);
+
     Task_Params taskParams;
     Task_Params_init(&taskParams);
     taskParams.stack = led_task_stack;

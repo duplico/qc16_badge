@@ -134,7 +134,7 @@ void ui_draw_top_bar_qbadge_headsup_icons() {
             break;
         case 1: // handlers
             icon_img = &img_handler;
-            if (!mission_possible()) {
+            if (!mission_getting_possible()) {
                 fade = 1;
             }
             break;
@@ -245,7 +245,7 @@ void ui_draw_top_bar_battery_life() {
         fillRectangle(&ui_gr_context_landscape, &rect);
     }
     if (vbat_out_uvolts/1000000 < 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 < VBAT_LOW_2DOT)) {
-        Graphics_drawStringCentered(&ui_gr_context_landscape, "LOW!", 4, BATTERY_X + TOPBAR_ICON_WIDTH/2, TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1, 0);
+        Graphics_drawStringCentered(&ui_gr_context_landscape, "LOW!", 4, BATTERY_X + TOPBAR_ICON_WIDTH/2, TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1, 1);
 
     }
 }

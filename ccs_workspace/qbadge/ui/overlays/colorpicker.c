@@ -115,7 +115,6 @@ void ui_colorpicking_load() {
     Event_post(ui_event_h, UI_EVENT_REFRESH);
     Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
 
-    // TODO: if the selected color is out of range, do this:
     ui_colorpicker_cursor_pos = 0;
 }
 
@@ -151,8 +150,6 @@ void ui_colorpicking_colorbutton() {
         color_index = 5;
         break;
     }
-
-    // TODO: This isn't exactly what we want.
 
     if (memcmp(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[color_index], sizeof(rgbcolor16_t)) == 0) {
         memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_off, sizeof(rgbcolor16_t));
@@ -217,16 +214,21 @@ void ui_colorpicking_do(UInt events) {
                 ui_colorpicking_colorbutton();
                 break;
             case KB_RIGHT:
-                if (ui_colorpicker_cursor_pos == led_tail_anim_color_counts[led_tail_anim_current.type])
+                ui_colorpicker_cursor_pos++;
+
+                if (ui_colorpicker_cursor_pos >= led_tail_anim_color_counts[led_tail_anim_current.type])
                     ui_colorpicker_cursor_pos = 0;
-                else
-                    ui_colorpicker_cursor_pos++; // TODO: this can overrun if max==1
+
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
             case KB_LEFT:
+                // NB: The following _would_ overrun if max=0, but other code
+                //  prevents us from getting here if max=0.
                 if (ui_colorpicker_cursor_pos == 0)
                     ui_colorpicker_cursor_pos = led_tail_anim_color_counts[led_tail_anim_current.type];
-                ui_colorpicker_cursor_pos--; // TODO: this can overrun if max==1
+
+                ui_colorpicker_cursor_pos--;
+
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
             case KB_UP:
@@ -250,8 +252,5 @@ void ui_colorpicking_do(UInt events) {
         case KB_OK:
             break;
         }
-        // TODO:
-        // Call this if needed:
-        //led_tail_start_anim();
     }
 }

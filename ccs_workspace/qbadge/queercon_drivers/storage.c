@@ -21,6 +21,10 @@ spiffs           fs;
 spiffs_config    fsConfig;
 SPIFFSNVS_Data   spiffsnvs;
 
+void storage_bad_file(char *fname) {
+    // TODO: delete it or something?
+}
+
 void storage_read_file(char *fname, uint8_t *dest, uint16_t size) {
     spiffs_file fd;
     fd = SPIFFS_open(&fs, fname, SPIFFS_O_RDONLY, 0);

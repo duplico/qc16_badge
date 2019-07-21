@@ -156,8 +156,10 @@ def main():
     image_parser.add_argument('--landscape', action='store_true')
     #   Send animation
     #   Set handle (cbadge only)
-    #   Make handler
-    #   Make uber
+    #   Promote (uber or handler)
+    promote_parser = cmd_parsers.add_parser('promote')
+    promote_parser.add_argument('--uber', action='store_true')
+    promote_parser.add_argument('--handler', action='store_true')
 
 
     args = parser.parse_args()

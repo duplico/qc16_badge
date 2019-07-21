@@ -165,7 +165,7 @@ def main():
     args = parser.parse_args()
 
     # pyserial object, with a 1 second timeout on reads.
-    ser = serial.Serial(args.port, 38400, parity=serial.PARITY_NONE, timeout=args.timeout)
+    ser = serial.Serial(args.port, 230400, parity=serial.PARITY_NONE, timeout=args.timeout)
     # Make the initial LL handshake with the badge:
     connect(ser)
 

@@ -240,16 +240,14 @@ void init_serial() {
 
     // Pause the UART peripheral:
     UCA0CTLW0 |= UCSWRST;
-    // Source the baud rate generation from SMCLK (~1 MHz)
-    // 8E2 (Enable parity, even parity, 2 stop bits)
-//    UCA0CTLW0 |= UCSSEL__SMCLK + UCPEN_1 + UCPAR__EVEN + UCSPB_1;
+    // Source the baud rate generation from SMCLK (8 MHz)
+    // 8N1 (8 data bits, no parity bits, 1 stop bit)
     UCA0CTLW0 |= UCSSEL__SMCLK + UCPEN_0 + UCSPB_0;
-    // Configure the baud rate to 38400.
+    // Configure the baud rate to 230400.
     //  (See page 589 in the family user's guide, SLAU445I)
-    // The below is for 1.00 MHz SMCLK:
-    UCA0BR0 = 1;
-    UCA0BR1 = 0x00;
-    UCA0MCTLW = 0x0000 | UCOS16 | UCBRF_10;
+    // The below is for 8.00 MHz SMCLK:
+    UCA0BRW = 2;
+    UCA0MCTLW = 0xBB00 | UCOS16_1 | UCBRF_2;
 
     // Activate the UART:
     UCA0CTLW0 &= ~UCSWRST;

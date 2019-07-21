@@ -11,7 +11,7 @@
 #include <qc16.h>
 
 #define TICK_WDT_BITS WDT_MDLY_0_5
-#define TICKS_PER_MS 2
+#define TICKS_PER_MS 16
 
 #define PWM_LEVELS 4
 #define PWM_CYCLES (1 << (PWM_LEVELS-1))

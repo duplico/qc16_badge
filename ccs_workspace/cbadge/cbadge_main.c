@@ -22,6 +22,8 @@ uint8_t s_connected = 0;
 uint8_t s_paired = 0;
 /// Signal that element ID s_level_up-1 has leveled up!
 uint8_t s_level_up = 0;
+/// Signal to do the next step in our current animation.
+uint8_t s_animation_step = 0;
 /// Interrupt flag for the serial PHY
 volatile uint8_t f_serial_phy = 0x00;
 /// Interrupt flag indicating it's time to poll a captouch button.
@@ -30,6 +32,9 @@ volatile uint8_t f_button_poll = 0x00;
 volatile uint8_t f_pwm_loop = 0x00;
 /// Interrupt flag indicating 1 ms has passed.
 volatile uint8_t f_ms = 0x00;
+
+uint16_t animation_step_ms = 0;
+uint16_t animation_step_curr_ms = 0;
 
 //#pragma PERSISTENT(badge_conf)
 cbadge_conf_t badge_conf = {
@@ -158,28 +163,26 @@ int main( void )
     uint8_t current_button = 0;
 
     uint8_t pwm_level_curr = 0;
-    uint8_t pwm_level_a = 0;
-    uint8_t pwm_level_b = 1;
-    uint8_t pwm_level_c = 2;
+    uint8_t pwm_levels[3] = {0,0,0};
 
     while (1) {
         if (f_pwm_loop) {
             pwm_level_curr++;
 
-            if ((1 << pwm_level_a) > pwm_level_curr)
+            if ((1 << pwm_levels[0]) > pwm_level_curr)
+                LEDC_PORT_OUT |= LEDC_PIN;
+            else
+                LEDC_PORT_OUT &= ~LEDC_PIN;
+
+            if ((1 << pwm_levels[1]) > pwm_level_curr)
                 LEDA_PORT_OUT |= LEDA_PIN;
             else
                 LEDA_PORT_OUT &= ~LEDA_PIN;
 
-            if ((1 << pwm_level_b) > pwm_level_curr)
+            if ((1 << pwm_levels[2]) > pwm_level_curr)
                 LEDB_PORT_OUT |= LEDB_PIN;
             else
                 LEDB_PORT_OUT &= ~LEDB_PIN;
-
-            if ((1 << pwm_level_c) > pwm_level_curr)
-                LEDC_PORT_OUT |= LEDC_PIN;
-            else
-                LEDC_PORT_OUT &= ~LEDC_PIN;
 
             if (pwm_level_curr > PWM_CYCLES)
                 pwm_level_curr = 0;
@@ -216,32 +219,39 @@ int main( void )
             f_button_poll = 0;
         }
 
-        if (s_button & BUTTON_PRESS_J1) {
-            pwm_level_a++;
-            if (pwm_level_a == PWM_LEVELS)
-                pwm_level_a = 0;
-            s_button &= ~BUTTON_PRESS_J1;
+        if (s_button & BUTTON_PRESS_COCKTAILS_J1) { // cocktails
+            if (badge_conf.element_selected == ELEMENT_COCKTAILS) {
+                badge_conf.element_selected = ELEMENT_COUNT_NONE;
+            } else {
+                badge_conf.element_selected = ELEMENT_COCKTAILS;
+            }
+            // TODO: if we're paired, send the button message.
         }
-        if (s_button & BUTTON_PRESS_J2) {
-            pwm_level_b++;
-            if (pwm_level_b == PWM_LEVELS)
-                pwm_level_b = 0;
-            s_button &= ~BUTTON_PRESS_J2;
+        if (s_button & BUTTON_PRESS_FLAGS_J2) { // flags
+            if (badge_conf.element_selected == ELEMENT_FLAGS) {
+                badge_conf.element_selected = ELEMENT_COUNT_NONE;
+            } else {
+                badge_conf.element_selected = ELEMENT_FLAGS;
+            }
+            // TODO: if we're paired, send the button message.
         }
-        if (s_button & BUTTON_PRESS_J3) {
-            pwm_level_c++;
-            if (pwm_level_c == PWM_LEVELS)
-                pwm_level_c = 0;
-            s_button &= ~BUTTON_PRESS_J3;
+        if (s_button & BUTTON_PRESS_KEYS_J3) { // keys
+            if (badge_conf.element_selected == ELEMENT_KEYS) {
+                badge_conf.element_selected = ELEMENT_COUNT_NONE;
+            } else {
+                badge_conf.element_selected = ELEMENT_KEYS;
+            }
+            // TODO: if we're paired, send the button message.
         }
         if (s_button & BUTTON_RELEASE_J1) {
-            s_button &= ~BUTTON_RELEASE_J1;
         }
         if (s_button & BUTTON_RELEASE_J2) {
-            s_button &= ~BUTTON_RELEASE_J2;
         }
         if (s_button & BUTTON_RELEASE_J3) {
-            s_button &= ~BUTTON_RELEASE_J3;
+        }
+
+        if (s_button) {
+            s_button = 0;
         }
 
         if (f_serial_phy == SERIAL_RX_DONE) {
@@ -254,6 +264,15 @@ int main( void )
         if (f_ms) {
             serial_ll_ms_tick();
 
+            if (animation_step_ms) {
+                // Doing an animation
+                animation_step_curr_ms++;
+                if (animation_step_curr_ms >= animation_step_ms) {
+                    animation_step_curr_ms = 0;
+                    s_animation_step = 1;
+                }
+            }
+
             f_ms = 0;
         }
 
@@ -261,11 +280,28 @@ int main( void )
             f_serial_phy = 0;
         }
 
+        if (s_animation_step) {
+            if (serial_ll_state == SERIAL_LL_STATE_C_PAIRED) {
+                uint8_t light_id = (uint8_t) ELEMENT_COUNT_NONE;
+                if (badge_conf.element_selected != ELEMENT_COUNT_NONE) {
+                    light_id = (uint8_t) badge_conf.element_selected - 3;
+                }
+                for (uint8_t i=0; i<3; i++) {
+                    if (i == light_id) {
+                        pwm_levels[i]++;
+                        if (pwm_levels[i] > PWM_LEVELS) {
+                            pwm_levels[i] = 0;
+                        }
+                    } else {
+                        pwm_levels[i] = 0;
+                    }
+                }
+            }
+            s_animation_step = 0;
+        }
+
         if (s_connected) {
             // We are now connected.
-            pwm_level_a = 0;
-            pwm_level_b = 0;
-            pwm_level_c = 0;
 
             // Are we connected to a qbadge? (That's the one that we pair with)
             //  And, if so, do we happen to be configured as the PTX?
@@ -274,10 +310,15 @@ int main( void )
                 serial_pair();
             }
 
+            // TODO: What do we do if we're connected to a cbadge?
+
             s_connected = 0;
         }
 
         if (s_paired) {
+            animation_step_ms = 100;
+            badge_conf.element_selected = ELEMENT_COUNT_NONE;
+
             s_paired = 0;
         }
 

@@ -274,7 +274,8 @@ void ui_task_fn(UArg a0, UArg a1) {
         }
 
         // NB: This order is very important:
-        if (kb_active_key_masked == KB_F4_PICKER
+        //     (colorpicking is not allowed during textentry)
+        if (!ui_textentry && kb_active_key_masked == KB_F4_PICKER
                 && pop_events(&events, UI_EVENT_KB_PRESS)) {
             if (ui_colorpicking) {
                 ui_colorpicking_unload();

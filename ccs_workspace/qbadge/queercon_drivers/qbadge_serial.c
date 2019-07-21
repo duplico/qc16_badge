@@ -135,6 +135,13 @@ void serial_pair() {
     memcpy(pair_payload_out->handle, badge_conf.handle, QC16_BADGE_NAME_LEN);
     pair_payload_out->handle[QC16_BADGE_NAME_LEN] = 0x00;
     pair_payload_out->last_clock = Seconds_get();
+    pair_payload_out->element_selected = ELEMENT_COUNT_NONE;
+
+    if (badge_conf.agent_present) {
+        // If we're not in the middle of a mission, go ahead and clear our
+        //  selected element to match with what we're sending here.
+        badge_conf.element_selected = ELEMENT_COUNT_NONE;
+    }
 
     serial_send(SERIAL_OPCODE_PAIR, (uint8_t *) pair_payload_out, sizeof(pair_payload_t));
 
@@ -253,15 +260,15 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         // Check whether the "go on a mission!" button is pressed.
         if (header->opcode == SERIAL_OPCODE_GOMISSION) {
             if (payload[1] < 3) {
-                // It's a mission from this badge.
-                // No need to do anything.
-            } else {
                 // It's a mission from the remote badge.
                 memcpy(&badge_conf.missions[3], &payload[1], sizeof(mission_t));
                 badge_conf.mission_assigned[3] = 1;
+                mission_begin_by_id(3);
+            } else {
+                // It's a mission from the local badge.
+                mission_begin_by_id(payload[1] - 3);
             }
 
-            mission_begin_by_id(3);
         }
         break;
 //    default:

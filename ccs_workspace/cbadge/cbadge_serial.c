@@ -88,9 +88,9 @@ void serial_pair() {
     pair_payload_out->element_level_max[4] = 5;
     pair_payload_out->element_level_max[5] = 5;
     memcpy(&pair_payload_out->element_level_progress[3], badge_conf.element_level_progress, 3);
-    memcpy(&pair_payload_out->element_qty[3], badge_conf.element_qty, 4);
+    memcpy(&pair_payload_out->element_qty[3], badge_conf.element_qty, 4*3);
     memcpy(pair_payload_out->handle, badge_conf.handle, QC16_BADGE_NAME_LEN);
-    pair_payload_out->handle[QC16_BADGE_NAME_LEN-1] = 0x00;
+    pair_payload_out->handle[QC16_BADGE_NAME_LEN] = 0x00;
     pair_payload_out->last_clock = 0;
     // pair_payload_out.missions are DONTCARE
 

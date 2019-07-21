@@ -87,7 +87,7 @@ void adc_timer_fn(UArg a0)
         curr_channel = ADCBUF_CH_VBAT;
         ADCBuf_convert(adc_buf_h, &next_conversion, 1);
     } else {
-        Event_post(led_event_h, LED_EVENT_SIDE_OFF_AND_TRIGGER_ADC);
+        adc_trigger_light();
     }
 
 

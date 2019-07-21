@@ -30,6 +30,7 @@ extern uint8_t serial_ll_state;
 extern uint16_t connected_badge_id;
 
 void serial_pair();
+void serial_element_update();
 void serial_ll_ms_tick();
 void serial_phy_handle_rx();
 void init_serial();

@@ -251,6 +251,11 @@ int main( void )
         }
 
         if (s_button) {
+            if (serial_ll_state == SERIAL_LL_STATE_C_PAIRED) {
+                // Send our updated element.
+                serial_element_update();
+            }
+
             s_button = 0;
         }
 

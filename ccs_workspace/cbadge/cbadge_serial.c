@@ -197,7 +197,7 @@ void serial_ll_handle_rx() {
         // Color-picking buttons are ignored.
         // But, mission-doing is a thing!
         if (serial_header_in.opcode == SERIAL_OPCODE_GOMISSION) {
-            mission_t *mission = &serial_buffer_in[1];
+            mission_t *mission = (mission_t *) &serial_buffer_in[1];
         }
         break;
     }

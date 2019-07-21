@@ -23,6 +23,7 @@
 #include <queercon_drivers/epd.h>
 #include <queercon_drivers/ht16d35b.h>
 #include <queercon_drivers/storage.h>
+#include <ui/adc.h>
 #include <ui/graphics.h>
 #include <ui/images.h>
 #include <ui/overlays/overlays.h>
@@ -383,6 +384,7 @@ uint8_t post() {
 
 void ui_init() {
     kb_init();
+    adc_init();
 
     Task_Params taskParams;
     Task_Params_init(&taskParams);

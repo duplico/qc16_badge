@@ -17,18 +17,20 @@
 #include <qbadge.h>
 
 #include <ui/leds.h>
+#include <ui/ui.h>
 
 uint16_t vbat_raw;
+uint32_t vbat_out_uvolts = 0;
 uint16_t brightness_raw;
 uint8_t brightness = 0;
 Clock_Handle adc_clock_h;
 
 ADCBuf_Handle adc_buf_h;
 ADCBuf_Conversion next_conversion;
+static QC16_ADCBuf0ChannelName curr_channel = ADCBUF_CH_VBAT;
 
 void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     void *completedADCBuffer, uint32_t completedChannel) {
-    // TODO: Determine when to set the battery event flag.
     uint8_t target_brightness_level;
 
     ADCBuf_adjustRawValues(handle, completedADCBuffer, 1, completedChannel);
@@ -48,27 +50,34 @@ void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
             else
                 brightness--;
 
-            // TODO: pin it for a while if we're at a brightness level where our sidelights are on.
-
-            // TODO: Event flag to the LED system
             if (brightness_raw > 3000) {
                 // TODO: unlock something for it being very bright.
             }
 
             Event_post(led_event_h, LED_EVENT_BRIGHTNESS);
+        } else if (brightness < BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH) {
+            Event_post(led_event_h, LED_EVENT_SIDE_ON);
         }
         break;
     case ADCBUF_CH_VBAT:
         ADCBuf_convertAdjustedToMicroVolts(handle, completedChannel, completedADCBuffer, &vbat_out_uvolts, conversion->samplesRequestedCount);
+        Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
         break;
     }
 }
 
+void adc_trigger_light() {
+    next_conversion.arg = NULL;
+    next_conversion.sampleBufferTwo = NULL;
+    next_conversion.adcChannel = ADCBUF_CH_VBAT;
+    next_conversion.sampleBuffer = &vbat_raw;
+    next_conversion.samplesRequestedCount = 1;
+    curr_channel = ADCBUF_CH_LIGHT;
+    ADCBuf_convert(adc_buf_h, &next_conversion, 1);
+}
+
 void adc_timer_fn(UArg a0)
 {
-    static QC16_ADCBuf0ChannelName curr_channel = ADCBUF_CH_VBAT;
-    volatile int_fast16_t res;
-
     if (curr_channel == ADCBUF_CH_LIGHT) {
         next_conversion.arg = NULL;
         next_conversion.sampleBufferTwo = NULL;
@@ -76,17 +85,11 @@ void adc_timer_fn(UArg a0)
         next_conversion.sampleBuffer = &brightness_raw;
         next_conversion.samplesRequestedCount = 1;
         curr_channel = ADCBUF_CH_VBAT;
+        ADCBuf_convert(adc_buf_h, &next_conversion, 1);
     } else {
-        next_conversion.arg = NULL;
-        next_conversion.sampleBufferTwo = NULL;
-        next_conversion.adcChannel = ADCBUF_CH_VBAT;
-        next_conversion.sampleBuffer = &vbat_raw;
-        next_conversion.samplesRequestedCount = 1;
-        curr_channel = ADCBUF_CH_LIGHT;
-        ht16d_put_color(12, 12, &led_off);
+        Event_post(led_event_h, LED_EVENT_SIDE_OFF_AND_TRIGGER_ADC);
     }
 
-    res = ADCBuf_convert(adc_buf_h, &next_conversion, 1);
 
     if (AONBatMonNewTempMeasureReady()) {
         if (AONBatMonTemperatureGetDegC() < 6) { // deg C (-256..255)
@@ -111,7 +114,7 @@ void adc_init() {
     adc_buf_params.blockingTimeout = NULL;
     adc_buf_params.callbackFxn = adc_cb;
     adc_buf_params.recurrenceMode = ADCBuf_RECURRENCE_MODE_ONE_SHOT;
-    adc_buf_params.samplingFrequency = 200;
+    adc_buf_params.samplingFrequency = 150000;
 
     adc_buf_h = ADCBuf_open(QC16_ADCBUF0, &adc_buf_params);
 

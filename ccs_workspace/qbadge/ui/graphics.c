@@ -1,8 +1,11 @@
 /*
  * graphics.c
  *
- *  Created on: Jun 29, 2019
- *      Author: george
+ *  qc16gr_drawImage and qc16gr_drawImageFromFile are derived from TI's
+ *   GrLib, and are (c) Texas Instruments and (c) George Louthan
+ *
+ *  Remainder of file is (c) George Louthan 2019
+ *
  */
 
 #include <stdlib.h>
@@ -13,14 +16,16 @@
 #include <spiffs.h>
 #include <queercon_drivers/storage.h>
 
-// Derived from TI grlib: // TODO: license
+#define RLE_BATCH_READ_SIZE 38
+
+/// More appropriate replacement function for Graphics_drawImage.
 void qc16gr_drawImage(const Graphics_Context *context,
                       const Graphics_Image *bitmap,
                       int16_t x,
                       int16_t y)
 {
     int16_t bPP, width, height, x0, x1, x2;
-    const uint32_t palette[2] = {0, 1}; // TODO: account for bg/fg
+    const uint32_t palette[2] = {0, 1};
     const uint8_t *image;
 
     //
@@ -221,7 +226,7 @@ void qc16gr_drawImage(const Graphics_Context *context,
     }
 }
 
-// Derived from TI grlib: // TODO: license
+/// More appropriate replacement function for Graphics_drawImage, reading from SPIFFS.
 void qc16gr_drawImageFromFile(const Graphics_Context *context,
                               char *pathname,
                               int16_t x,
@@ -230,7 +235,7 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
     Graphics_Image bitmap;
 
     int16_t bPP, width, height, x0, x1, x2;
-    const uint32_t palette[2] = {0, 1}; // TODO: account for bg/fg
+    const uint32_t palette[2] = {0, 1};
 
     uint8_t *image;
 
@@ -241,8 +246,13 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
 
     spiffs_file fd;
     fd = SPIFFS_open(&fs, pathname, SPIFFS_O_RDONLY, 0);
-    // TODO: assert lengths
-    SPIFFS_read(&fs, fd, &bitmap, sizeof(Graphics_Image));
+    int32_t ret = SPIFFS_read(&fs, fd, &bitmap, sizeof(Graphics_Image));
+
+    if (ret < sizeof(Graphics_Image)) {
+        SPIFFS_close(&fs, fd);
+        storage_bad_file(pathname);
+        return;
+    }
 
     //
     // Check the arguments.
@@ -357,7 +367,13 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
         while(height--)
         {
             // Load an entire row (possibly outside of clipping area)
-            SPIFFS_read(&fs, fd, image, ((width * bPP) + 7) / 8);
+            ret = SPIFFS_read(&fs, fd, image, ((width * bPP) + 7) / 8);
+
+            if (ret < ((width * bPP) + 7) / 8) {
+                SPIFFS_close(&fs, fd);
+                storage_bad_file(pathname);
+                return;
+            }
 
             // Draw the part of that row inside the clipping area:
             Graphics_drawMultiplePixelsOnDisplay(context->display, x + x0, y,
@@ -372,8 +388,6 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
         }
         free(image);
     } else {
-        // TODO: move
-#define RLE_BATCH_READ_SIZE 38
         // The image is compressed with RLE4, RLE7 or RLE8 Algorithm
         image = malloc(RLE_BATCH_READ_SIZE);
         uint8_t read_len = 0;
@@ -396,7 +410,13 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
                     read_len = RLE_BATCH_READ_SIZE;
                 }
                 img_index = 0;
-                SPIFFS_read(&fs, fd, image, read_len);
+                ret = SPIFFS_read(&fs, fd, image, read_len);
+
+                if (ret < read_len) {
+                    SPIFFS_close(&fs, fd);
+                    storage_bad_file(pathname);
+                    return;
+                }
             }
 
             if(rleType == 8)   // RLE 8 bit encoding

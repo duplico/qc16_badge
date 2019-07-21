@@ -599,10 +599,10 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
             }
             i += section_len+1;
         }
-        if (i >= len-8-6) {
-            // oops
-            while (1);
-            // TODO: not this.
+        if (i > len-8-6) {
+            // We had some kind of weird overrun.
+            // So let's not process this message at all, then.
+            return;
         }
 
         if (seems_queercon == 0xFF) {

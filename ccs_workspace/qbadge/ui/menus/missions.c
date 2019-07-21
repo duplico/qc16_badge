@@ -44,7 +44,6 @@ mission_t candidate_mission;
 void ui_draw_mission_icons() {
     Graphics_Rectangle rect;
 
-    // TODO: Put the agent icon next to a mission if it's being run.
     for (uint8_t i=0; i<3; i++) {
         rect.xMin=124;
         rect.yMin=TOPBAR_HEIGHT+3+i*(TOPBAR_HEIGHT+2);
@@ -77,14 +76,12 @@ void ui_draw_mission_icons() {
             //  other than the one we're assigning.
             fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+1, rect.yMin+1, rect.xMax-1, rect.yMax-1);
         } else {
-            // In a normal render, fade out the element if it's not equipped:
-            // TODO: We also need to be of sufficient level.
-            if (badge_conf.element_selected != mission.element_types[0]) {
+            // In a normal render, fade out the element if it's not valid
+            if (!mission_qualified_for_element_id(&mission, 0)) {
                 fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+2, rect.yMin+1, rect.xMin+1+TOPBAR_ICON_WIDTH, rect.yMin+1+TOPBAR_ICON_HEIGHT);
             }
         }
 
-        // TODO: handle the second one:
         if (mission.element_types[1] != ELEMENT_COUNT_NONE) {
             ui_draw_element(mission.element_types[1], mission.element_levels[1], 5, mission.element_rewards[1], rect.xMin+2+TOPBAR_SEG_WIDTH, rect.yMin+1);
         }
@@ -98,7 +95,7 @@ void ui_draw_mission_menu() {
         ui_draw_menu_icons(ui_x_cursor, image_missionmenu_icons, mission_menu_text, 5, 0, TOPBAR_HEIGHT+8, 2);
     }
 
-    if (!mission_possible()) {
+    if (!mission_getting_possible()) {
         // There are no handlers nearby (not even the vhandler)
         // Put an X over the mission-getting icon
         Graphics_drawLine(&ui_gr_context_landscape, 0, TOPBAR_HEIGHT+8, 0+image_missionmenu_icons[0]->xSize, TOPBAR_HEIGHT+8+image_missionmenu_icons[0]->ySize);
@@ -131,19 +128,22 @@ void ui_missions_do(UInt events) {
         switch(kb_active_key_masked) {
         case KB_OK:
             if (mission_picking) {
-                // TODO: don't allow it to be done on a mission currently being run.
+                if (!badge_conf.agent_present && badge_conf.agent_mission_id == ui_y_cursor) {
+                    // Agent is currently running a mission, and it's
+                    //  this mission.
+                    break;
+                }
                 mission_picking = 0;
                 ui_x_cursor = 0;
                 // Copy the candidate mission into the config mission
                 memcpy(&badge_conf.missions[ui_y_cursor], &candidate_mission, sizeof(mission_t));
                 badge_conf.mission_assigned[ui_y_cursor] = 1;
-                write_conf();// and save. // TODO: move
+                write_conf();// and save.
                 epd_do_partial = 1;
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
             } else {
                 if (ui_x_cursor == 0) {
-                    // TODO: validate conditions better
-                    if (mission_possible()) {
+                    if (mission_getting_possible()) {
                         mission_picking = 1;
                         candidate_mission = generate_mission();
                         ui_y_cursor = 0;
@@ -152,11 +152,10 @@ void ui_missions_do(UInt events) {
                     }
                 } else {
                     // Mission
-                    // TODO: validate conditions
                     // Choose & start a mission
                     for (uint8_t i=0; i<3; i++) {
                         // take the first one we qualify for
-                        if (mission_qualifies(i)) {
+                        if (mission_solo_qualifies(i)) {
                             mission_begin_by_id(i);
                             Event_post(ui_event_h, UI_EVENT_REFRESH);
                             break;

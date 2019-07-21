@@ -20,6 +20,7 @@
 #define LED_EVENT_FN_STEP       Event_Id_06
 #define LED_EVENT_SIDE_ON       Event_Id_07
 #define LED_EVENT_SIDE_OFF      Event_Id_08
+#define LED_EVENT_SIDE_OFF_AND_TRIGGER_ADC Event_Id_09
 
 typedef enum {
     LED_TAIL_ANIM_TYPE_OFF = 0,
@@ -49,7 +50,7 @@ typedef enum {
 
 typedef struct {
     led_tail_anim_type type;
-    rgbcolor16_t colors[6]; // TODO: this should be indices instead.
+    rgbcolor16_t colors[6];
     led_tail_anim_mod modifier;
 } led_tail_anim_t;
 

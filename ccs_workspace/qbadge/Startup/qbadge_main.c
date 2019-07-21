@@ -28,9 +28,6 @@
 
 #include "ui/ui.h"
 #include "ui/leds.h"
-#include <ui/adc.h>
-
-uint32_t vbat_out_uvolts = 0;
 
 int main()
 {
@@ -61,8 +58,6 @@ int main()
     serial_init();
     led_init();
     epd_phy_init();
-
-    adc_init();
 
     BIOS_start();     /* enable interrupts and start SYS/BIOS */
 

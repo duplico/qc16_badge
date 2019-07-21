@@ -109,18 +109,27 @@ void ui_draw_battery_at(Graphics_Context *gr, uint16_t x, uint16_t y) {
         rect.yMax = rect.yMin+BATTERY_BODY_HEIGHT;
         Graphics_drawRectangle(gr, &rect);
 
-        rect.yMin += 2;
-        rect.yMax -= 2;
-        if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 >= VBAT_FULL_2DOT)) {
-            // Full battery segment
-            rect.xMin = x+BATTERY_HIGH_X0_OFFSET+BATTERY_SEGMENT_PAD;
-            rect.xMax = rect.xMin+BATTERY_SEGMENT_WIDTH-1;
-        }
-        if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_MID_2DOT))) {
-            // Mid battery segment
-        }
         if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_LOW_2DOT))) {
             // Low battery segment
+            rect.xMin +=2;
+            rect.yMin +=2;
+            rect.yMax -=2;
+            rect.xMax = rect.xMin + BATTERY_SEGMENT_WIDTH - BATTERY_SEGMENT_PAD;
+            fillRectangle(gr, &rect);
+        }
+
+        if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_MID_2DOT))) {
+            // Mid battery segment
+            rect.xMin = rect.xMax + BATTERY_SEGMENT_PAD;
+            rect.xMax = rect.xMin + BATTERY_SEGMENT_WIDTH - BATTERY_SEGMENT_PAD;
+            fillRectangle(gr, &rect);
+        }
+
+        if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 >= VBAT_FULL_2DOT)) {
+            // Full battery segment
+            rect.xMin = rect.xMax + BATTERY_SEGMENT_PAD;
+            rect.xMax = rect.xMin + BATTERY_SEGMENT_WIDTH - BATTERY_SEGMENT_PAD;
+            fillRectangle(gr, &rect);
         }
 
         // Draw the anode:
@@ -133,7 +142,7 @@ void ui_draw_battery_at(Graphics_Context *gr, uint16_t x, uint16_t y) {
 
     if (vbat_out_uvolts/1000000 < 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 < VBAT_LOW_2DOT)) {
         // Very low battery warning
-        Graphics_drawStringCentered(gr, "LOW!", 4, BATTERY_X + TOPBAR_ICON_WIDTH/2, TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1, 1);
+        Graphics_drawStringCentered(gr, "LOW!", 4, x + TOPBAR_ICON_WIDTH/2, y + TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 3, 0);
     } else {
         // Otherwise, voltage reading
         Graphics_setFont(gr, &g_sFontFixed6x8);
@@ -141,48 +150,6 @@ void ui_draw_battery_at(Graphics_Context *gr, uint16_t x, uint16_t y) {
         sprintf(bat_text, "%d.%dV", vbat_out_uvolts/1000000, (vbat_out_uvolts/100000) % 10);
         Graphics_drawStringCentered(gr, (int8_t *) bat_text, 4, x + TOPBAR_ICON_WIDTH/2, y + TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 3, 0);
     }
-
-//    if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 >= VBAT_FULL_2DOT)) {
-//        // full
-//        rect.xMin = x+BATTERY_HIGH_X0_OFFSET+BATTERY_SEGMENT_PAD;
-//        rect.xMax = x+BATTERY_HIGH_X0_OFFSET+BATTERY_SEGMENT_WIDTH-1;
-//        // TODO: the Ys
-//        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD+1;
-//        rect.yMax = rect.yMin + BATTERY_BODY_HEIGHT - BATTERY_SEGMENT_PAD - 1;
-//        fillRectangle(&ui_gr_context_landscape, &rect);
-//
-//        rect.xMin = BATTERY_HIGH_X0+BATTERY_SEGMENT_PAD;
-//        rect.xMax = BATTERY_HIGH_X0+BATTERY_SEGMENT_WIDTH-1;
-//        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD+1;
-//        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-1;
-//        fillRectangle(&ui_gr_context_landscape, &rect);
-//    }
-//    if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_MID_2DOT))) {
-//        rect.xMin = BATTERY_MID_X0+BATTERY_SEGMENT_PAD;
-//        rect.xMax = BATTERY_MID_X0+BATTERY_SEGMENT_WIDTH;
-//        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD+1;
-//        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-1;
-//        fillRectangle(&ui_gr_context_landscape, &rect);
-//
-//        rect.xMin = BATTERY_MID_X0+BATTERY_SEGMENT_PAD;
-//        rect.xMax = BATTERY_MID_X0+BATTERY_SEGMENT_WIDTH;
-//        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD+1;
-//        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-1;
-//        fillRectangle(&ui_gr_context_landscape, &rect);
-//    }
-//    if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_LOW_2DOT))) {
-//        rect.xMin = BATTERY_LOW_X0+BATTERY_SEGMENT_PAD+1;
-//        rect.xMax = BATTERY_LOW_X0+BATTERY_SEGMENT_WIDTH;
-//        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD+1;
-//        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-1;
-//        fillRectangle(&ui_gr_context_landscape, &rect);
-//
-//        rect.xMin = BATTERY_LOW_X0+BATTERY_SEGMENT_PAD+1;
-//        rect.xMax = BATTERY_LOW_X0+BATTERY_SEGMENT_WIDTH;
-//        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD+1;
-//        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-1;
-//        fillRectangle(&ui_gr_context_landscape, &rect);
-//    }
 }
 
 /// Draw the agent-present, handler-available, and radar icons.

@@ -96,6 +96,80 @@ void ui_draw_top_bar_remote_element_icons() {
 
 }
 
+void ui_draw_battery_at(Graphics_Context *gr, uint16_t x, uint16_t y) {
+    Graphics_Rectangle rect;
+
+    for (uint8_t battery=0; battery<2; battery++) {
+        // Draw the battery body:
+        rect.xMin = x;
+        rect.xMax = x+BATTERY_BODY_WIDTH;
+        rect.yMin = y + (battery*(BATTERY_BODY_HEIGHT+BATTERY_BODY_VPAD));
+        rect.yMax = rect.yMin+BATTERY_BODY_HEIGHT;
+        Graphics_drawRectangle(gr, &rect);
+
+        // Draw the anode:
+        rect.xMin = x+BATTERY_BODY_WIDTH;
+        rect.xMax = x+BATTERY_BODY_WIDTH+BATTERY_ANODE_WIDTH;
+        rect.yMin = y + (battery*(BATTERY_BODY_HEIGHT+BATTERY_BODY_VPAD)) + (BATTERY_BODY_HEIGHT-BATTERY_ANODE_HEIGHT)/2;
+        rect.yMax = rect.yMin + BATTERY_ANODE_HEIGHT;
+        Graphics_drawRectangle(gr, &rect);
+
+        // TODO: Add the segments in...
+
+    }
+
+    Graphics_setFont(gr, &g_sFontFixed6x8);
+    char bat_text[5] = "3.0V";
+    sprintf(bat_text, "%d.%dV", vbat_out_uvolts/1000000, (vbat_out_uvolts/100000) % 10);
+    Graphics_drawStringCentered(gr, (int8_t *) bat_text, 4, x + TOPBAR_ICON_WIDTH/2, y + TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 3, 0);
+
+//    if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 >= VBAT_FULL_2DOT)) {
+//        // full
+//        rect.xMin = x+BATTERY_HIGH_X0_OFFSET+BATTERY_SEGMENT_PAD;
+//        rect.xMax = x+BATTERY_HIGH_X0_OFFSET+BATTERY_SEGMENT_WIDTH-1;
+//        // TODO: the Ys
+//        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD+1;
+//        rect.yMax = rect.yMin + BATTERY_BODY_HEIGHT - BATTERY_SEGMENT_PAD - 1;
+//        fillRectangle(&ui_gr_context_landscape, &rect);
+//
+//        rect.xMin = BATTERY_HIGH_X0+BATTERY_SEGMENT_PAD;
+//        rect.xMax = BATTERY_HIGH_X0+BATTERY_SEGMENT_WIDTH-1;
+//        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD+1;
+//        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-1;
+//        fillRectangle(&ui_gr_context_landscape, &rect);
+//    }
+//    if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_MID_2DOT))) {
+//        rect.xMin = BATTERY_MID_X0+BATTERY_SEGMENT_PAD;
+//        rect.xMax = BATTERY_MID_X0+BATTERY_SEGMENT_WIDTH;
+//        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD+1;
+//        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-1;
+//        fillRectangle(&ui_gr_context_landscape, &rect);
+//
+//        rect.xMin = BATTERY_MID_X0+BATTERY_SEGMENT_PAD;
+//        rect.xMax = BATTERY_MID_X0+BATTERY_SEGMENT_WIDTH;
+//        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD+1;
+//        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-1;
+//        fillRectangle(&ui_gr_context_landscape, &rect);
+//    }
+//    if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_LOW_2DOT))) {
+//        rect.xMin = BATTERY_LOW_X0+BATTERY_SEGMENT_PAD+1;
+//        rect.xMax = BATTERY_LOW_X0+BATTERY_SEGMENT_WIDTH;
+//        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD+1;
+//        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-1;
+//        fillRectangle(&ui_gr_context_landscape, &rect);
+//
+//        rect.xMin = BATTERY_LOW_X0+BATTERY_SEGMENT_PAD+1;
+//        rect.xMax = BATTERY_LOW_X0+BATTERY_SEGMENT_WIDTH;
+//        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD+1;
+//        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-1;
+//        fillRectangle(&ui_gr_context_landscape, &rect);
+//    }
+    if (vbat_out_uvolts/1000000 < 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 < VBAT_LOW_2DOT)) {
+        Graphics_drawStringCentered(gr, "LOW!", 4, BATTERY_X + TOPBAR_ICON_WIDTH/2, TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1, 1);
+
+    }
+}
+
 /// Draw the agent-present, handler-available, and radar icons.
 void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint16_t y) {
     char str[QC16_BADGE_NAME_LEN+1] = {0,};
@@ -154,86 +228,11 @@ void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint1
         y+TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1,
         0
     );
-}
 
-void ui_draw_top_bar_battery_life() {
-    Graphics_Rectangle rect;
-    // Draw the top battery:
-    rect.xMin = BATTERY_X;
-    rect.xMax = BATTERY_X+BATTERY_BODY_WIDTH;
-    rect.yMin = BATTERY_BODY0_Y0;
-    rect.yMax = BATTERY_BODY0_Y1;
-    Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+    x += img_hud_radar.xSize + 4;
 
-    rect.xMin = BATTERY_X+BATTERY_BODY_WIDTH;
-    rect.xMax = BATTERY_X+BATTERY_BODY_WIDTH+BATTERY_ANODE_WIDTH;
-    rect.yMin = BATTERY_ANODE0_Y0;
-    rect.yMax = BATTERY_ANODE0_Y0 + BATTERY_ANODE_HEIGHT;
-    Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
-
-    // Bottom battery:
-    rect.xMin = BATTERY_X;
-    rect.xMax = BATTERY_X+BATTERY_BODY_WIDTH;
-    rect.yMin = BATTERY_BODY1_Y0;
-    rect.yMax = BATTERY_BODY1_Y1;
-    Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
-
-    rect.xMin = BATTERY_X+BATTERY_BODY_WIDTH;
-    rect.xMax = BATTERY_X+BATTERY_BODY_WIDTH+BATTERY_ANODE_WIDTH;
-    rect.yMin = BATTERY_ANODE1_Y0;
-    rect.yMax = BATTERY_ANODE1_Y0 + BATTERY_ANODE_HEIGHT;
-    Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
-
-    Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
-    char bat_text[5] = "3.0V";
-    sprintf(bat_text, "%d.%dV", vbat_out_uvolts/1000000, (vbat_out_uvolts/100000) % 10);
-    Graphics_drawStringCentered(&ui_gr_context_landscape, (int8_t *) bat_text, 4, BATTERY_X + TOPBAR_ICON_WIDTH/2, TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1, 0);
-
-    // Now do the graphics part:
-    if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 >= VBAT_FULL_2DOT)) {
-        // full
-        rect.xMin = BATTERY_HIGH_X0+BATTERY_SEGMENT_PAD;
-        rect.xMax = BATTERY_HIGH_X0+BATTERY_SEGMENT_WIDTH-1;
-        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD+1;
-        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-1;
-        fillRectangle(&ui_gr_context_landscape, &rect);
-
-        rect.xMin = BATTERY_HIGH_X0+BATTERY_SEGMENT_PAD;
-        rect.xMax = BATTERY_HIGH_X0+BATTERY_SEGMENT_WIDTH-1;
-        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD+1;
-        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-1;
-        fillRectangle(&ui_gr_context_landscape, &rect);
-    }
-    if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_MID_2DOT))) {
-        rect.xMin = BATTERY_MID_X0+BATTERY_SEGMENT_PAD;
-        rect.xMax = BATTERY_MID_X0+BATTERY_SEGMENT_WIDTH;
-        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD+1;
-        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-1;
-        fillRectangle(&ui_gr_context_landscape, &rect);
-
-        rect.xMin = BATTERY_MID_X0+BATTERY_SEGMENT_PAD;
-        rect.xMax = BATTERY_MID_X0+BATTERY_SEGMENT_WIDTH;
-        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD+1;
-        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-1;
-        fillRectangle(&ui_gr_context_landscape, &rect);
-    }
-    if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_LOW_2DOT))) {
-        rect.xMin = BATTERY_LOW_X0+BATTERY_SEGMENT_PAD+1;
-        rect.xMax = BATTERY_LOW_X0+BATTERY_SEGMENT_WIDTH;
-        rect.yMin = BATTERY_BODY0_Y0+BATTERY_SEGMENT_PAD+1;
-        rect.yMax = BATTERY_BODY0_Y1-BATTERY_SEGMENT_PAD-1;
-        fillRectangle(&ui_gr_context_landscape, &rect);
-
-        rect.xMin = BATTERY_LOW_X0+BATTERY_SEGMENT_PAD+1;
-        rect.xMax = BATTERY_LOW_X0+BATTERY_SEGMENT_WIDTH;
-        rect.yMin = BATTERY_BODY1_Y0+BATTERY_SEGMENT_PAD+1;
-        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-1;
-        fillRectangle(&ui_gr_context_landscape, &rect);
-    }
-    if (vbat_out_uvolts/1000000 < 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 < VBAT_LOW_2DOT)) {
-        Graphics_drawStringCentered(&ui_gr_context_landscape, "LOW!", 4, BATTERY_X + TOPBAR_ICON_WIDTH/2, TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1, 1);
-
-    }
+    // TODO: numbers:
+    ui_draw_battery_at(gr, x, y+2);
 }
 
 void ui_draw_top_bar() {
@@ -248,7 +247,6 @@ void ui_draw_top_bar() {
 
     fadeRectangle(&ui_gr_context_landscape, &rect);
 
-    ui_draw_top_bar_battery_life();
     ui_draw_top_bar_local_element_icons();
     ui_draw_hud(&ui_gr_context_landscape, 0, TOPBAR_SEG_WIDTH_PADDED * 3, 0);
 }

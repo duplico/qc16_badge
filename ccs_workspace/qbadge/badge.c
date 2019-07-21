@@ -368,9 +368,9 @@ void generate_config() {
     badge_conf.element_level_max[1] = 2;
     badge_conf.element_level_max[2] = 2;
 
-    badge_conf.element_qty[0] = 999;
-    badge_conf.element_qty[1] = 999;
-    badge_conf.element_qty[2] = 999;
+    badge_conf.element_qty[0] = 0;
+    badge_conf.element_qty[1] = 0;
+    badge_conf.element_qty[2] = 0;
 
     badge_conf.vhandler_present=1;
 

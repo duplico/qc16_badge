@@ -99,6 +99,8 @@ void ui_draw_top_bar_remote_element_icons() {
 void ui_draw_battery_at(Graphics_Context *gr, uint16_t x, uint16_t y) {
     Graphics_Rectangle rect;
 
+    // TODO: Hey, just make this work::::::::::::::::::::::::::::::::
+
     for (uint8_t battery=0; battery<2; battery++) {
         // Draw the battery body:
         rect.xMin = x;
@@ -107,21 +109,38 @@ void ui_draw_battery_at(Graphics_Context *gr, uint16_t x, uint16_t y) {
         rect.yMax = rect.yMin+BATTERY_BODY_HEIGHT;
         Graphics_drawRectangle(gr, &rect);
 
+        rect.yMin += 2;
+        rect.yMax -= 2;
+        if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 >= VBAT_FULL_2DOT)) {
+            // Full battery segment
+            rect.xMin = x+BATTERY_HIGH_X0_OFFSET+BATTERY_SEGMENT_PAD;
+            rect.xMax = rect.xMin+BATTERY_SEGMENT_WIDTH-1;
+        }
+        if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_MID_2DOT))) {
+            // Mid battery segment
+        }
+        if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000 % 10 >= VBAT_LOW_2DOT))) {
+            // Low battery segment
+        }
+
         // Draw the anode:
         rect.xMin = x+BATTERY_BODY_WIDTH;
         rect.xMax = x+BATTERY_BODY_WIDTH+BATTERY_ANODE_WIDTH;
         rect.yMin = y + (battery*(BATTERY_BODY_HEIGHT+BATTERY_BODY_VPAD)) + (BATTERY_BODY_HEIGHT-BATTERY_ANODE_HEIGHT)/2;
         rect.yMax = rect.yMin + BATTERY_ANODE_HEIGHT;
         Graphics_drawRectangle(gr, &rect);
-
-        // TODO: Add the segments in...
-
     }
 
-    Graphics_setFont(gr, &g_sFontFixed6x8);
-    char bat_text[5] = "3.0V";
-    sprintf(bat_text, "%d.%dV", vbat_out_uvolts/1000000, (vbat_out_uvolts/100000) % 10);
-    Graphics_drawStringCentered(gr, (int8_t *) bat_text, 4, x + TOPBAR_ICON_WIDTH/2, y + TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 3, 0);
+    if (vbat_out_uvolts/1000000 < 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 < VBAT_LOW_2DOT)) {
+        // Very low battery warning
+        Graphics_drawStringCentered(gr, "LOW!", 4, BATTERY_X + TOPBAR_ICON_WIDTH/2, TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1, 1);
+    } else {
+        // Otherwise, voltage reading
+        Graphics_setFont(gr, &g_sFontFixed6x8);
+        char bat_text[5] = "3.0V";
+        sprintf(bat_text, "%d.%dV", vbat_out_uvolts/1000000, (vbat_out_uvolts/100000) % 10);
+        Graphics_drawStringCentered(gr, (int8_t *) bat_text, 4, x + TOPBAR_ICON_WIDTH/2, y + TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 3, 0);
+    }
 
 //    if (vbat_out_uvolts/1000000 > 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 >= VBAT_FULL_2DOT)) {
 //        // full
@@ -164,10 +183,6 @@ void ui_draw_battery_at(Graphics_Context *gr, uint16_t x, uint16_t y) {
 //        rect.yMax = BATTERY_BODY1_Y1-BATTERY_SEGMENT_PAD-1;
 //        fillRectangle(&ui_gr_context_landscape, &rect);
 //    }
-    if (vbat_out_uvolts/1000000 < 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 < VBAT_LOW_2DOT)) {
-        Graphics_drawStringCentered(gr, "LOW!", 4, BATTERY_X + TOPBAR_ICON_WIDTH/2, TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1, 1);
-
-    }
 }
 
 /// Draw the agent-present, handler-available, and radar icons.
@@ -185,12 +200,14 @@ void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint1
 
     // Give more space for the text.
     x += 5;
-    if (mission_getting_possible()) {
-        // Should draw handler image.
-        if (agent_vertical) {
+
+    if (agent_vertical) {
+        if (mission_getting_possible()) {
             qc16gr_drawImage(gr, &img_hud_handler, x, y+1);
-            x += img_hud_handler.xSize + 1;
-        } else {
+        }
+        x += img_hud_handler.xSize + 1;
+    } else {
+        if (mission_getting_possible()) {
             qc16gr_drawImage(gr, &img_hud_handler_sideways, x, y+1);
             if (handler_nearby()) {
                 // Use the handler's name
@@ -207,9 +224,10 @@ void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint1
                     y+TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1,
                     0
             );
-            x += img_hud_handler_sideways.xSize + 1;
         }
+        x += img_hud_handler_sideways.xSize + 1;
     }
+
     // Give more space for the text.
     x += 3;
 

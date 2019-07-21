@@ -2,6 +2,7 @@
 #define QC16_SERIAL_COMMON_H_
 
 #include <stdint.h>
+#include <qc16.h>
 
 // Configuration
 #define PTX_TIME_MS 100
@@ -14,12 +15,12 @@
 
 #define SERIAL_OPCODE_HELO      0x01
 #define SERIAL_OPCODE_ACK       0x02
-#define SERIAL_OPCODE_KB_J1    0x03
-#define SERIAL_OPCODE_KB_J2    0x04
-#define SERIAL_OPCODE_KB_J3    0x05
-#define SERIAL_OPCODE_KB_F1    0x06
-#define SERIAL_OPCODE_KB_F2    0x07
-#define SERIAL_OPCODE_KB_F3    0x08
+#define SERIAL_OPCODE_KB_J1     0x03
+#define SERIAL_OPCODE_KB_J2     0x04
+#define SERIAL_OPCODE_KB_J3     0x05
+#define SERIAL_OPCODE_KB_F1     0x06
+#define SERIAL_OPCODE_KB_F2     0x07
+#define SERIAL_OPCODE_KB_F3     0x08
 #define SERIAL_OPCODE_PUTFILE   0x09
 #define SERIAL_OPCODE_APPFILE   0x0A
 #define SERIAL_OPCODE_ENDFILE   0x0B
@@ -28,6 +29,10 @@
 #define SERIAL_OPCODE_DUMPQ     0x0E
 #define SERIAL_OPCODE_DUMPA     0x0F
 #define SERIAL_OPCODE_DISCON    0x10
+#define SERIAL_OPCODE_SETTYPE   0x11
+#define SERIAL_OPCODE_PAIR      0x12
+#define SERIAL_OPCODE_GETFILE   0x13
+#define SERIAL_OPCODE_GOMISSION 0x14
 
 #define SERIAL_ID_ANY 0xffff
 
@@ -48,6 +53,19 @@ typedef struct {
     uint16_t crc16_payload;
     uint16_t crc16_header;
 } serial_header_t;
+
+typedef struct {
+    __packed uint8_t badge_type;
+    __packed uint8_t element_level[6];
+    __packed uint8_t element_level_max[6];
+    __packed uint8_t element_level_progress[6];
+    __packed uint32_t element_qty[6];
+    __packed uint32_t last_clock;
+    __packed uint8_t clock_is_set;
+    __packed uint8_t agent_present;
+    __packed mission_t missions[3];
+    __packed char handle[QC16_BADGE_NAME_LEN + 1];
+} pair_payload_t;
 
 uint16_t crc16_buf(volatile uint8_t *sbuf, uint8_t len);
 uint16_t crc_build(uint8_t data, uint8_t start_over);

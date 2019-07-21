@@ -18,9 +18,8 @@
 
 #define KEY_LVL (1000 * TICKS_PER_MS) // Should be about 1000 per ms
 
-#define SERIAL_BUFFER_LEN 32
-// Currently ticks are about 2ms:
-// And, at 9600 baud a header takes about 7ms to send.
+// An enormous work buffer for the serial (what else am I using all this RAM for?)
+#define SERIAL_BUFFER_LEN 448
 #define SERIAL_PHY_TIMEOUT_MS 10
 
 #define SERIAL_DIO_OUT P1OUT

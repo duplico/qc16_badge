@@ -97,7 +97,7 @@ void ui_draw_top_bar_remote_element_icons() {
 }
 
 /// Draw the agent-present, handler-available, and radar icons.
-void ui_draw_top_bar_qbadge_headsup_icons(Graphics_Context *gr, uint16_t x, uint16_t y) {
+void ui_draw_top_bar_qbadge_headsup_icons(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint16_t y) {
     char str[QC16_BADGE_NAME_LEN+1] = {0,};
 
     x += 1;
@@ -113,24 +113,29 @@ void ui_draw_top_bar_qbadge_headsup_icons(Graphics_Context *gr, uint16_t x, uint
     x += 5;
     if (mission_getting_possible()) {
         // Should draw handler image.
-        qc16gr_drawImage(gr, &img_hud_handler_sideways, x, y+1);
-        if (handler_nearby()) {
-            // Use the handler's name
+        if (agent_vertical) {
+            qc16gr_drawImage(gr, &img_hud_handler, x, y+1);
+            x += img_hud_handler.xSize + 1;
         } else {
-            // vhandler
-            sprintf(str, "vhandler");
+            qc16gr_drawImage(gr, &img_hud_handler_sideways, x, y+1);
+            if (handler_nearby()) {
+                // Use the handler's name
+            } else {
+                // vhandler
+                sprintf(str, "vhandler");
+            }
+            Graphics_setFont(gr, &g_sFontFixed6x8);
+            Graphics_drawStringCentered(
+                    gr,
+                    (int8_t *) str,
+                    QC16_BADGE_NAME_LEN,
+                    x+img_hud_handler_sideways.xSize/2,
+                    y+TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1,
+                    0
+            );
+            x += img_hud_handler_sideways.xSize + 1;
         }
-        Graphics_setFont(gr, &g_sFontFixed6x8);
-        Graphics_drawStringCentered(
-                gr,
-                (int8_t *) str,
-                QC16_BADGE_NAME_LEN,
-                x+img_hud_handler_sideways.xSize/2,
-                y+TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1,
-                0
-        );
     }
-    x += img_hud_handler_sideways.xSize + 1;
     // Give more space for the text.
     x += 3;
 
@@ -245,7 +250,7 @@ void ui_draw_top_bar() {
 
     ui_draw_top_bar_battery_life();
     ui_draw_top_bar_local_element_icons();
-    ui_draw_top_bar_qbadge_headsup_icons(&ui_gr_context_landscape, TOPBAR_SEG_WIDTH_PADDED * 3, 0);
+    ui_draw_top_bar_qbadge_headsup_icons(&ui_gr_context_landscape, 1, TOPBAR_SEG_WIDTH_PADDED * 3, 0);
 }
 
 void ui_draw_menu_icons(uint8_t selected_index, const Graphics_Image **icons, const char text[][MAINMENU_NAME_MAX_LEN+1], uint16_t pad, uint16_t x, uint16_t y, uint8_t len) {

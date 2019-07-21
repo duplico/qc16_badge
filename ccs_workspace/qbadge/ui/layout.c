@@ -97,7 +97,7 @@ void ui_draw_top_bar_remote_element_icons() {
 }
 
 /// Draw the agent-present, handler-available, and radar icons.
-void ui_draw_top_bar_qbadge_headsup_icons(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint16_t y) {
+void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint16_t y) {
     char str[QC16_BADGE_NAME_LEN+1] = {0,};
 
     x += 1;
@@ -250,7 +250,7 @@ void ui_draw_top_bar() {
 
     ui_draw_top_bar_battery_life();
     ui_draw_top_bar_local_element_icons();
-    ui_draw_top_bar_qbadge_headsup_icons(&ui_gr_context_landscape, 1, TOPBAR_SEG_WIDTH_PADDED * 3, 0);
+    ui_draw_hud(&ui_gr_context_landscape, 0, TOPBAR_SEG_WIDTH_PADDED * 3, 0);
 }
 
 void ui_draw_menu_icons(uint8_t selected_index, const Graphics_Image **icons, const char text[][MAINMENU_NAME_MAX_LEN+1], uint16_t pad, uint16_t x, uint16_t y, uint8_t len) {

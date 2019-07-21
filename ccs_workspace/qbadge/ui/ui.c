@@ -50,8 +50,6 @@ uint8_t ui_y_cursor = 0;
 uint8_t ui_x_max = 0;
 uint8_t ui_y_max = 0;
 
-
-
 uint8_t ui_is_landscape() {
     if (ui_colorpicking) {
         return 0;
@@ -95,12 +93,12 @@ void ui_draw_screensaver() {
     Graphics_clearDisplay(&ui_gr_context_portrait);
 
     Graphics_setFont(&ui_gr_context_portrait, &UI_TEXT_FONT);
-    Graphics_drawStringCentered(
+    Graphics_drawString(
             &ui_gr_context_portrait,
-            "- queercon 16 -",
-            15,
-            64,
-            UI_IDLE_BLOCK0_HEIGHT_PX / 2,
+            " - queercon 16 - ",
+            25,
+            0,
+            0,
             0
     );
 
@@ -110,9 +108,11 @@ void ui_draw_screensaver() {
             "DUPLiCO",
             7,
             64,
-            UI_IDLE_BLOCK2_TOP_PX + (UI_IDLE_BLOCK2_HEIGHT_PX / 2),
+            UI_IDLE_HUD_Y-28-5,
             0
     );
+
+    ui_draw_hud(&ui_gr_context_portrait, 1, 0, UI_IDLE_HUD_Y);
 
     Graphics_drawLineH(&ui_gr_context_portrait, 0, 128, UI_IDLE_PHOTO_TOP-2);
     Graphics_drawLineH(&ui_gr_context_portrait, 0, 128, UI_IDLE_PHOTO_TOP-1);

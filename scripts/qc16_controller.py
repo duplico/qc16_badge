@@ -9,6 +9,7 @@ import serial
 from image_reformer import QcImage
 
 HEADER_FMT_NOCRCs   = '<BBHH'
+HEADER_FMT   = '<BBHHHH'
 CRC_FMT = '<H'
 IMG_META_FMT = '<BxHHHII'
 
@@ -58,6 +59,9 @@ def validate_header(header):
 def await_ack(ser):
     resp = ser.read(11)
     validate_header(resp)
+    opcode, payload_len, from_id, badge_type, crc16_payload, crc16_header = struct.unpack(HEADER_FMT, resp[1:])
+    return from_id
+
 
 def send_message(ser, opcode, payload=b'', src_id=CONTROLLER_ID, dst_id=SERIAL_ID_ANY):
     msg = struct.pack(HEADER_FMT_NOCRCs, opcode, len(payload), src_id, dst_id)
@@ -73,15 +77,14 @@ def connect(ser):
     Raises all errors that `validate_header` can raise.
     """
     send_message(ser, SERIAL_OPCODE_HELO)
-    await_ack(ser)
+    return await_ack(ser)
 
 def connect_poll(ser):
     """Attempt to connect to a badge, returning True if successful and False on timeout."""
     try:
-        connect(ser)
+        return connect(ser)
     except TimeoutError:
-        return False
-    return True
+        return None
 
 def disconnect(ser):
     send_message(ser, SERIAL_OPCODE_DISCON)
@@ -167,7 +170,9 @@ def main():
     # pyserial object, with a 1 second timeout on reads.
     ser = serial.Serial(args.port, 230400, parity=serial.PARITY_NONE, timeout=args.timeout)
     # Make the initial LL handshake with the badge:
-    connect(ser)
+    badge_id = connect(ser)
+
+    print("Connected to badge %d" % badge_id)
 
     # Send the message requested by the user
     if args.command == 'image':

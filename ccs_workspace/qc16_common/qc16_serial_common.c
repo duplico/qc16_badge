@@ -43,6 +43,10 @@ uint8_t validate_header(serial_header_t *header) {
         return 0;
     }
 
+    if (header->payload_len > SERIAL_BUFFER_LEN) {
+        return 0;
+    }
+
     return 1;
 }
 

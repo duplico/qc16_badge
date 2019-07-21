@@ -66,6 +66,7 @@ typedef struct {
     __packed uint8_t clock_is_set;
     __packed uint8_t agent_present;
     __packed mission_t missions[3];
+    __packed uint8_t missions_accepted[3];
     __packed char handle[QC16_BADGE_NAME_LEN + 1];
 } pair_payload_t;
 

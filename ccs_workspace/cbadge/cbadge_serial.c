@@ -79,6 +79,8 @@ void serial_send_start(uint8_t opcode, uint8_t payload_len) {
 }
 
 void serial_pair() {
+    // Guard against clobbering anything:
+    while (serial_phy_state != SERIAL_PHY_STATE_IDLE);
     pair_payload_t *pair_payload_out = (pair_payload_t *) serial_buffer_out;
     memset(pair_payload_out, 0, sizeof(pair_payload_t));
     pair_payload_out->agent_present = 0;
@@ -98,6 +100,13 @@ void serial_pair() {
     // pair_payload_out.missions are DONTCARE
 
     serial_send_start(SERIAL_OPCODE_PAIR, sizeof(pair_payload_t));
+}
+
+void serial_element_update() {
+    // Guard against clobbering anything:
+    while (serial_phy_state != SERIAL_PHY_STATE_IDLE);
+    memcpy(serial_buffer_out, &badge_conf.element_selected, sizeof(element_type));
+    serial_send_start(SERIAL_OPCODE_ELEMENT, sizeof(element_type));
 }
 
 void serial_ll_timeout() {
@@ -201,6 +210,7 @@ void serial_ll_handle_rx() {
         // But, mission-doing is a thing!
         if (serial_header_in.opcode == SERIAL_OPCODE_GOMISSION) {
             mission_t *mission = (mission_t *) &serial_buffer_in[1];
+            // TODO: get our mission rewards!
         }
         break;
     }

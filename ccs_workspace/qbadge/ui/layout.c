@@ -99,75 +99,42 @@ void ui_draw_top_bar_remote_element_icons() {
 /// Draw the agent-present, handler-available, and radar icons.
 void ui_draw_top_bar_qbadge_headsup_icons() {
     Graphics_Rectangle rect;
+    char cnt[5] = {0,};
+    uint16_t y=1;
+    // We have about 106 px to do this in.
 
-    // TODO: The following, but properly:
-    //  We need a part-height agent icon, with a progress bar or countdown
-    //          a handler icon, with name
-    //          a radar icon, with count
-//    // TODO: Let's say I've got 128 px to do this in.
-//
-//    uint16_t x_offset = 0;
-//
-//    // First, agent present:
-//    if (badge_conf.agent_present) {
-//
-//    }
-//
-//
+    uint8_t x = TOPBAR_SEG_WIDTH_PADDED * 3;
 
-    char cnt[5];
-
-    for (uint8_t i=0; i<3; i++) {
-        uint16_t icon_x = TOPBAR_HEADSUP_START + i*TOPBAR_SEG_WIDTH_PADDED;
-        uint16_t icon_y = 0;
-        uint8_t fade = 0;
-
-        const tImage *icon_img;
-
-
-        switch(i) {
-        case 0: // agent
-            icon_img = &img_agent;
-            if (!badge_conf.agent_present) {
-                fade = 1;
-            }
-            break;
-        case 1: // handlers
-            icon_img = &img_handler;
-            if (!mission_getting_possible()) {
-                fade = 1;
-            }
-            break;
-        case 2: // scan
-            icon_img = &img_radar;
-            sprintf(cnt, "%d", qbadges_near_count);
-            Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
-            Graphics_drawStringCentered(
-                    &ui_gr_context_landscape,
-                    (int8_t *) cnt,
-                    4,
-                    icon_x + TOPBAR_SEG_WIDTH/2,
-                    TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1,
-                    0);
-            break;
-        }
-
-        // Align the icon horizontally:
-        icon_x += (TOPBAR_SEG_WIDTH - icon_img->ySize) / 2;
-        qc16gr_drawImage(&ui_gr_context_landscape, icon_img, icon_x, icon_y);
-        if (fade) {
-            rect.xMin = icon_x;
-            rect.yMin = icon_y;
-            rect.xMax = icon_x + icon_img->xSize;
-            rect.yMax = icon_y + icon_img->ySize;
-            fadeRectangle(&ui_gr_context_landscape, &rect);
-        }
+    if (badge_conf.agent_present) {
+        // Should draw the agent icon.
+        qc16gr_drawImage(&ui_gr_context_landscape, &img_hud_agent, x, y);
+        x += img_hud_agent.xSize + 1;
     }
 
-    // Is our agent around? Draw the agent symbol.
+    if (mission_getting_possible()) {
+        // Should draw handler image.
+        qc16gr_drawImage(&ui_gr_context_landscape, &img_hud_handler, x, y);
+        x += img_hud_handler.xSize + 1;
+    }
 
-    // Are there any handlers around? Draw the handler symbol.
+    // Now, regardless, we draw the radar icon, and text.
+    //  We've got about 15 px for it.
 
+    qc16gr_drawImage(&ui_gr_context_landscape, &img_hud_radar, x, y);
+    x += img_hud_radar.xSize/2;
+    y += img_hud_radar.ySize;
+    y += 6;
+
+    sprintf(cnt, "%d", qbadges_near_count);
+    Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
+    Graphics_drawStringCentered(
+        &ui_gr_context_landscape,
+        (int8_t *) cnt,
+        4,
+        x,
+        6,
+        0
+    );
 }
 
 void ui_draw_top_bar_battery_life() {

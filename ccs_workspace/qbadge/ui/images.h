@@ -17,9 +17,9 @@ extern const Graphics_Image img_coins;
 extern const Graphics_Image img_flags;
 extern const Graphics_Image img_keys;
 extern const Graphics_Image img_locks;
-extern const Graphics_Image img_radar;
-extern const Graphics_Image img_agent;
-extern const Graphics_Image img_handler;
+extern const Graphics_Image img_hud_radar;
+extern const Graphics_Image img_hud_agent;
+extern const Graphics_Image img_hud_handler;
 extern const Graphics_Image img_cbadge;
 
 extern const tImage *image_anim_type_buttons[];

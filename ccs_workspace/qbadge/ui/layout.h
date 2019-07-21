@@ -23,7 +23,7 @@
 #define TOPBAR_TEXT_WIDTH 18
 #define TOPBAR_TEXT_HEIGHT (TOPBAR_HEIGHT - TOPBAR_ICON_HEIGHT)
 #define TOPBAR_SEG_WIDTH (TOPBAR_ICON_WIDTH + TOPBAR_TEXT_WIDTH)
-#define TOPBAR_SEG_PAD 2
+#define TOPBAR_SEG_PAD 3
 #define TOPBAR_SEG_WIDTH_PADDED (TOPBAR_ICON_WIDTH + TOPBAR_TEXT_WIDTH + TOPBAR_SEG_PAD)
 #define TOPBAR_SUB_WIDTH TOPBAR_SEG_WIDTH
 #define TOPBAR_SUB_HEIGHT (TOPBAR_HEIGHT - TOPBAR_ICON_HEIGHT - 1)
@@ -70,6 +70,6 @@ extern uint8_t ui_y_max;
 
 void ui_draw_top_bar();
 void ui_draw_menu_icons(uint8_t selected_index, const Graphics_Image **icons, const char text[][MAINMENU_NAME_MAX_LEN+1], uint16_t pad, uint16_t x, uint16_t y, uint8_t len);
-void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capacity, uint16_t number, uint16_t x, uint16_t y);
+void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capacity, uint32_t number, uint16_t x, uint16_t y);
 
 #endif /* UI_LAYOUT_H_ */

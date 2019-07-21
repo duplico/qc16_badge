@@ -37,15 +37,16 @@ typedef enum {
 } element_type;
 
 typedef struct {
-    element_type element_types[2];
-    uint8_t element_levels[2];
-    uint8_t element_rewards[2];
-    uint8_t element_progress[2];
+    __packed element_type element_types[2];
+    __packed uint8_t element_levels[2];
+    __packed uint8_t element_rewards[2];
+    __packed uint8_t element_progress[2];
 } mission_t;
 
 typedef struct {
     uint16_t badge_id;
     uint8_t initialized;
+    uint8_t badge_type;
     uint8_t element_level[3];
     uint8_t element_level_max[3];
     uint8_t element_level_progress[3];
@@ -53,6 +54,8 @@ typedef struct {
     uint16_t qbadges_seen_count;
     uint16_t qbadges_connected_count;
     uint16_t cbadges_connected_count;
+    uint16_t qbadge_max_id;
+    uint16_t cbadge_max_id;
     uint32_t last_clock;
     uint8_t clock_is_set;
     uint8_t agent_present;
@@ -72,9 +75,15 @@ typedef struct {
     uint8_t active;
     uint8_t activated;
     uint8_t initialized;
+    uint8_t badge_type;
+    element_type element_selected;
     uint8_t element_level[3];
     uint8_t element_level_progress[3];
     uint16_t element_qty[3];
+    uint16_t qbadges_connected_count;
+    uint16_t cbadges_connected_count;
+    uint16_t qbadge_max_id;
+    uint16_t cbadge_max_id;
     char handle[QC16_BADGE_NAME_LEN + 1];
 } cbadge_conf_t;
 
@@ -85,10 +94,10 @@ typedef struct {
 
 #define QBADGE_ID_START 0
 #define QBADGES_IN_SYSTEM 650
-#define QBADGE_ID_UNASSIGNED 999
+#define QBADGE_ID_MAX_UNASSIGNED 999
 #define CBADGE_ID_START 1000
 #define CBADGES_IN_SYSTEM 1550
-#define CBADGE_ID_UNASSIGNED 9999
+#define CBADGE_ID_MAX_UNASSIGNED 9999
 
 #define CONTROLLER_ID 22222
 

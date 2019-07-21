@@ -25,7 +25,10 @@ extern volatile uint8_t serial_phy_state;
 extern volatile uint8_t serial_phy_timeout_counter;
 extern volatile serial_header_t serial_header_in;
 extern serial_header_t serial_header_out;
+extern uint8_t serial_phy_mode_ptx;
+extern uint16_t connected_badge_id;
 
+void serial_pair();
 void serial_ll_ms_tick();
 void serial_phy_handle_rx();
 void init_serial();

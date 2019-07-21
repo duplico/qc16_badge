@@ -30,7 +30,7 @@
 qbadge_conf_t badge_conf;
 
 #pragma DATA_SECTION(startup_id, ".qc16cfg")
-volatile const uint16_t startup_id = QBADGE_ID_UNASSIGNED;
+volatile const uint16_t startup_id = QBADGE_ID_MAX_UNASSIGNED;
 
 // Radar constructs:
 
@@ -368,6 +368,10 @@ void generate_config() {
     badge_conf.element_level_max[1] = 2;
     badge_conf.element_level_max[2] = 2;
 
+    badge_conf.element_qty[0] = 999;
+    badge_conf.element_qty[1] = 999;
+    badge_conf.element_qty[2] = 999;
+
     badge_conf.vhandler_present=1;
 
     // NB: These both will save the badge_conf:
@@ -409,7 +413,7 @@ uint8_t badge_near(uint16_t id) {
 }
 
 uint8_t set_badge_seen(uint16_t id, char *name) {
-    if (!is_qbadge(id) || id == QBADGE_ID_UNASSIGNED)
+    if (!is_qbadge(id) || id == QBADGE_ID_MAX_UNASSIGNED)
         return 0;
 
     // If we're here, it's a qbadge.
@@ -425,7 +429,7 @@ uint8_t set_badge_seen(uint16_t id, char *name) {
 
     // Let's update its details/name in our records.
 
-    if (id == QBADGE_ID_UNASSIGNED || id == CBADGE_ID_UNASSIGNED)
+    if (id == QBADGE_ID_MAX_UNASSIGNED || id == CBADGE_ID_MAX_UNASSIGNED)
             return 0;
     if (badge_seen(id)) {
         return 0;
@@ -442,7 +446,7 @@ uint8_t set_badge_connected(uint16_t id, char *handle) {
     if (!is_qbadge(id) && !is_cbadge(id))
         return 0;
 
-    if (id == QBADGE_ID_UNASSIGNED || id == CBADGE_ID_UNASSIGNED)
+    if (id == QBADGE_ID_MAX_UNASSIGNED || id == CBADGE_ID_MAX_UNASSIGNED)
         return 0;
 
     if (badge_connected(id)) {

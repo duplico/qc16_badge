@@ -6,6 +6,7 @@
  */
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <xdc/runtime/Error.h>
 #include <ti/drivers/UART.h>
@@ -19,6 +20,7 @@
 
 #include <qc16.h>
 
+#include <badge.h>
 #include "board.h"
 #include <qc16_serial_common.h>
 #include <queercon_drivers/qbadge_serial.h>
@@ -82,7 +84,7 @@ void serial_send_ack() {
     UART_write(uart, (uint8_t *)(&header_out), sizeof(serial_header_t));
 }
 
-
+// TODO: what is this supposed to be?
 void serial_clock_swi(UArg a0) {
 
 }
@@ -115,8 +117,28 @@ void serial_enter_c_idle() {
     serial_ll_next_timeout = Clock_getTicks() + (SERIAL_C_DIO_POLL_MS * 100);
 }
 
+void serial_pair() {
+//    pair_payload_t pair_payload_out;
+//    pair_payload_out.agent_present = badge_conf.agent_present;
+//    pair_payload_out.badge_type = badge_conf.badge_type;
+//    pair_payload_out.clock_is_set = badge_conf.clock_is_set;
+//    memcpy(&pair_payload_out.element_level[0], badge_conf.element_level, sizeof(element_type)*3);
+//    memcpy(&pair_payload_out.element_level_max[0], badge_conf.element_level_max, sizeof(element_type)*3);
+//    memcpy(&pair_payload_out.element_level_progress[0], badge_conf.element_level_progress, 3);
+//    memcpy(&pair_payload_out.element_qty[0], badge_conf.element_qty, 4*3);
+//    memcpy(pair_payload_out.handle, badge_conf.handle, QC16_BADGE_NAME_LEN);
+//    pair_payload_out.handle[QC16_BADGE_NAME_LEN] = 0x00;
+//    pair_payload_out.last_clock = badge_conf.last_clock;
+//
+//    serial_send_start(SERIAL_OPCODE_PAIR, sizeof(pair_payload_t));
+}
+
 void serial_rx_done(serial_header_t *header, uint8_t *payload) {
     // If this is called, it's already been validated.
+    // NB: payload will be freed immediately after this returns, so
+    //     it should be copied to a more durable buffer if it needs to be
+    //     used after this function returns. Otherwise we'll have
+    //     a use-after-free problem.
     switch(serial_ll_state) {
     case SERIAL_LL_STATE_NC_PRX:
         // We are expecting a HELO.
@@ -171,6 +193,15 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             }
         }
 
+
+        if (header->opcode == SERIAL_OPCODE_PAIR) {
+            // We got a request to pair, so we should respond and consider
+            //  ourselved paired.
+            // TODO: Copy the data from the pairing payload.
+            serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
+            serial_pair();
+        }
+
         if (header->opcode == SERIAL_OPCODE_DISCON) {
             if (serial_phy_mode_ptx) {
                 serial_ll_state = SERIAL_LL_STATE_NC_PTX;
@@ -189,8 +220,32 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             if (SPIFFS_write(&fs, serial_fd, payload, header->payload_len) == header->payload_len) {
                 serial_send_ack();
             } else {
+                // broken.
             }
         }
+        break;
+    case SERIAL_LL_STATE_C_PAIRING:
+        if (header->opcode == SERIAL_OPCODE_PAIR) {
+            serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
+        }
+        break;
+    case SERIAL_LL_STATE_C_PAIRED:
+        // The element selection buttons are ignored.
+        // Color-picking buttons are ignored.
+        // But, mission-doing is a thing!
+        if (header->opcode == SERIAL_OPCODE_GOMISSION) {
+            if (payload[1] < 3) {
+                // It's a mission from this badge.
+                // No need to do anything.
+            } else {
+                // It's a mission from the remote badge.
+                memcpy(&badge_conf.missions[3], &payload[1], sizeof(mission_t));
+                badge_conf.mission_assigned[3] = 1;
+            }
+
+            mission_begin_by_id(3);
+        }
+        break;
 //    default:
     }
 }
@@ -253,7 +308,7 @@ void serial_task_fn(UArg a0, UArg a1) {
     //  Primary RX - in which we listen for a HELO message, and
     //  Primary TX - in which we send a HELO and wait, very briefly, for ACK.
     serial_header_t header_in;
-    uint8_t input[32];
+    uint8_t *input = 0x00;
     volatile int_fast32_t result;
 
     serial_ll_next_timeout = Clock_getTicks() + PRX_TIME_MS * 100;
@@ -274,10 +329,16 @@ void serial_task_fn(UArg a0, UArg a1) {
             if (result == sizeof(serial_header_t)
                     && validate_header(&header_in)) {
                 if (header_in.payload_len) {
+                    // Payload expected.
+                    input = malloc(header_in.payload_len);
+
                     result = UART_read(uart, input, header_in.payload_len);
                     if (result == header_in.payload_len) {
                         // RXed good.
                         serial_rx_done(&header_in, input);
+                        free(input);
+                    } else {
+                        free(input);
                     }
                 } else {
                     // RXed good.

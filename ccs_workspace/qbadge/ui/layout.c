@@ -32,7 +32,7 @@
 #include <board.h>
 #include <ui/layout.h>
 
-void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capacity, uint16_t number, uint16_t x, uint16_t y) {
+void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capacity, uint32_t number, uint16_t x, uint16_t y) {
     // NB: We don't do much bounds checking, because none of the parameters
     //     meaningfully address anything.
 
@@ -72,7 +72,7 @@ void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capaci
     Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
 
     char amt[4];
-    if (number < 999) {
+    if (number < 1000) {
         sprintf(amt, "%d", number);
     } else if (number < 100000) {
         // <100k
@@ -100,9 +100,11 @@ void ui_draw_top_bar_remote_element_icons() {
 void ui_draw_top_bar_qbadge_headsup_icons(Graphics_Context *gr, uint16_t x, uint16_t y) {
     char str[QC16_BADGE_NAME_LEN+1] = {0,};
 
+    x += 1;
+
     if (badge_conf.agent_present) {
         // Should draw the agent icon.
-        qc16gr_drawImage(gr, &img_hud_agent, x+3, y+4);
+        qc16gr_drawImage(gr, &img_hud_agent, x, y+4);
     }
     x += img_hud_agent.xSize + 1;
 
@@ -130,7 +132,7 @@ void ui_draw_top_bar_qbadge_headsup_icons(Graphics_Context *gr, uint16_t x, uint
     }
     x += img_hud_handler_sideways.xSize + 1;
     // Give more space for the text.
-    x += 5;
+    x += 3;
 
     // Now, regardless, we draw the radar icon, and text.
     //  We've got about 15 px for it.

@@ -5,6 +5,7 @@
  *      Author: george
  */
 #include <stdint.h>
+#include <string.h>
 
 #include <msp430fr2111.h>
 
@@ -14,11 +15,14 @@
 volatile serial_header_t serial_header_in = {0,};
 serial_header_t serial_header_out = {0,};
 volatile uint8_t *serial_header_buf;
-volatile uint8_t serial_buffer[SERIAL_BUFFER_LEN] = {0,};
+volatile uint8_t serial_buffer_in[SERIAL_BUFFER_LEN] = {0,};
+volatile uint8_t serial_buffer_out[SERIAL_BUFFER_LEN] = {0,};
 uint8_t serial_phy_mode_ptx = 0;
 volatile uint8_t serial_phy_state = 0;
 volatile uint8_t serial_phy_index = 0;
 volatile uint8_t serial_phy_timeout_counter = 0;
+
+uint16_t connected_badge_id;
 
 uint8_t serial_ll_state;
 uint16_t serial_ll_timeout_ms;
@@ -59,17 +63,44 @@ void serial_enter_prx() {
     serial_ll_timeout_ms = PRX_TIME_MS;
 }
 
-void serial_send_start() {
+/// Send a message, applying the payload, len, crc, and from-ID.
+void serial_send_start(uint8_t opcode, uint8_t payload_len) {
+    // Block until the PHY is idle.
+    while (serial_phy_state != SERIAL_PHY_STATE_IDLE);
+    serial_header_out.opcode = opcode;
+    serial_header_out.to_id = SERIAL_ID_ANY;
+    serial_header_out.from_id = badge_conf.badge_id;
+    serial_header_out.payload_len = payload_len;
+    serial_header_out.crc16_payload = crc16_buf(serial_buffer_out, payload_len);
     crc16_header_apply(&serial_header_out);
     serial_phy_state = SERIAL_PHY_STATE_IDLE;
     UCA0TXBUF = SERIAL_PHY_SYNC_WORD;
     // The interrupts will take it from here.
 }
 
+void serial_pair() {
+    pair_payload_t *pair_payload_out = (pair_payload_t *) serial_buffer_out;
+    pair_payload_out->agent_present = 0;
+    pair_payload_out->badge_type = badge_conf.badge_type;
+    pair_payload_out->clock_is_set = 0;
+    memcpy(&pair_payload_out->element_level[3], badge_conf.element_level, sizeof(element_type)*3);
+    pair_payload_out->element_level_max[3] = 5;
+    pair_payload_out->element_level_max[4] = 5;
+    pair_payload_out->element_level_max[5] = 5;
+    memcpy(&pair_payload_out->element_level_progress[3], badge_conf.element_level_progress, 3);
+    memcpy(&pair_payload_out->element_qty[3], badge_conf.element_qty, 4);
+    memcpy(pair_payload_out->handle, badge_conf.handle, QC16_BADGE_NAME_LEN);
+    pair_payload_out->handle[QC16_BADGE_NAME_LEN-1] = 0x00;
+    pair_payload_out->last_clock = 0;
+    // pair_payload_out.missions are DONTCARE
+
+    serial_send_start(SERIAL_OPCODE_PAIR, sizeof(pair_payload_t));
+}
+
 void serial_ll_timeout() {
     switch(serial_ll_state) {
     case SERIAL_LL_STATE_NC_PRX:
-        if (!my_conf.active) {
+        if (!badge_conf.active) {
             serial_ll_timeout_ms = PRX_TIME_MS;
             break; // If we're not active, we never leave PRX.
         }
@@ -89,11 +120,7 @@ void serial_ll_timeout() {
         if (SERIAL_DIO_IN & SERIAL_DIO2_PRX) {
             serial_ll_timeout_ms = PTX_TIME_MS;
 
-            serial_header_out.from_id = my_conf.badge_id;
-            serial_header_out.opcode = SERIAL_OPCODE_HELO;
-            serial_header_out.payload_len = 0;
-            serial_header_out.to_id = SERIAL_ID_ANY;
-            serial_send_start();
+            serial_send_start(SERIAL_OPCODE_HELO, 0);
             break;
         }
 
@@ -133,15 +160,11 @@ void serial_ll_handle_rx() {
         // Expecting a HELO.
         if (serial_header_in.opcode == SERIAL_OPCODE_HELO) {
             // Need to send an ACK.
-            serial_header_out.from_id = my_conf.badge_id;
-            serial_header_out.opcode = SERIAL_OPCODE_ACK;
-            serial_header_out.payload_len = 0;
-            serial_header_out.to_id = SERIAL_ID_ANY;
-            serial_send_start();
+            serial_send_start(SERIAL_OPCODE_ACK, 0);
             // Once that completes, we'll be connected.
             serial_ll_state = SERIAL_LL_STATE_C_IDLE;
             serial_ll_timeout_ms = SERIAL_C_DIO_POLL_MS;
-            s_serial_ll = 1;
+            s_connected = 1;
         }
         break;
     case SERIAL_LL_STATE_NC_PTX:
@@ -149,13 +172,32 @@ void serial_ll_handle_rx() {
         if (serial_header_in.opcode == SERIAL_OPCODE_ACK) {
             serial_ll_state = SERIAL_LL_STATE_C_IDLE;
             serial_ll_timeout_ms = SERIAL_C_DIO_POLL_MS;
-            s_serial_ll = 1;
+            s_connected = 1;
         }
         break;
     case SERIAL_LL_STATE_C_IDLE:
         serial_ll_timeout_ms = SERIAL_C_DIO_POLL_MS;
         if (serial_header_in.opcode == SERIAL_OPCODE_DISCON) {
-            // TODO: Flag a disconnection.
+            serial_enter_prx();
+            serial_ll_state = SERIAL_LL_STATE_NC_PRX;
+        } else if (serial_header_in.opcode == SERIAL_OPCODE_PAIR) {
+            serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
+            s_paired = 1;
+            serial_pair();
+        }
+        break;
+    case SERIAL_LL_STATE_C_PAIRING:
+        if (serial_header_in.opcode == SERIAL_OPCODE_PAIR) {
+            serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
+            s_paired = 1;
+        }
+        break;
+    case SERIAL_LL_STATE_C_PAIRED:
+        // The element selection buttons are ignored.
+        // Color-picking buttons are ignored.
+        // But, mission-doing is a thing!
+        if (serial_header_in.opcode == SERIAL_OPCODE_GOMISSION) {
+            mission_t *mission = &serial_buffer_in[1];
         }
         break;
     }
@@ -185,15 +227,15 @@ void init_serial() {
         // We are being externally powered, because at least one of
         //  DIO1_PTX and DIO2_PRX are asserted (and we have those
         //  set as inputs with pull-down resistors)
-        my_conf.active = 0;
-    } else if (my_conf.badge_id != CBADGE_ID_UNASSIGNED) {
+        badge_conf.active = 0;
+    } else if (badge_conf.badge_id != CBADGE_ID_MAX_UNASSIGNED) {
         // We are under our own power.
-        if (!my_conf.activated) {
-            my_conf.activated = 1;
+        if (!badge_conf.activated) {
+            badge_conf.activated = 1;
             // This badge was just turned on under its own power for the first time!
             s_activated = 1;
         }
-        my_conf.active = 1;
+        badge_conf.active = 1;
     }
 
     // Pause the UART peripheral:
@@ -260,7 +302,7 @@ __interrupt void serial_isr() {
             }
             break;
         case SERIAL_PHY_STATE_RX_PAYLOAD:
-            serial_buffer[serial_phy_index] = UCA0RXBUF;
+            serial_buffer_in[serial_phy_index] = UCA0RXBUF;
             serial_phy_index++;
             if (serial_phy_index == serial_header_in.payload_len) {
                 serial_phy_state = SERIAL_PHY_STATE_IDLE;
@@ -273,7 +315,7 @@ __interrupt void serial_isr() {
         }
         break;
     case UCIV__UCTXIFG:
-        // Transmit buffer full' ready to load another byte to send.
+        // Transmit buffer full, ready to load another byte to send.
         switch(serial_phy_state) {
         case SERIAL_PHY_STATE_IDLE:
             // We just sent a sync byte. Time to send the header:
@@ -312,7 +354,7 @@ __interrupt void serial_isr() {
                 LPM3_EXIT;
             } else {
                 // Need to send another.
-                UCA0TXBUF = serial_buffer[serial_phy_index];
+                UCA0TXBUF = serial_buffer_out[serial_phy_index];
                 serial_phy_index++;
             }
             break;

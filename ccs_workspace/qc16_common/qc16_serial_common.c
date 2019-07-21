@@ -98,9 +98,7 @@ uint16_t buffer_rank(uint8_t *buf, uint8_t len) {
 }
 
 uint8_t is_qbadge(uint16_t id) {
-    if (id >= QBADGE_ID_START && id < QBADGE_ID_START + QBADGES_IN_SYSTEM) {
-        return 1;
-    } else if (id == QBADGE_ID_UNASSIGNED) {
+    if (id >= QBADGE_ID_START && id <= QBADGE_ID_MAX_UNASSIGNED) {
         return 1;
     }
     return 0;
@@ -109,7 +107,7 @@ uint8_t is_qbadge(uint16_t id) {
 uint8_t is_cbadge(uint16_t id) {
     if (id >= CBADGE_ID_START && id < CBADGE_ID_START + CBADGES_IN_SYSTEM) {
         return 1;
-    } else if (id == CBADGE_ID_UNASSIGNED) {
+    } else if (id == CBADGE_ID_MAX_UNASSIGNED) {
         return 1;
     }
     return 0;

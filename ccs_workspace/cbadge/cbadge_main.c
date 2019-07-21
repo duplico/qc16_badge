@@ -2,6 +2,8 @@
 
 #include <msp430fr2111.h>
 
+#include <qc16.h>
+
 #include <cbadge.h>
 #include <cbadge_serial.h>
 
@@ -14,8 +16,12 @@ volatile uint8_t button_poll_this_ms = 0;
 uint8_t s_activated = 0x00;
 /// Signal for all captouch button events.
 uint8_t s_button = 0x00;
-/// Signal for the serial link-layer.
-uint8_t s_serial_ll = 0;
+/// Signal for the serial link-layer connection event.
+uint8_t s_connected = 0;
+/// Signal that this badge is paired with a qbadge.
+uint8_t s_paired = 0;
+/// Signal that element ID s_level_up-1 has leveled up!
+uint8_t s_level_up = 0;
 /// Interrupt flag for the serial PHY
 volatile uint8_t f_serial_phy = 0x00;
 /// Interrupt flag indicating it's time to poll a captouch button.
@@ -25,13 +31,15 @@ volatile uint8_t f_pwm_loop = 0x00;
 /// Interrupt flag indicating 1 ms has passed.
 volatile uint8_t f_ms = 0x00;
 
-//#pragma PERSISTENT(my_conf)
-cbadge_conf_t my_conf = {
+//#pragma PERSISTENT(badge_conf)
+cbadge_conf_t badge_conf = {
     .activated=0,
     .active=0,
-    .badge_id=0,
+    .badge_id=CBADGE_ID_MAX_UNASSIGNED,
     .initialized=0,
 };
+
+pair_payload_t paired_badge = {0,};
 
 /// Initialize clock signals and the three system clocks.
 /**
@@ -117,13 +125,13 @@ void init_io() {
 }
 
 void init_conf() {
-    if (!my_conf.initialized) {
+    if (!badge_conf.initialized) {
         // this is first boot.
-        my_conf.initialized=1;
-        my_conf.badge_id=CBADGE_ID_UNASSIGNED;
-        my_conf.activated=0;
+        badge_conf.initialized=1;
+        badge_conf.badge_id=CBADGE_ID_MAX_UNASSIGNED;
+        badge_conf.activated=0;
     }
-    my_conf.active=0;
+    badge_conf.active=0;
 }
 
 /// Perform basic initialization of the cbadge.
@@ -253,13 +261,24 @@ int main( void )
             f_serial_phy = 0;
         }
 
-        if (s_serial_ll) {
+        if (s_connected) {
             // We are now connected.
-            pwm_level_a = !pwm_level_a;
-            pwm_level_b = !pwm_level_b;
-            pwm_level_c = !pwm_level_c;
+            pwm_level_a = 0;
+            pwm_level_b = 0;
+            pwm_level_c = 0;
 
-            s_serial_ll = 0;
+            // Are we connected to a qbadge? (That's the one that we pair with)
+            //  And, if so, do we happen to be configured as the PTX?
+            if (serial_phy_mode_ptx && is_qbadge(connected_badge_id)) {
+                // The PTX is the side that sends the pairing message
+                serial_pair();
+            }
+
+            s_connected = 0;
+        }
+
+        if (s_paired) {
+            s_paired = 0;
         }
 
         __bis_SR_register(LPM3_bits);

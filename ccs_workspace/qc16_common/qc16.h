@@ -26,6 +26,9 @@
 #define QC16_PHOTO_NAME_LEN 16
 #define QC16_COLOR_NAME_LEN 16
 
+// Maximum length of a serial payload (the max work buffer length)
+#define SERIAL_BUFFER_LEN 128
+
 typedef enum {
     ELEMENT_LOCKS = 0,
     ELEMENT_COINS,

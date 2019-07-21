@@ -109,7 +109,7 @@ uint8_t is_qbadge(uint16_t id) {
 }
 
 uint8_t is_cbadge(uint16_t id) {
-    if (id >= CBADGE_ID_START && id < CBADGE_ID_START + CBADGES_IN_SYSTEM) {
+    if (id >= CBADGE_ID_START && id <= CBADGE_ID_MAX_UNASSIGNED) {
         return 1;
     } else if (id == CBADGE_ID_MAX_UNASSIGNED) {
         return 1;

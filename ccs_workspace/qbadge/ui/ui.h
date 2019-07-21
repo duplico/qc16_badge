@@ -37,14 +37,16 @@
 #define UI_EVENT_KB_PRESS Event_Id_30
 #define UI_EVENT_KB_RELEASE Event_Id_29
 // and the rest from the bottom:
-#define UI_EVENT_BRIGHTNESS_UPDATE Event_Id_04
+#define UI_EVENT_UNPAIRED Event_Id_07
+#define UI_EVENT_PAIRED Event_Id_06
+#define UI_EVENT_BRIGHTNESS_UPDATE Event_Id_05
 #define UI_EVENT_TEXT_CANCELED Event_Id_04
 #define UI_EVENT_TEXT_READY Event_Id_03
 #define UI_EVENT_HUD_UPDATE Event_Id_02
 #define UI_EVENT_DO_SAVE Event_Id_01
 #define UI_EVENT_REFRESH Event_Id_00
 
-#define UI_EVENT_ALL (UI_EVENT_KB_FLIP | UI_EVENT_KB_PRESS | UI_EVENT_REFRESH | UI_EVENT_HUD_UPDATE | UI_EVENT_REFRESH)
+#define UI_EVENT_ALL (0xFF)
 
 // Visual configurations:
 // The screensaver stackup:

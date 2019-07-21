@@ -15,6 +15,7 @@
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/Task.h>
+#include <ti/sysbios/family/arm/cc26xx/Seconds.h>
 
 #include <spiffs.h>
 
@@ -25,6 +26,7 @@
 #include <qc16_serial_common.h>
 #include <queercon_drivers/qbadge_serial.h>
 #include <queercon_drivers/storage.h>
+#include <ui/ui.h>
 #include <ui/leds.h>
 
 #define SERIAL_STACKSIZE 1900
@@ -44,6 +46,8 @@ Clock_Handle serial_timeout_clock_h;
 
 spiffs_file serial_fd;
 
+pair_payload_t paired_badge = {0,};
+
 const PIN_Config serial_gpio_prx[] = {
     QC16_PIN_SERIAL_DIO1_PTX | PIN_INPUT_EN | PIN_PULLDOWN,
     QC16_PIN_SERIAL_DIO2_PRX | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH,
@@ -56,32 +60,32 @@ const PIN_Config serial_gpio_ptx[] = {
     PIN_TERMINATE
 };
 
-void serial_send_helo(UART_Handle uart) {
+/// Send a message, applying the payload, len, crc, and from-ID.
+void serial_send(uint8_t opcode, uint8_t *payload, uint8_t payload_len) {
     serial_header_t header_out;
-    header_out.from_id = 1;
-    header_out.opcode = SERIAL_OPCODE_HELO;
-    header_out.payload_len = 0;
+    header_out.opcode = opcode;
     header_out.to_id = SERIAL_ID_ANY;
-    header_out.crc16_payload = 0xabcd;
+    header_out.from_id = badge_conf.badge_id;
+    header_out.payload_len = payload_len;
+    if (payload_len) {
+        header_out.crc16_payload = crc16_buf(payload, payload_len);
+    }
     crc16_header_apply(&header_out);
     uint8_t syncword = SERIAL_PHY_SYNC_WORD;
 
     UART_write(uart, &syncword, 1);
     UART_write(uart, (uint8_t *)(&header_out), sizeof(serial_header_t));
+    if (payload_len) {
+        UART_write(uart, payload, payload_len);
+    }
+}
+
+void serial_send_helo(UART_Handle uart) {
+    serial_send(SERIAL_OPCODE_HELO, NULL, 0);
 }
 
 void serial_send_ack() {
-    serial_header_t header_out;
-    header_out.from_id = 1;
-    header_out.opcode = SERIAL_OPCODE_ACK;
-    header_out.payload_len = 0;
-    header_out.to_id = SERIAL_ID_ANY;
-    header_out.crc16_payload = 0xabcd;
-    crc16_header_apply(&header_out);
-    uint8_t syncword = SERIAL_PHY_SYNC_WORD;
-
-    UART_write(uart, &syncword, 1);
-    UART_write(uart, (uint8_t *)(&header_out), sizeof(serial_header_t));
+    serial_send(SERIAL_OPCODE_ACK, NULL, 0);
 }
 
 // TODO: what is this supposed to be?
@@ -117,20 +121,24 @@ void serial_enter_c_idle() {
     serial_ll_next_timeout = Clock_getTicks() + (SERIAL_C_DIO_POLL_MS * 100);
 }
 
+/// Send the pairing payload from this badge.
 void serial_pair() {
-//    pair_payload_t pair_payload_out;
-//    pair_payload_out.agent_present = badge_conf.agent_present;
-//    pair_payload_out.badge_type = badge_conf.badge_type;
-//    pair_payload_out.clock_is_set = badge_conf.clock_is_set;
-//    memcpy(&pair_payload_out.element_level[0], badge_conf.element_level, sizeof(element_type)*3);
-//    memcpy(&pair_payload_out.element_level_max[0], badge_conf.element_level_max, sizeof(element_type)*3);
-//    memcpy(&pair_payload_out.element_level_progress[0], badge_conf.element_level_progress, 3);
-//    memcpy(&pair_payload_out.element_qty[0], badge_conf.element_qty, 4*3);
-//    memcpy(pair_payload_out.handle, badge_conf.handle, QC16_BADGE_NAME_LEN);
-//    pair_payload_out.handle[QC16_BADGE_NAME_LEN] = 0x00;
-//    pair_payload_out.last_clock = badge_conf.last_clock;
-//
-//    serial_send_start(SERIAL_OPCODE_PAIR, sizeof(pair_payload_t));
+    pair_payload_t *pair_payload_out = malloc(sizeof(pair_payload_t));
+    memset(pair_payload_out, 0, sizeof(pair_payload_t));
+    pair_payload_out->agent_present = badge_conf.agent_present;
+    pair_payload_out->badge_type = badge_conf.badge_type;
+    pair_payload_out->clock_is_set = badge_conf.clock_is_set;
+    memcpy(pair_payload_out->element_level, badge_conf.element_level, 3*sizeof(element_type));
+    memcpy(pair_payload_out->element_level_max, badge_conf.element_level_max, 3*sizeof(element_type));
+    memcpy(pair_payload_out->element_level_progress, badge_conf.element_level_progress, 3);
+    memcpy(pair_payload_out->element_qty, badge_conf.element_qty, sizeof(badge_conf.element_qty[0])*3);
+    memcpy(pair_payload_out->handle, badge_conf.handle, QC16_BADGE_NAME_LEN);
+    pair_payload_out->handle[QC16_BADGE_NAME_LEN] = 0x00;
+    pair_payload_out->last_clock = Seconds_get();
+
+    serial_send(SERIAL_OPCODE_PAIR, (uint8_t *) pair_payload_out, sizeof(pair_payload_t));
+
+    free(pair_payload_out);
 }
 
 void serial_rx_done(serial_header_t *header, uint8_t *payload) {
@@ -155,6 +163,13 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         if (header->opcode == SERIAL_OPCODE_ACK) {
             serial_enter_c_idle();
             serial_ll_state = SERIAL_LL_STATE_C_IDLE;
+
+            // If this is a badge we should pair with, go ahead and do that:
+            if (is_cbadge(header->from_id) || is_qbadge(header->from_id)) {
+                serial_ll_state = SERIAL_LL_STATE_C_PAIRING;
+                serial_pair();
+            }
+
         }
         break;
     case SERIAL_LL_STATE_C_IDLE:
@@ -197,9 +212,10 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         if (header->opcode == SERIAL_OPCODE_PAIR) {
             // We got a request to pair, so we should respond and consider
             //  ourselved paired.
-            // TODO: Copy the data from the pairing payload.
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
+            memcpy(&paired_badge, payload, sizeof(pair_payload_t));
             serial_pair();
+            Event_post(ui_event_h, UI_EVENT_PAIRED);
         }
 
         if (header->opcode == SERIAL_OPCODE_DISCON) {
@@ -227,12 +243,14 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
     case SERIAL_LL_STATE_C_PAIRING:
         if (header->opcode == SERIAL_OPCODE_PAIR) {
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
+            memcpy(&paired_badge, payload, sizeof(pair_payload_t));
+            Event_post(ui_event_h, UI_EVENT_PAIRED);
         }
         break;
     case SERIAL_LL_STATE_C_PAIRED:
-        // The element selection buttons are ignored.
-        // Color-picking buttons are ignored.
-        // But, mission-doing is a thing!
+        // TODO: we DO care about element-selection buttons
+        // TODO: we DO care about color-picking buttons
+        // Check whether the "go on a mission!" button is pressed.
         if (header->opcode == SERIAL_OPCODE_GOMISSION) {
             if (payload[1] < 3) {
                 // It's a mission from this badge.

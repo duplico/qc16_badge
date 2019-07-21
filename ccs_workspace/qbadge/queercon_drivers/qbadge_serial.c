@@ -308,7 +308,8 @@ void serial_task_fn(UArg a0, UArg a1) {
     //  Primary RX - in which we listen for a HELO message, and
     //  Primary TX - in which we send a HELO and wait, very briefly, for ACK.
     serial_header_t header_in;
-    uint8_t *input = 0x00;
+    uint8_t syncbyte_input[1];
+    uint8_t *payload_input;
     volatile int_fast32_t result;
 
     serial_ll_next_timeout = Clock_getTicks() + PRX_TIME_MS * 100;
@@ -321,28 +322,28 @@ void serial_task_fn(UArg a0, UArg a1) {
 
         // This blocks on a semaphore while waiting to return, so it's safe
         //  not to have a Task_yield() in this.
-        result = UART_read(uart, input, 1);
+        result = UART_read(uart, syncbyte_input, 1);
 
-        if (result == 1 && input[0] == SERIAL_PHY_SYNC_WORD) {
+        if (result == 1 && syncbyte_input[0] == SERIAL_PHY_SYNC_WORD) {
             // Got the sync word, now try to read a header:
             result = UART_read(uart, &header_in, sizeof(serial_header_t));
             if (result == sizeof(serial_header_t)
                     && validate_header(&header_in)) {
                 if (header_in.payload_len) {
                     // Payload expected.
-                    input = malloc(header_in.payload_len);
+                    payload_input = malloc(header_in.payload_len);
 
-                    result = UART_read(uart, input, header_in.payload_len);
-                    if (result == header_in.payload_len) {
+                    result = UART_read(uart, payload_input, header_in.payload_len);
+                    if (result == header_in.payload_len && crc16_buf(payload_input, header_in.payload_len) == header_in.crc16_payload) {
                         // RXed good.
-                        serial_rx_done(&header_in, input);
-                        free(input);
+                        serial_rx_done(&header_in, payload_input);
                     } else {
-                        free(input);
+                        // ruh roh
                     }
+                    free(payload_input);
                 } else {
                     // RXed good.
-                    serial_rx_done(&header_in, input);
+                    serial_rx_done(&header_in, payload_input);
                 }
             }
         }

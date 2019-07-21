@@ -80,6 +80,7 @@ void serial_send_start(uint8_t opcode, uint8_t payload_len) {
 
 void serial_pair() {
     pair_payload_t *pair_payload_out = (pair_payload_t *) serial_buffer_out;
+    memset(pair_payload_out, 0, sizeof(pair_payload_t));
     pair_payload_out->agent_present = 0;
     pair_payload_out->badge_type = badge_conf.badge_type;
     pair_payload_out->clock_is_set = 0;

@@ -16,7 +16,7 @@
 #define PWM_LEVELS 4
 #define PWM_CYCLES (1 << (PWM_LEVELS-1))
 
-#define KEY_LVL (1000 * TICKS_PER_MS) // Should be about 1000 per ms
+#define KEY_LVL (2000) // Should be about 1000 per ms
 
 #define SERIAL_PHY_TIMEOUT_MS 10
 

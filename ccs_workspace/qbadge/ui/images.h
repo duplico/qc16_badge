@@ -20,6 +20,7 @@ extern const Graphics_Image img_locks;
 extern const Graphics_Image img_hud_radar;
 extern const Graphics_Image img_hud_agent;
 extern const Graphics_Image img_hud_handler;
+extern const Graphics_Image img_hud_handler_sideways;
 extern const Graphics_Image img_cbadge;
 
 extern const tImage *image_anim_type_buttons[];

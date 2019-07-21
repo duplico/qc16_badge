@@ -97,42 +97,54 @@ void ui_draw_top_bar_remote_element_icons() {
 }
 
 /// Draw the agent-present, handler-available, and radar icons.
-void ui_draw_top_bar_qbadge_headsup_icons() {
-    Graphics_Rectangle rect;
-    char cnt[5] = {0,};
-    uint16_t y=1;
-    // We have about 106 px to do this in.
-
-    uint8_t x = TOPBAR_SEG_WIDTH_PADDED * 3;
+void ui_draw_top_bar_qbadge_headsup_icons(Graphics_Context *gr, uint16_t x, uint16_t y) {
+    char str[QC16_BADGE_NAME_LEN+1] = {0,};
 
     if (badge_conf.agent_present) {
         // Should draw the agent icon.
-        qc16gr_drawImage(&ui_gr_context_landscape, &img_hud_agent, x, y);
-        x += img_hud_agent.xSize + 1;
+        qc16gr_drawImage(gr, &img_hud_agent, x+3, y+4);
     }
+    x += img_hud_agent.xSize + 1;
 
+
+    // Give more space for the text.
+    x += 5;
     if (mission_getting_possible()) {
         // Should draw handler image.
-        qc16gr_drawImage(&ui_gr_context_landscape, &img_hud_handler, x, y);
-        x += img_hud_handler.xSize + 1;
+        qc16gr_drawImage(gr, &img_hud_handler_sideways, x, y+1);
+        if (handler_nearby()) {
+            // Use the handler's name
+        } else {
+            // vhandler
+            sprintf(str, "vhandler");
+        }
+        Graphics_setFont(gr, &g_sFontFixed6x8);
+        Graphics_drawStringCentered(
+                gr,
+                (int8_t *) str,
+                QC16_BADGE_NAME_LEN,
+                x+img_hud_handler_sideways.xSize/2,
+                y+TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1,
+                0
+        );
     }
+    x += img_hud_handler_sideways.xSize + 1;
+    // Give more space for the text.
+    x += 5;
 
     // Now, regardless, we draw the radar icon, and text.
     //  We've got about 15 px for it.
 
-    qc16gr_drawImage(&ui_gr_context_landscape, &img_hud_radar, x, y);
-    x += img_hud_radar.xSize/2;
-    y += img_hud_radar.ySize;
-    y += 6;
+    qc16gr_drawImage(gr, &img_hud_radar, x, y);
 
-    sprintf(cnt, "%d", qbadges_near_count);
-    Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
+    sprintf(str, "%d", qbadges_near_count);
+    Graphics_setFont(gr, &g_sFontFixed6x8);
     Graphics_drawStringCentered(
-        &ui_gr_context_landscape,
-        (int8_t *) cnt,
+            gr,
+        (int8_t *) str,
         4,
-        x,
-        6,
+        x+img_hud_radar.xSize/2,
+        y+TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1,
         0
     );
 }
@@ -231,7 +243,7 @@ void ui_draw_top_bar() {
 
     ui_draw_top_bar_battery_life();
     ui_draw_top_bar_local_element_icons();
-    ui_draw_top_bar_qbadge_headsup_icons();
+    ui_draw_top_bar_qbadge_headsup_icons(&ui_gr_context_landscape, TOPBAR_SEG_WIDTH_PADDED * 3, 0);
 }
 
 void ui_draw_menu_icons(uint8_t selected_index, const Graphics_Image **icons, const char text[][MAINMENU_NAME_MAX_LEN+1], uint16_t pad, uint16_t x, uint16_t y, uint8_t len) {

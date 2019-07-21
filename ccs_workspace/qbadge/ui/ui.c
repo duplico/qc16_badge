@@ -257,7 +257,8 @@ void ui_task_fn(UArg a0, UArg a1) {
     while (1) {
         events = Event_pend(ui_event_h, Event_Id_NONE, ~Event_Id_NONE,  UI_AUTOREFRESH_TIMEOUT);
 
-        if (!events) {
+        // Timeouts only happen in the normal menu system & overlays:
+        if (!events && ui_current < UI_SCREEN_STORY1) {
             // This is a timeout.
             if (ui_colorpicking) {
                 ui_colorpicking_unload();
@@ -270,6 +271,28 @@ void ui_task_fn(UArg a0, UArg a1) {
             // If we're doing a timeout, it's because nobody is paying
             //  attention. Therefore, it's likely safe to do a full refresh.
             epd_do_partial = 0;
+            continue;
+        }
+
+        if (events & UI_EVENT_PAIRED) {
+            // Unload everything, go to main pairing menu.
+            if (ui_colorpicking) {
+                ui_colorpicking_unload();
+            }
+            if (ui_textentry) {
+                ui_textentry_unload(0);
+            }
+            continue;
+        }
+
+        if (events & UI_EVENT_UNPAIRED) {
+            // Unload everything, go to main menu.
+            if (ui_colorpicking) {
+                ui_colorpicking_unload();
+            }
+            if (ui_textentry) {
+                ui_textentry_unload(0);
+            }
             continue;
         }
 

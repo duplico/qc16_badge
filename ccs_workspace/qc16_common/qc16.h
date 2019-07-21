@@ -103,6 +103,7 @@ typedef struct {
 #define CBADGE_ID_MAX_UNASSIGNED 9999
 
 #define CONTROLLER_ID 22222
+#define PHONE_ID 22223
 
 #define BADGE_TYPE_INVALID 0
 

@@ -48,21 +48,13 @@
 
 // Visual configurations:
 // The screensaver stackup:
-// 7 blocks of 18 px high
+//  94 px high personal frame
+//  30 px high HUD
+//   2 px rule
 // 170 px high photo section
-#define UI_IDLE_BLOCK_HEIGHT_PX 18
-#define UI_IDLE_BLOCK0_HEIGHT 1
-#define UI_IDLE_BLOCK1_HEIGHT 4
-#define UI_IDLE_BLOCK2_HEIGHT 2
 
-#define UI_IDLE_BLOCK0_TOP_PX       0
-#define UI_IDLE_BLOCK0_HEIGHT_PX    (UI_IDLE_BLOCK0_HEIGHT * UI_IDLE_BLOCK_HEIGHT_PX)
-#define UI_IDLE_BLOCK1_TOP_PX       UI_IDLE_BLOCK0_HEIGHT_PX
-#define UI_IDLE_BLOCK1_HEIGHT_PX    (UI_IDLE_BLOCK1_HEIGHT * UI_IDLE_BLOCK_HEIGHT_PX)
-#define UI_IDLE_BLOCK2_TOP_PX       (UI_IDLE_BLOCK0_HEIGHT_PX + UI_IDLE_BLOCK1_HEIGHT_PX)
-#define UI_IDLE_BLOCK2_HEIGHT_PX    (UI_IDLE_BLOCK2_HEIGHT * UI_IDLE_BLOCK_HEIGHT_PX)
-
-#define UI_IDLE_PHOTO_TOP           (UI_IDLE_BLOCK2_TOP_PX + UI_IDLE_BLOCK2_HEIGHT_PX)
+#define UI_IDLE_HUD_Y 94
+#define UI_IDLE_PHOTO_TOP 126
 
 #define UI_PICKER_TOP               UI_IDLE_PHOTO_TOP
 

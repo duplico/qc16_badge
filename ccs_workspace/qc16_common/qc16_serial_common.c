@@ -115,11 +115,3 @@ uint8_t is_cbadge(uint16_t id) {
     return 0;
 }
 
-uint8_t badge_type(uint16_t id) {
-    if (is_cbadge(id))
-        return BADGE_TYPE_CBADGE_NORMAL;
-    if (is_qbadge(id))
-        return BADGE_TYPE_QBADGE_NORMAL;
-    return BADGE_TYPE_INVALID;
-}
-

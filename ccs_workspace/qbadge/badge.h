@@ -28,6 +28,7 @@ extern uint8_t mission_accepted[3];
 extern mission_t missions[3];
 
 uint8_t mission_getting_possible();
+uint8_t handler_nearby();
 mission_t generate_mission();
 void mission_begin_by_id(uint8_t mission_id);
 void complete_mission(mission_t *mission);

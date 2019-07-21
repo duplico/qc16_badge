@@ -150,7 +150,7 @@ def main():
             out_name = os.path.basename(infile)
             out_name = os.path.splitext(out_name)[0]
 
-        img = QcImage(path=infile, landscape=args.landscape)
+        img = QcImage(path=infile, landscape=args.landscape, name=out_name)
         img.output_code()
 
         if args.show:

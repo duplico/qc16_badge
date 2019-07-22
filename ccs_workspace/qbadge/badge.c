@@ -144,49 +144,117 @@ mission_t generate_mission() {
     return new_mission;
 }
 
-uint8_t mission_qualified_for_element_id(mission_t *mission, uint8_t element_position) {
+uint8_t mission_levels_qualify_for_element_id(mission_t *mission, uint8_t element_position, uint8_t element_level[3], element_type element_selected, uint8_t is_cbadge) {
     if (element_position > 1) {
-        // Invalid element ID
+        // Invalid element position ID
         return 0;
     }
 
-    if (mission->element_types[element_position] > 2) {
-        // Not a qbadge element, or not an element at all.
+    if (mission->element_types[element_position] == ELEMENT_COUNT_NONE) {
+        // This slot is unused.
         return 0;
     }
 
-    if (badge_conf.element_selected != mission->element_types[element_position]) {
-        // My element isn't the same as the required one.
+    if (!is_cbadge && mission->element_types[element_position] > 2) {
+        // Not a qbadge element
         return 0;
     }
 
-    if (mission->element_levels[element_position] <= badge_conf.element_level[mission->element_types[element_position]]) {
-        // I am of sufficient level. Accept!
+    if (is_cbadge && mission->element_types[element_position] < 3) {
+        // Not a cbadge element
+        return 0;
+    }
+
+    if (element_selected != mission->element_types[element_position]) {
+        // Selected element differs from required element
+        return 0;
+    }
+
+    uint8_t element_level_index = mission->element_types[element_position] % 3;
+
+    if (mission->element_levels[element_position] <= element_level[element_level_index]) {
+        // Badge is of sufficient level!
         return 1;
     }
 
+    // Level is insufficient.
     return 0;
+}
+
+uint8_t mission_local_qualified_for_element_id(mission_t *mission, uint8_t element_position) {
+    return mission_levels_qualify_for_element_id(mission, element_position, badge_conf.element_level, badge_conf.element_selected, 0);
+}
+
+/// Determines whether the paired badge qualifies for a mission's element.
+/**
+ ** This is safe to use even when we're not paired, because it returns
+ ** false if we're not paired (which should do all the right things
+ ** in an unpaired situation).
+ **/
+uint8_t mission_remote_qualified_for_element_id(mission_t *mission, uint8_t element_position) {
+    if (!badge_paired) {
+        return 0;
+    }
+
+    return mission_levels_qualify_for_element_id(mission, element_position, badge_conf.element_level, paired_badge.element_selected, is_cbadge(paired_badge.badge_id));
 }
 
 /// In the provided mission, which element ID do we fulfill?
 /**
- ** This, importantly, does not verification that the mission is doable.
+ ** This, importantly, does not verify that the mission is doable.
  ** That is, if  the mission is do-able, this will return the index of the
  ** element that we fulfill in it. But, if the mission is not do-able,
- ** then this function's return value is not meaningful.
+ ** then this function's return value is not necessarily meaningful.
  */
 uint8_t mission_element_id_we_fill(mission_t *mission) {
-    // TODO: If we're paired...
-
-    // Otherwise, if we're solo, see if we only qualify for one of them:
-    if (mission_qualified_for_element_id(mission, 0) && !mission_qualified_for_element_id(mission, 1)) {
+    // If this is a 1-element mission, obviously it's the only one we can do.
+    if (mission->element_types[1] == ELEMENT_COUNT_NONE) {
         return 0;
     }
-    if (mission_qualified_for_element_id(mission, 1) && !mission_qualified_for_element_id(mission, 0)) {
+
+    // See if we only qualify for one of them:
+    if (mission_local_qualified_for_element_id(mission, 0) && !mission_local_qualified_for_element_id(mission, 1)) {
+        return 0;
+    }
+    if (mission_local_qualified_for_element_id(mission, 1) && !mission_local_qualified_for_element_id(mission, 0)) {
         return 1;
     }
-    // If we qualify for both, pick the first one:
-    return 0;
+
+    if (!badge_paired) {
+        // If we're not paired, just pick the first one:
+        return 0;
+    }
+
+    // If we're here, that means we're paired, and we qualify for both elements
+    //  of this mission. That means we need to determine if our pair partner
+    //  qualifies for any elements of the mission, and if so, we need to
+    //  select the other one.
+    if (mission_remote_qualified_for_element_id(mission, 0) && !mission_remote_qualified_for_element_id(mission, 1)) {
+        // Other badge is only qualified for #0
+        return 1;
+    }
+
+    if (mission_remote_qualified_for_element_id(mission, 1) && !mission_remote_qualified_for_element_id(mission, 0)) {
+        // Other badge is only qualified for #1
+        return 0;
+    }
+
+    // If we're here, both badges qualify for both elements. So we'll pick based on badge ID:
+    if (badge_conf.badge_id < paired_badge.badge_id) {
+        return 0;
+    } else {
+        return 1;
+    }
+
+}
+
+/// Can we participate in this mission?
+uint8_t mission_can_participate(mission_t *mission) {
+    if (!badge_conf.agent_present) {
+        return 0; // can't do a mission without the agent.
+    }
+
+    return mission_local_qualified_for_element_id(mission, 0) || mission_local_qualified_for_element_id(mission, 1);
 }
 
 /// Is a local-only mission complete-able by our badge?
@@ -200,7 +268,7 @@ uint8_t mission_solo_qualifies(uint8_t mission_id) {
         return 0;
     }
 
-    return mission_qualified_for_element_id(&badge_conf.missions[mission_id], 0);
+    return mission_local_qualified_for_element_id(&badge_conf.missions[mission_id], 0);
 }
 
 void mission_begin_by_id(uint8_t mission_id) {

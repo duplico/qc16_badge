@@ -110,7 +110,7 @@ uint8 advertData[30] =
    0x04, // Company ID - Fixed (queercon)
    0x00, // Badge ID MSB //.22
    0x00, // Badge ID LSB //.23
-   0x00, // TYPE FLAG (BIT7=UBER; BIT6=HANDLER; BIT5-0=ELEMENT)
+   0x00, // TYPE FLAG (BIT7=UBER; BIT6=HANDLER; BIT5-3=unused BIT2-0=ELEMENT)
    0x00, // SPARE
    0x00, // SPARE
    0x00, // SPARE
@@ -521,7 +521,7 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
      * | AdvA    | AdvData    |
      * | 6 bytes | 0-31 bytes |
      *
-     * The radio stripps the CRC and replaces it with the postfix.
+     * The radio strips the CRC and replaces it with the postfix.
      *
      * The Postfix is expended to:
      * | RSSI   | Status | TimeStamp |

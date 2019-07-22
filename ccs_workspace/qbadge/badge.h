@@ -39,7 +39,7 @@ void mission_begin_by_id(uint8_t mission_id);
 void complete_mission(mission_t *mission);
 void complete_mission_id(uint8_t mission_id);
 uint8_t mission_solo_qualifies(uint8_t mission_id);
-uint8_t mission_qualified_for_element_id(mission_t *mission, uint8_t element_position);
+uint8_t mission_local_qualified_for_element_id(mission_t *mission, uint8_t element_position);
 
 void load_conf();
 void write_conf();

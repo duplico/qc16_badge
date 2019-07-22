@@ -102,7 +102,7 @@ void ht16d_send_array(uint8_t txdat[], uint8_t len) {
 
     status = I2C_transfer(ht16d_i2c_h, &transaction);
     if (!status) {
-        while (1);
+        // TODO: Store and flag
     }
 }
 
@@ -136,7 +136,7 @@ void ht16d_read_reg(uint8_t reg[]) {
 
     status = I2C_transfer(ht16d_i2c_h, &transaction);
     if (!status) {
-        while (1);
+        // TODO: Store and flag
     }
 }
 

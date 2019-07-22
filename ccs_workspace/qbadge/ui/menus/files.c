@@ -85,8 +85,7 @@ void put_all_filenames(char *curr_fname) {
         struct spiffs_dirent e;
         struct spiffs_dirent *pe = &e;
         SPIFFS_opendir(&fs, "/", &d);
-        while ((pe = SPIFFS_readdir(&d, pe)) &&
-                (y+7 < EPD_WIDTH)) {
+        while ((pe = SPIFFS_readdir(&d, pe))) {
             if (strncmp(dirs[i], (char *) pe->name, 8)) {
                 continue;
             }

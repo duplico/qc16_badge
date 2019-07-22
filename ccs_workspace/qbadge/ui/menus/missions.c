@@ -42,31 +42,74 @@ const char mission_menu_text[2][MAINMENU_NAME_MAX_LEN+1] = {
 uint8_t mission_picking = 0;
 mission_t candidate_mission;
 
+void ui_put_mission_at(mission_t *mission, uint16_t x, uint16_t y) {
+    Graphics_Rectangle rect;
+    rect.xMin=x;
+    rect.yMin=y;
+    rect.xMax=rect.xMin+TOPBAR_SEG_WIDTH_PADDED*2;
+    rect.yMax=rect.yMin+TOPBAR_HEIGHT;
+    Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+
+    for (uint8_t i=0; i<2; i++) {
+        rect.xMin=x;
+        rect.xMax=rect.xMin+TOPBAR_SEG_WIDTH_PADDED*2;
+
+        if (mission->element_types[i] == ELEMENT_COUNT_NONE) {
+            continue;
+        }
+        ui_draw_element(mission->element_types[i], mission->element_levels[i], 5, mission->element_rewards[i], x+2, y+1);
+
+        if (mission_picking) {
+            x += TOPBAR_SEG_WIDTH;
+            continue;
+        }
+
+        if (mission_local_qualified_for_element_id(mission, i) && mission_element_id_we_fill(mission) == i) {
+            // We qualify to fulfill this element requirement,
+            //  and this is the element we'll be filling.
+        } else if (mission_remote_qualified_for_element_id(mission, i) && mission_element_id_remote_fills(mission) == i) {
+            // We're paired, and the remote badge can fulfill this element,
+            //  and this is the element the remote badge will fill (i.e.
+            //  it's not the one that we fill).
+        } else {
+            // No badge can fulfill this element.
+            fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+2, rect.yMin+1, rect.xMin+1+TOPBAR_ICON_WIDTH, rect.yMin+1+TOPBAR_ICON_HEIGHT);
+        }
+        x += TOPBAR_SEG_WIDTH;
+    }
+}
+
 void ui_draw_mission_icons() {
     Graphics_Rectangle rect;
+    mission_t mission;
 
     for (uint8_t i=0; i<3; i++) {
         rect.xMin=124;
         rect.yMin=TOPBAR_HEIGHT+3+i*(TOPBAR_HEIGHT+2);
         rect.xMax=rect.xMin+TOPBAR_SEG_WIDTH_PADDED*2;
         rect.yMax=rect.yMin+TOPBAR_HEIGHT;
-        Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
-        mission_t mission;
-
         if (mission_picking && i == ui_y_cursor) {
             mission = candidate_mission;
         } else if (!badge_conf.mission_assigned[i]) {
+            Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
             continue;
         } else {
             mission = badge_conf.missions[i];
         }
 
-        ui_draw_element(mission.element_types[0], mission.element_levels[0], 5, mission.element_rewards[0], rect.xMin+2, rect.yMin+1);
+        // Draw the mission:
+        ui_put_mission_at(&mission, rect.xMin, rect.yMin);
 
+        // Is our agent doing this mission? If so, render that:
         if (!badge_conf.agent_present && badge_conf.agent_mission_id == i) {
             Graphics_drawString(&ui_gr_context_landscape, "agent", 5, rect.xMax+1, rect.yMin+2, 0);
         }
 
+        // If we're mission-picking, either:
+        //  1. this is the currently selected mission slot, and we need to
+        //      mark it with an arrow or agent icon; or
+        //  2. this is not the currently selected mission slot, and we
+        //      need to fade it out in its entirety.
         if (mission_picking && i == ui_y_cursor) {
             // If we're mission picking, and this is the relevant mission...
             // Don't fade it, but DO mark it
@@ -76,15 +119,6 @@ void ui_draw_mission_icons() {
             // If we're in mission picking mode, fade out the entire mission
             //  other than the one we're assigning.
             fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+1, rect.yMin+1, rect.xMax-1, rect.yMax-1);
-        } else {
-            // In a normal render, fade out the element if it's not valid
-            if (!mission_local_qualified_for_element_id(&mission, 0)) {
-                fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+2, rect.yMin+1, rect.xMin+1+TOPBAR_ICON_WIDTH, rect.yMin+1+TOPBAR_ICON_HEIGHT);
-            }
-        }
-
-        if (mission.element_types[1] != ELEMENT_COUNT_NONE) {
-            ui_draw_element(mission.element_types[1], mission.element_levels[1], 5, mission.element_rewards[1], rect.xMin+2+TOPBAR_SEG_WIDTH, rect.yMin+1);
         }
     }
 }
@@ -150,7 +184,7 @@ void ui_missions_do(UInt events) {
                 // Copy the candidate mission into the config mission
                 memcpy(&badge_conf.missions[ui_y_cursor], &candidate_mission, sizeof(mission_t));
                 badge_conf.mission_assigned[ui_y_cursor] = 1;
-                write_conf();// and save.
+                Event_post(ui_event_h, UI_EVENT_DO_SAVE);
                 epd_do_partial = 1;
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
             } else {

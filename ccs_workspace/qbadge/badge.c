@@ -115,6 +115,7 @@ mission_t generate_mission() {
         }
     } else if (badge_conf.vhandler_present) {
         badge_conf.vhandler_return_time = Seconds_get() + VHANDLER_COOLDOWN_MIN_SECONDS + rand() % (VHANDLER_COOLDOWN_MAX_SECONDS - VHANDLER_COOLDOWN_MIN_SECONDS);
+        badge_conf.vhandler_return_time = Seconds_get() + 1; // TODO: remove
         badge_conf.vhandler_present = 0;
         // The vhandler always hands out a primary element of qtype.
         new_mission.element_types[0] = (element_type) (rand() % 3);
@@ -122,7 +123,7 @@ mission_t generate_mission() {
         // The vhandler has a max level it can assign:
         new_mission.element_levels[0] = rand() % (VHANDLER_MAX_LEVEL-1);
 
-        if (!(rand() % VHANDLER_SECOND_ELEMENT_ONE_IN)) {
+        if (1 || !(rand() % VHANDLER_SECOND_ELEMENT_ONE_IN)) { // TODO
             // There's a chance to assign a second element.
             // A second element is needed. We'll assign it totally randomly.
             new_mission.element_types[1] = (element_type) (rand() % 6);
@@ -206,21 +207,27 @@ uint8_t mission_remote_qualified_for_element_id(mission_t *mission, uint8_t elem
  ** element that we fulfill in it. But, if the mission is not do-able,
  ** then this function's return value is not necessarily meaningful.
  */
-uint8_t mission_element_id_we_fill(mission_t *mission) {
+uint8_t mission_element_id_fulfilled_by(mission_t *mission, uint8_t *this_element_level, element_type this_element_selected, uint16_t this_id,
+                                        uint8_t *other_element_level, element_type other_element_selected, uint16_t other_id, uint8_t paired) {
     // If this is a 1-element mission, obviously it's the only one we can do.
     if (mission->element_types[1] == ELEMENT_COUNT_NONE) {
         return 0;
     }
 
-    // See if we only qualify for one of them:
-    if (mission_local_qualified_for_element_id(mission, 0) && !mission_local_qualified_for_element_id(mission, 1)) {
+    // Check if "this" badge only qualifies for one of the two element slots:
+    if (mission_levels_qualify_for_element_id(mission, 0, this_element_level, this_element_selected, is_cbadge(this_id))
+            && !mission_levels_qualify_for_element_id(mission, 1, this_element_level, this_element_selected, is_cbadge(this_id))) {
         return 0;
     }
-    if (mission_local_qualified_for_element_id(mission, 1) && !mission_local_qualified_for_element_id(mission, 0)) {
+    if (mission_levels_qualify_for_element_id(mission, 1, this_element_level, this_element_selected, is_cbadge(this_id))
+            && !mission_levels_qualify_for_element_id(mission, 0, this_element_level, this_element_selected, is_cbadge(this_id))) {
         return 1;
     }
 
-    if (!badge_paired) {
+    // Now, we either qualify for both, or we qualify for neither.
+    //  The "neither" case must be checked elsewhere.
+
+    if (!paired) {
         // If we're not paired, just pick the first one:
         return 0;
     }
@@ -229,23 +236,53 @@ uint8_t mission_element_id_we_fill(mission_t *mission) {
     //  of this mission. That means we need to determine if our pair partner
     //  qualifies for any elements of the mission, and if so, we need to
     //  select the other one.
-    if (mission_remote_qualified_for_element_id(mission, 0) && !mission_remote_qualified_for_element_id(mission, 1)) {
-        // Other badge is only qualified for #0
-        return 1;
-    }
 
-    if (mission_remote_qualified_for_element_id(mission, 1) && !mission_remote_qualified_for_element_id(mission, 0)) {
-        // Other badge is only qualified for #1
+
+    if (mission_levels_qualify_for_element_id(mission, 0, other_element_level, other_element_selected, is_cbadge(other_id))
+            && !mission_levels_qualify_for_element_id(mission, 1, other_element_level, other_element_selected, is_cbadge(other_id))) {
         return 0;
+    }
+    if (mission_levels_qualify_for_element_id(mission, 1, other_element_level, other_element_selected, is_cbadge(other_id))
+            && !mission_levels_qualify_for_element_id(mission, 0, other_element_level, other_element_selected, is_cbadge(other_id))) {
+        return 1;
     }
 
     // If we're here, both badges qualify for both elements. So we'll pick based on badge ID:
-    if (badge_conf.badge_id < paired_badge.badge_id) {
+    if (this_id < other_id) {
         return 0;
-    } else {
-        return 1;
     }
 
+    return 1;
+}
+
+uint8_t mission_element_id_we_fill(mission_t *mission) {
+    return mission_element_id_fulfilled_by(
+        mission,
+        badge_conf.element_level,
+        badge_conf.element_selected,
+        badge_conf.badge_id,
+        paired_badge.element_level,
+        paired_badge.element_selected,
+        paired_badge.badge_id,
+        badge_paired
+    );
+}
+
+uint8_t mission_element_id_remote_fills(mission_t *mission) {
+    if (!badge_paired) {
+        // This is an error.
+        return 0;
+    }
+    return mission_element_id_fulfilled_by(
+        mission,
+        paired_badge.element_level,
+        paired_badge.element_selected,
+        paired_badge.badge_id,
+        badge_conf.element_level,
+        badge_conf.element_selected,
+        badge_conf.badge_id,
+        badge_paired
+    );
 }
 
 /// Can we participate in this mission?
@@ -275,7 +312,7 @@ void mission_begin_by_id(uint8_t mission_id) {
     badge_conf.agent_mission_id = mission_id;
     badge_conf.agent_present = 0;
     badge_conf.agent_return_time = Seconds_get() + 60;
-    write_conf();
+    Event_post(ui_event_h, UI_EVENT_DO_SAVE);
     Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
 }
 
@@ -509,7 +546,7 @@ uint8_t set_badge_seen(uint16_t id, char *name) {
     set_id_buf(id, (uint8_t *)qbadges_seen);
     badge_conf.qbadges_seen_count++;
 
-    write_conf();
+    Event_post(ui_event_h, UI_EVENT_DO_SAVE);
     return 1;
 }
 
@@ -532,7 +569,7 @@ uint8_t set_badge_connected(uint16_t id, char *handle) {
         badge_conf.cbadges_connected_count++;
     }
 
-    write_conf();
+    Event_post(ui_event_h, UI_EVENT_DO_SAVE);
     return 1;
 }
 

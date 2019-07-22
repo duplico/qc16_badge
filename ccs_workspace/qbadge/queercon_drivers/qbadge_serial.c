@@ -46,8 +46,6 @@ Clock_Handle serial_timeout_clock_h;
 
 spiffs_file serial_fd;
 
-pair_payload_t paired_badge = {0,};
-
 const PIN_Config serial_gpio_prx[] = {
     QC16_PIN_SERIAL_DIO1_PTX | PIN_INPUT_EN | PIN_PULLDOWN,
     QC16_PIN_SERIAL_DIO2_PRX | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH,
@@ -221,8 +219,10 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             //  ourselved paired.
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
             memcpy(&paired_badge, payload, sizeof(pair_payload_t));
+            badge_paired = 1;
             serial_pair();
             Event_post(ui_event_h, UI_EVENT_PAIRED);
+
         }
 
         if (header->opcode == SERIAL_OPCODE_DISCON) {
@@ -250,6 +250,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
     case SERIAL_LL_STATE_C_PAIRING:
         if (header->opcode == SERIAL_OPCODE_PAIR) {
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
+            badge_paired = 1;
             memcpy(&paired_badge, payload, sizeof(pair_payload_t));
             Event_post(ui_event_h, UI_EVENT_PAIRED);
         }
@@ -319,9 +320,17 @@ void serial_timeout() {
              || (!serial_phy_mode_ptx && !PIN_getInputValue(QC16_PIN_SERIAL_DIO1_PTX))
         ) {
             // We just registered a PHY disconnect signal.
+
+            // If we were paired, need to raise an unpaired event.
+            if (serial_ll_state == SERIAL_LL_STATE_C_PAIRED) {
+                Event_post(ui_event_h, UI_EVENT_UNPAIRED);
+                badge_paired = 0;
+            }
+
             serial_ll_state = SERIAL_LL_STATE_NC_PRX;
             UART_close(uart);
             serial_enter_prx();
+
         }
         break;
 //    default:

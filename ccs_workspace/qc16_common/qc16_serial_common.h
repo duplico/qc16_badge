@@ -52,6 +52,7 @@ typedef struct {
 } serial_header_t;
 
 typedef struct {
+    __packed uint16_t badge_id;
     __packed uint8_t badge_type;
     __packed uint8_t element_level[6];
     __packed uint8_t element_level_max[6];

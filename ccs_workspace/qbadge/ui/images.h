@@ -23,6 +23,10 @@ extern const Graphics_Image img_hud_handler;
 extern const Graphics_Image img_hud_handler_sideways;
 extern const Graphics_Image img_cbadge;
 
+extern const Graphics_Image img_pair_cb;
+extern const Graphics_Image img_pair_mission;
+extern const Graphics_Image img_pair_files;
+
 extern const tImage *image_anim_type_buttons[];
 extern const tImage *image_mainmenu_icons[];
 extern const tImage *image_missionmenu_icons[];

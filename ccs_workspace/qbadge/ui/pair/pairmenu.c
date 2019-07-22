@@ -22,7 +22,9 @@
 #include <queercon_drivers/epd.h>
 #include <queercon_drivers/ht16d35b.h>
 #include <queercon_drivers/storage.h>
+#include <qc16_serial_common.h>
 
+#include <ui/pair/pair.h>
 #include "ui/ui.h"
 #include "ui/graphics.h"
 #include "ui/images.h"
@@ -32,36 +34,52 @@
 #include <board.h>
 #include <ui/layout.h>
 
-const char mainmenu_icon[MAINMENU_ICON_COUNT][MAINMENU_NAME_MAX_LEN+1] = {
+const char pair_menu_text_c[2][MAINMENU_NAME_MAX_LEN+1] = {
+    "GO!",
     "Info",
-    "Mission",
-    "Scan",
+};
+
+const char pair_menu_text_q[2][MAINMENU_NAME_MAX_LEN+1] = {
+    "GO!",
     "Files",
 };
 
-void ui_draw_main_menu_icons() {
-    ui_draw_menu_icons(ui_x_cursor, image_mainmenu_icons, mainmenu_icon, 10, 5, TOPBAR_HEIGHT+8, 4);
+const Graphics_Image *pair_menu_icons_c[2] = {
+    &img_pair_mission,
+    &img_pair_cb,
+};
+
+const Graphics_Image *pair_menu_icons_q[2] = {
+    &img_pair_mission,
+    &img_pair_files,
+};
+
+void ui_draw_pair_menu_icons() {
+    if (is_qbadge(paired_badge.badge_id)) {
+        ui_draw_menu_icons(ui_x_cursor, pair_menu_icons_q, pair_menu_text_q, 10, 5, TOPBAR_HEIGHT+8, 2);
+    } else {
+        ui_draw_menu_icons(ui_x_cursor, pair_menu_icons_c, pair_menu_text_c, 10, 5, TOPBAR_HEIGHT+8, 2);
+    }
 }
 
-void ui_draw_main_menu() {
+void ui_draw_pair_menu() {
     // Clear the buffer.
     Graphics_clearDisplay(&ui_gr_context_landscape);
 
     ui_draw_top_bar();
-
-    ui_draw_main_menu_icons();
+    ui_draw_pair_menu_icons();
 
     Graphics_flushBuffer(&ui_gr_context_landscape);
 }
 
-void ui_mainmenu_do(UInt events) {
+void ui_pair_menu_do(UInt events) {
     if (pop_events(&events, UI_EVENT_BACK)) {
-        ui_transition(UI_SCREEN_IDLE);
+        // Do nothing; this is the bottom of the stack when paired.
         return;
     }
 
     if (pop_events(&events, UI_EVENT_REFRESH)) {
-        ui_draw_main_menu();
+        ui_draw_pair_menu();
     }
 
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
@@ -69,16 +87,14 @@ void ui_mainmenu_do(UInt events) {
         case KB_OK:
             switch(ui_x_cursor) {
             case 0:
-                ui_transition(UI_SCREEN_INFO);
+                // TODO: Attempt a mission
                 break;
             case 1:
-                ui_transition(UI_SCREEN_MISSIONS);
-                break;
-            case 2:
-                ui_transition(UI_SCREEN_SCAN);
-                break;
-            case 3:
-                ui_transition(UI_SCREEN_FILES);
+                if (is_qbadge(paired_badge.badge_id)) {
+                    ui_transition(UI_SCREEN_PAIR_FILE);
+                } else {
+                    ui_transition(UI_SCREEN_PAIR_CB_INFO);
+                }
                 break;
             }
             break;

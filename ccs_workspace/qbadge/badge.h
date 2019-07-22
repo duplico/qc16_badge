@@ -12,6 +12,8 @@
 
 #include <qc16.h>
 
+#include <qc16_serial_common.h>
+
 extern qbadge_conf_t badge_conf;
 
 extern volatile uint32_t qc_clock;
@@ -26,6 +28,9 @@ extern uint16_t handlers_near_count_running;
 
 extern uint8_t mission_accepted[3];
 extern mission_t missions[3];
+
+extern uint8_t badge_paired;
+extern pair_payload_t paired_badge;
 
 uint8_t mission_getting_possible();
 uint8_t handler_nearby();

@@ -71,7 +71,9 @@
   #define SET_CCFG_SIZE_AND_DIS_FLAGS_DIS_GPRAM  0x0 /* Enable GPRAM */
 #endif //CACHE_AS_RAM
 
-#define SET_CCFG_MODE_CONF_SCLK_LF_OPTION            0x3 // LF RCOSC
-#define SET_CCFG_MODE_CONF_VDDR_TRIM_SLEEP_TC        0x0 // Enable
+#ifdef USE_RCOSC
+    #define SET_CCFG_MODE_CONF_SCLK_LF_OPTION            0x3 // LF RCOSC
+    #define SET_CCFG_MODE_CONF_VDDR_TRIM_SLEEP_TC        0x0 // Enable
+#endif
 
 #include <startup_files/ccfg.c>

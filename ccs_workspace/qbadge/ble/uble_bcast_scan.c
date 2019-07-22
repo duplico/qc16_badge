@@ -332,6 +332,8 @@ static void UBLEBcastScan_bcast_advPrepareCB(void) {
     badge_frame->spare1 = 0;
     badge_frame->spare2 = 0;
     badge_frame->crc16 = crc16_buf((uint8_t *) badge_frame, sizeof(qc16_ble_t)-2);
+
+    uble_setParameter(UBLE_PARAM_ADVDATA, sizeof(advertData), advertData);
 }
 
 /*********************************************************************
@@ -412,6 +414,7 @@ bool UBLEBcastScan_initBcast(void)
     /* Initilaize Micro GAP Broadcaster Role */
     if (SUCCESS == ugap_bcastInit(&bcastCBs))
     {
+        // TODO: Set this up, first:
         uble_setParameter(UBLE_PARAM_ADVDATA, sizeof(advertData), advertData);
         return true;
     }

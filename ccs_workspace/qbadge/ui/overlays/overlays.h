@@ -14,7 +14,7 @@ void ui_colorpicking_do(UInt events);
 void ui_textentry_load();
 void ui_textentry_unload();
 void ui_textentry_do();
-void ui_textbox_load();
+void ui_textbox_load(char *text);
 void ui_textbox_unload(uint8_t ok);
 void ui_textbox_do();
 

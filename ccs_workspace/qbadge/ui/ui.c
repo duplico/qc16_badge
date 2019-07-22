@@ -28,6 +28,7 @@
 #include <ui/images.h>
 #include <ui/overlays/overlays.h>
 #include <ui/menus/menus.h>
+#include <ui/pair/pair.h>
 #include <ui/leds.h>
 #include <ui/ui.h>
 #include <ui/keypad.h>
@@ -154,6 +155,14 @@ void ui_transition(uint8_t destination) {
         ui_x_max = 2;
         // NB: ui_y_max will be set in the do_ function, so no need here.
         break;
+    case UI_SCREEN_PAIR_MENU:
+        ui_x_max = 1;
+        ui_y_max = 0;
+        break;
+    case UI_SCREEN_PAIR_FILE:
+        break;
+    case UI_SCREEN_PAIR_CB_INFO:
+        break;
     }
 
     ui_current = destination;
@@ -171,14 +180,7 @@ uint8_t ui_menusystem_do(UInt events) {
     if (events & UI_EVENT_KB_PRESS) {
         switch(kb_active_key_masked) {
         case KB_BACK:
-            if (ui_current == UI_SCREEN_MAINMENU) {
-                ui_transition(UI_SCREEN_IDLE);
-            } else if (ui_current == UI_SCREEN_MISSIONS && mission_picking) {
-                mission_picking = 0;
-                Event_post(ui_event_h, UI_EVENT_REFRESH);
-            } else {
-                ui_transition(UI_SCREEN_MAINMENU);
-            }
+            Event_post(ui_event_h, UI_EVENT_BACK);
             return 1;
         case KB_LEFT:
             if (ui_x_cursor == 0)
@@ -223,6 +225,10 @@ uint8_t ui_menusystem_do(UInt events) {
 }
 
 void ui_info_do(UInt events) {
+    if (pop_events(&events, UI_EVENT_BACK)) {
+        ui_transition(UI_SCREEN_MAINMENU);
+        return;
+    }
     if (pop_events(&events, UI_EVENT_REFRESH)) {
         ui_draw_info();
     }
@@ -235,6 +241,10 @@ void ui_info_do(UInt events) {
 }
 
 void ui_scan_do(UInt events) {
+    if (pop_events(&events, UI_EVENT_BACK)) {
+        ui_transition(UI_SCREEN_MAINMENU);
+        return;
+    }
     if (pop_events(&events, UI_EVENT_REFRESH)) {
         ui_draw_scan();
     }
@@ -282,6 +292,7 @@ void ui_task_fn(UArg a0, UArg a1) {
             if (ui_textentry) {
                 ui_textentry_unload(0);
             }
+            ui_transition(UI_SCREEN_PAIR_MENU);
             continue;
         }
 
@@ -293,6 +304,7 @@ void ui_task_fn(UArg a0, UArg a1) {
             if (ui_textentry) {
                 ui_textentry_unload(0);
             }
+            ui_transition(UI_SCREEN_MAINMENU);
             continue;
         }
 
@@ -376,7 +388,7 @@ void ui_task_fn(UArg a0, UArg a1) {
                     ui_transition(UI_SCREEN_MAINMENU);
                 }
                 ui_screensaver_do(events);
-            } else if (ui_current >= UI_SCREEN_MAINMENU && ui_current <= UI_SCREEN_MAINMENU_END) {
+            } else if (ui_current >= UI_SCREEN_MAINMENU && ui_current <= UI_SCREEN_MENUSYSTEM_END) {
                 if (ui_menusystem_do(events)) {
                     continue;
                 }
@@ -395,6 +407,10 @@ void ui_task_fn(UArg a0, UArg a1) {
                     break;
                 case UI_SCREEN_FILES:
                     ui_files_do(events);
+                    break;
+
+                case UI_SCREEN_PAIR_MENU:
+                    ui_pair_menu_do(events);
                     break;
                 }
             }

@@ -121,6 +121,16 @@ void ui_draw_missions() {
 }
 
 void ui_missions_do(UInt events) {
+    if (pop_events(&events, UI_EVENT_BACK)) {
+        if (mission_picking) {
+            mission_picking = 0;
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
+        } else {
+            ui_transition(UI_SCREEN_MAINMENU);
+        }
+        return;
+    }
+
     if (pop_events(&events, UI_EVENT_REFRESH)) {
         ui_draw_missions();
     }

@@ -32,6 +32,9 @@ qbadge_conf_t badge_conf;
 #pragma DATA_SECTION(startup_id, ".qc16cfg")
 volatile const uint16_t startup_id = QBADGE_ID_MAX_UNASSIGNED;
 
+uint8_t badge_paired = 0;
+pair_payload_t paired_badge = {0,};
+
 // Radar constructs:
 
 #define QBADGE_BITFIELD_LONGS 21

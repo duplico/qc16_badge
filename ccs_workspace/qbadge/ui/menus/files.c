@@ -154,6 +154,37 @@ void ui_files_do(UInt events) {
     static uint8_t text_use = 0;
     static char *text;
 
+    // NB: Do these first out of an abundance of caution to avoid
+    //     memory leaks:
+    if (pop_events(&events, UI_EVENT_TEXT_CANCELED)) {
+        // dooo noooooothiiiiing
+        // except prevent a memory leak:
+        free(text);
+    }
+
+    if (pop_events(&events, UI_EVENT_TEXT_READY)) {
+        switch(text_use) {
+        case FILES_TEXT_USE_RENAME:
+        {
+            // Rename curr_file_name to text
+            SPIFFS_rename(&fs, curr_file_name, text);
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
+            break;
+        }
+        case FILES_TEXT_USE_SAVE_COLOR:
+            // Save current colors as text
+            save_anim(text);
+            break;
+        }
+
+        free(text);
+    }
+
+    if (pop_events(&events, UI_EVENT_BACK)) {
+        ui_transition(UI_SCREEN_MAINMENU);
+        return;
+    }
+
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
         case KB_OK:
@@ -204,30 +235,6 @@ void ui_files_do(UInt events) {
             }
             break;
         }
-    }
-
-    if (pop_events(&events, UI_EVENT_TEXT_CANCELED)) {
-        // dooo noooooothiiiiing
-        // except prevent a memory leak:
-        free(text);
-    }
-
-    if (pop_events(&events, UI_EVENT_TEXT_READY)) {
-        switch(text_use) {
-        case FILES_TEXT_USE_RENAME:
-        {
-            // Rename curr_file_name to text
-            SPIFFS_rename(&fs, curr_file_name, text);
-            Event_post(ui_event_h, UI_EVENT_REFRESH);
-            break;
-        }
-        case FILES_TEXT_USE_SAVE_COLOR:
-            // Save current colors as text
-            save_anim(text);
-            break;
-        }
-
-        free(text);
     }
 
     if (pop_events(&events, UI_EVENT_REFRESH)) {

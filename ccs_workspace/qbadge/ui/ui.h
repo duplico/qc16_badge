@@ -40,7 +40,7 @@
 #define UI_EVENT_KB_PRESS Event_Id_30
 #define UI_EVENT_KB_RELEASE Event_Id_29
 // and the rest from the bottom:
-#define UI_EVENT_TEXTBOX_OK Event_Id_0A
+#define UI_EVENT_TEXTBOX_OK Event_Id_10
 #define UI_EVENT_TEXTBOX_NO Event_Id_09
 #define UI_EVENT_BACK Event_Id_08
 #define UI_EVENT_UNPAIRED Event_Id_07
@@ -94,5 +94,6 @@ UInt pop_events(UInt *events_ptr, UInt events_to_check);
 void ui_init();
 uint8_t ui_is_landscape();
 void ui_transition(uint8_t destination);
+void ui_draw_mission_icons();
 
 #endif /* APPLICATION_UI_H_ */

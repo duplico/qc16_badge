@@ -47,7 +47,7 @@ const uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT] = {
 };
 
 const uint16_t BRIGHTNESS_STEPS[LED_NUM_BRIGHTNESS_STEPS][2] = {
-    {40, 24},
+    {20, 24},
     {50, 40},
     {55, 45},
     {60, 50},

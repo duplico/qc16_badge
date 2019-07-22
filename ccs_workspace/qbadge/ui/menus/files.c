@@ -229,7 +229,8 @@ void ui_files_do(UInt events) {
                         // photo
                         strncpy(badge_conf.current_photo, &curr_file_name[8], QC16_PHOTO_NAME_LEN);
                     }
-                    Event_post(ui_event_h, UI_EVENT_REFRESH);
+                    ui_transition(UI_SCREEN_IDLE);
+                    return;
                 }
             }
             break;

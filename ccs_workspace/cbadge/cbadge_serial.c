@@ -85,6 +85,7 @@ void serial_pair() {
     memset(pair_payload_out, 0, sizeof(pair_payload_t));
     pair_payload_out->agent_present = 0;
     pair_payload_out->badge_type = badge_conf.badge_type;
+    pair_payload_out->badge_id = badge_conf.badge_id;
     pair_payload_out->clock_is_set = 0;
     memcpy(&pair_payload_out->element_level[3], badge_conf.element_level, sizeof(element_type)*3);
     pair_payload_out->element_level_max[3] = 5;

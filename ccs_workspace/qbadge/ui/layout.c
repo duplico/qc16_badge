@@ -93,7 +93,16 @@ void ui_draw_top_bar_local_element_icons() {
 }
 
 void ui_draw_top_bar_remote_element_icons() {
-
+    qc16gr_drawImage(&ui_gr_context_landscape, &img_remote_icon_separator, 296/2 - img_remote_icon_separator.xSize/2, 0);
+    for (uint8_t i=0; i<3; i++) {
+        uint16_t icon_x = (EPD_HEIGHT-1-(3*TOPBAR_SEG_WIDTH_PADDED)) + i*TOPBAR_SEG_WIDTH_PADDED;
+        uint16_t icon_y = 0;
+        element_type type = (element_type) i;
+        if (is_cbadge(paired_badge.badge_id)) {
+            type = (element_type) (i+3);
+        }
+        ui_draw_element(type, paired_badge.element_level[i], paired_badge.element_level_max[i], paired_badge.element_qty[i], icon_x, icon_y);
+    }
 }
 
 void ui_draw_battery_at(Graphics_Context *gr, uint16_t x, uint16_t y) {
@@ -233,7 +242,11 @@ void ui_draw_top_bar() {
     fadeRectangle(&ui_gr_context_landscape, &rect);
 
     ui_draw_top_bar_local_element_icons();
-    ui_draw_hud(&ui_gr_context_landscape, 0, TOPBAR_SEG_WIDTH_PADDED * 3, 0);
+    if (badge_paired) {
+        ui_draw_top_bar_remote_element_icons();
+    } else {
+        ui_draw_hud(&ui_gr_context_landscape, 0, TOPBAR_SEG_WIDTH_PADDED * 3, 0);
+    }
 }
 
 void ui_draw_menu_icons(uint8_t selected_index, const Graphics_Image **icons, const char text[][MAINMENU_NAME_MAX_LEN+1], uint16_t pad, uint16_t x, uint16_t y, uint8_t len) {

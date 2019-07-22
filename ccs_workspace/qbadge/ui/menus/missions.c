@@ -177,10 +177,15 @@ void ui_missions_do(UInt events) {
                             break;
                         }
                     }
+                    if (mission_started) {
+                        return;
+                    }
                     if (!badge_conf.agent_present) {
                         ui_textbox_load("Agent already dispatched.");
-                    } else if (!mission_started) {
-                        ui_textbox_load("No suitable mission found.");
+                    } else if (badge_conf.element_selected == ELEMENT_COUNT_NONE) {
+                        ui_textbox_load("No elements equipped, can't do a mission.");
+                    } else {
+                        ui_textbox_load("No suitable mission for current element.");
                     }
                 }
             }

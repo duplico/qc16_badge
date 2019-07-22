@@ -31,9 +31,9 @@
 #include <board.h>
 #include <ui/layout.h>
 
-uint8_t textentry_len;
-char *textentry_dest;
-char *textentry_buf;
+uint8_t textbox_len;
+char *textbox_dest;
+char *textbox_buf;
 uint8_t textentry_cursor = 0;
 
 extern const tFont g_sFontfixed10x20;
@@ -42,12 +42,12 @@ void ui_textentry_load(char *dest, uint8_t len) {
     if (len > TEXTENTRY_MAX_LEN) {
         len = TEXTENTRY_MAX_LEN;
     }
-    textentry_len = len;
-    textentry_buf = malloc(len);
-    textentry_dest = dest;
+    textbox_len = len;
+    textbox_buf = malloc(len);
+    textbox_dest = dest;
     textentry_cursor = 0;
-    memset(textentry_buf, 0x00, len);
-    strncpy(textentry_buf, textentry_dest, textentry_len);
+    memset(textbox_buf, 0x00, len);
+    strncpy(textbox_buf, textbox_dest, textbox_len);
     ui_textentry = 1;
 
     // Fade out everything.
@@ -58,21 +58,21 @@ void ui_textentry_load(char *dest, uint8_t len) {
 
 void ui_textentry_unload(uint8_t save) {
     ui_textentry = 0;
-    if (save && textentry_buf[0] && textentry_dest) {
+    if (save && textbox_buf[0] && textbox_dest) {
         // If we're supposed to copy this back to the destination,
         //  and if text was actually entered, then save it.
-        strncpy(textentry_dest, textentry_buf, textentry_len);
+        strncpy(textbox_dest, textbox_buf, textbox_len);
         Event_post(ui_event_h, UI_EVENT_TEXT_READY);
     } else {
         Event_post(ui_event_h, UI_EVENT_TEXT_CANCELED);
     }
 
-    free(textentry_buf);
+    free(textbox_buf);
     Event_post(ui_event_h, UI_EVENT_REFRESH);
 }
 
 void ui_textentry_draw() {
-    uint16_t entry_width = textentry_len * 10;
+    uint16_t entry_width = textbox_len * 10;
     uint16_t txt_left = 148 - (entry_width/2);
     uint16_t txt_top = 64 - 10;
 
@@ -96,14 +96,14 @@ void ui_textentry_draw() {
 
     // Draw the text itself:
     Graphics_setFont(&ui_gr_context_landscape, &g_sFontfixed10x20);
-    Graphics_drawString(&ui_gr_context_landscape, (int8_t *)textentry_buf, textentry_len, txt_left, txt_top, 1);
+    Graphics_drawString(&ui_gr_context_landscape, (int8_t *)textbox_buf, textbox_len, txt_left, txt_top, 1);
 
     // Now invert and draw the current character:
     Graphics_setBackgroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);
     Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_WHITE);
 
-    Graphics_drawString(&ui_gr_context_landscape, textentry_buf[textentry_cursor] ? (int8_t *) &textentry_buf[textentry_cursor] : " ", 1, txt_left +
-            Graphics_getStringWidth(&ui_gr_context_landscape, (const int8_t *) textentry_buf, textentry_cursor), txt_top, 1);
+    Graphics_drawString(&ui_gr_context_landscape, textbox_buf[textentry_cursor] ? (int8_t *) &textbox_buf[textentry_cursor] : " ", 1, txt_left +
+            Graphics_getStringWidth(&ui_gr_context_landscape, (const int8_t *) textbox_buf, textentry_cursor), txt_top, 1);
 
     Graphics_setBackgroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_WHITE);
     Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);
@@ -120,7 +120,7 @@ void ui_textentry_do(UInt events) {
         switch(kb_active_key_masked) {
         case KB_RIGHT:
             // right cursor
-            if (textentry_cursor < strlen(textentry_buf)) {
+            if (textentry_cursor < strlen(textbox_buf)) {
                 textentry_cursor++;
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
             }
@@ -133,45 +133,45 @@ void ui_textentry_do(UInt events) {
             }
             break;
         case KB_DOWN:
-            if (textentry_buf[textentry_cursor] < '0') {
+            if (textbox_buf[textentry_cursor] < '0') {
                 // Start with A
-                textentry_buf[textentry_cursor] = 'A';
-            } else if (textentry_buf[textentry_cursor] < '9') {
+                textbox_buf[textentry_cursor] = 'A';
+            } else if (textbox_buf[textentry_cursor] < '9') {
                 // It's a number, so next number:
-                textentry_buf[textentry_cursor]++;
-            } else if (textentry_buf[textentry_cursor] == '9') {
+                textbox_buf[textentry_cursor]++;
+            } else if (textbox_buf[textentry_cursor] == '9') {
                 // It's number 9, now use the null term:
-                textentry_buf[textentry_cursor] = 0x00;
-            } else if (textentry_buf[textentry_cursor] < 'Z') {
+                textbox_buf[textentry_cursor] = 0x00;
+            } else if (textbox_buf[textentry_cursor] < 'Z') {
                 // Capitals:
-                textentry_buf[textentry_cursor]++;
-            } else if (textentry_buf[textentry_cursor] == 'Z') {
+                textbox_buf[textentry_cursor]++;
+            } else if (textbox_buf[textentry_cursor] == 'Z') {
                 // It's a Z, so go to a:
-                textentry_buf[textentry_cursor] = 'a';
-            } else if (textentry_buf[textentry_cursor] == 'z') {
-                textentry_buf[textentry_cursor] = '0';
+                textbox_buf[textentry_cursor] = 'a';
+            } else if (textbox_buf[textentry_cursor] == 'z') {
+                textbox_buf[textentry_cursor] = '0';
             } else {
-                textentry_buf[textentry_cursor] = 0x00;
+                textbox_buf[textentry_cursor] = 0x00;
             }
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             break;
         case KB_UP:
-            if (textentry_buf[textentry_cursor] < '0') {
-                textentry_buf[textentry_cursor] = '9';
-            } else if (textentry_buf[textentry_cursor] > 'a') {
-                textentry_buf[textentry_cursor]--;
-            } else if (textentry_buf[textentry_cursor] == 'a') {
-                textentry_buf[textentry_cursor] = 'Z';
-            } else if (textentry_buf[textentry_cursor] > 'A') {
-                textentry_buf[textentry_cursor]--;
-            } else if (textentry_buf[textentry_cursor] == 'A') {
-                textentry_buf[textentry_cursor] = 0x00;
-            } else if (textentry_buf[textentry_cursor] > '0') {
-                textentry_buf[textentry_cursor]--;
-            } else if (textentry_buf[textentry_cursor] == '0') {
-                textentry_buf[textentry_cursor] = 'z';
+            if (textbox_buf[textentry_cursor] < '0') {
+                textbox_buf[textentry_cursor] = '9';
+            } else if (textbox_buf[textentry_cursor] > 'a') {
+                textbox_buf[textentry_cursor]--;
+            } else if (textbox_buf[textentry_cursor] == 'a') {
+                textbox_buf[textentry_cursor] = 'Z';
+            } else if (textbox_buf[textentry_cursor] > 'A') {
+                textbox_buf[textentry_cursor]--;
+            } else if (textbox_buf[textentry_cursor] == 'A') {
+                textbox_buf[textentry_cursor] = 0x00;
+            } else if (textbox_buf[textentry_cursor] > '0') {
+                textbox_buf[textentry_cursor]--;
+            } else if (textbox_buf[textentry_cursor] == '0') {
+                textbox_buf[textentry_cursor] = 'z';
             } else {
-                textentry_buf[textentry_cursor] = 0x00;
+                textbox_buf[textentry_cursor] = 0x00;
             }
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             break;

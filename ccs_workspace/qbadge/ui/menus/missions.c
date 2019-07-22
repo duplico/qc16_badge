@@ -32,6 +32,7 @@
 #include <badge.h>
 #include <board.h>
 #include <ui/layout.h>
+#include <ui/overlays/overlays.h>
 
 const char mission_menu_text[2][MAINMENU_NAME_MAX_LEN+1] = {
     "Get mission",
@@ -141,6 +142,7 @@ void ui_missions_do(UInt events) {
                 if (!badge_conf.agent_present && badge_conf.agent_mission_id == ui_y_cursor) {
                     // Agent is currently running a mission, and it's
                     //  this mission.
+                    ui_textbox_load("Can't overwrite current mission");
                     break;
                 }
                 mission_picking = 0;
@@ -159,17 +161,26 @@ void ui_missions_do(UInt events) {
                         ui_y_cursor = 0;
                         epd_do_partial = 1;
                         Event_post(ui_event_h, UI_EVENT_REFRESH);
+                    } else {
+                        ui_textbox_load("No handler available.");
                     }
                 } else {
                     // Mission
                     // Choose & start a mission
+                    uint8_t mission_started = 0;
                     for (uint8_t i=0; i<3; i++) {
                         // take the first one we qualify for
                         if (mission_solo_qualifies(i)) {
+                            mission_started = 1;
                             mission_begin_by_id(i);
                             Event_post(ui_event_h, UI_EVENT_REFRESH);
                             break;
                         }
+                    }
+                    if (!badge_conf.agent_present) {
+                        ui_textbox_load("Agent already dispatched.");
+                    } else if (!mission_started) {
+                        ui_textbox_load("No suitable mission found.");
                     }
                 }
             }

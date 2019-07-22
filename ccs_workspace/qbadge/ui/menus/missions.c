@@ -78,7 +78,7 @@ void ui_draw_mission_icons() {
             fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+1, rect.yMin+1, rect.xMax-1, rect.yMax-1);
         } else {
             // In a normal render, fade out the element if it's not valid
-            if (!mission_qualified_for_element_id(&mission, 0)) {
+            if (!mission_local_qualified_for_element_id(&mission, 0)) {
                 fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+2, rect.yMin+1, rect.xMin+1+TOPBAR_ICON_WIDTH, rect.yMin+1+TOPBAR_ICON_HEIGHT);
             }
         }

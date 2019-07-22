@@ -45,6 +45,7 @@ uint8_t ui_task_stack[UI_STACKSIZE];
 uint8_t ui_current = UI_SCREEN_STORY1;
 uint8_t ui_colorpicking = 0;
 uint8_t ui_textentry = 0;
+uint8_t ui_textbox = 0;
 
 uint8_t ui_x_cursor = 0;
 uint8_t ui_y_cursor = 0;
@@ -274,6 +275,9 @@ void ui_task_fn(UArg a0, UArg a1) {
                 ui_colorpicking_unload();
             } else if (ui_textentry) {
                 ui_textentry_unload(0);
+            } else if (ui_textbox) {
+                // TODO: Should this stay up?
+                ui_textbox_unload(0);
             } else if (ui_current == UI_SCREEN_IDLE) {
             } else {
                 ui_transition(UI_SCREEN_IDLE);
@@ -291,6 +295,9 @@ void ui_task_fn(UArg a0, UArg a1) {
             }
             if (ui_textentry) {
                 ui_textentry_unload(0);
+            }
+            if (ui_textbox) {
+                ui_textbox_unload(0);
             }
             ui_transition(UI_SCREEN_PAIR_MENU);
             continue;
@@ -378,6 +385,8 @@ void ui_task_fn(UArg a0, UArg a1) {
             ui_colorpicking_do(events);
         } else if (ui_textentry) {
             ui_textentry_do(events);
+        } else if (ui_textbox) {
+            ui_textbox_do(events);
         } else {
             // If neither of our "overlay" options are in use, then we follow
             //  a normal state flow:

@@ -75,6 +75,7 @@
 extern uint8_t ui_current;
 extern uint8_t ui_colorpicking;
 extern uint8_t ui_textentry;
+extern uint8_t ui_textbox;
 
 extern uint8_t kb_active_key;
 extern Event_Handle ui_event_h;

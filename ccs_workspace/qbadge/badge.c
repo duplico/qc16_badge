@@ -417,8 +417,6 @@ void reset_scan_cycle(UArg a0) {
     qbadges_near_count_running = 0;
     memset((void *) qbadges_near, 0x00, 4*QBADGE_BITFIELD_LONGS);
 
-    // TODO: Save time?
-
     process_seconds();
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
 }

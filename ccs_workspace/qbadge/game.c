@@ -337,7 +337,6 @@ void mission_begin_by_id(uint8_t mission_id) {
     badge_conf.agent_present = 0;
     badge_conf.agent_return_time = Seconds_get() + badge_conf.missions[mission_id].duration_seconds;
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
-    Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
 }
 
 /// Attempt to start a mission, returning 1 for success and 0 for failure.
@@ -375,9 +374,6 @@ uint8_t mission_begin() {
                 // Now, signal that we're starting it.
                 serial_mission_go(i, mission);
             }
-
-            // Aaand, we're done: the mission begins.
-            Event_post(ui_event_h, UI_EVENT_REFRESH);
             return 1;
         }
     }

@@ -52,4 +52,6 @@ extern uint8_t s_connected;
 extern uint8_t s_paired;
 extern uint8_t s_level_up;
 
+void complete_mission(mission_t *mission);
+
 #endif /* CBADGE_H_ */

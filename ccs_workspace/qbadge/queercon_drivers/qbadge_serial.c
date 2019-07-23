@@ -283,16 +283,17 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         // TODO: we DO care about color-picking buttons
         // Check whether the "go on a mission!" button is pressed.
         if (header->opcode == SERIAL_OPCODE_GOMISSION) {
+            // Remote badge has chosen a mission to do.
             if (payload[1] < 3) {
-                // It's a mission from the remote badge.
+                // It's a mission on the remote badge.
                 memcpy(&badge_conf.missions[3], &payload[1], sizeof(mission_t));
                 badge_conf.mission_assigned[3] = 1;
                 mission_begin_by_id(3);
             } else {
-                // It's a mission from the local badge.
+                // It's a mission on the local badge.
                 mission_begin_by_id(payload[1] - 3);
             }
-            // TODO: Get rid of this because we'll always get an update???
+
             Event_post(ui_event_h, UI_EVENT_REFRESH);
         }
 
@@ -305,7 +306,6 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         if (header->opcode == SERIAL_OPCODE_PAIR) {
             // This is a data update for our pair partner.
             memcpy(&paired_badge, payload, sizeof(pair_payload_t));
-            epd_do_partial = 1;
             Event_post(ui_event_h, UI_EVENT_REFRESH);
         }
 

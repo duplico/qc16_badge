@@ -154,7 +154,6 @@ void ui_pair_menu_do(UInt events) {
         case KB_OK:
             switch(ui_x_cursor) {
             case 0:
-                // TODO: Attempt a mission
                 break;
             case 1:
                 if (is_qbadge(paired_badge.badge_id)) {

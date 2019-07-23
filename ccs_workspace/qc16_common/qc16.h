@@ -26,6 +26,9 @@
 #define QC16_PHOTO_NAME_LEN 16
 #define QC16_COLOR_NAME_LEN 16
 
+#define QBADGE_BITFIELD_LONGS 21
+#define CBADGE_BITFIELD_LONGS 47
+
 // Maximum length of a serial payload (the max work buffer length)
 #define SERIAL_BUFFER_LEN 128
 

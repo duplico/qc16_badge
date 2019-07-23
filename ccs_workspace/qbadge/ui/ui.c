@@ -271,8 +271,12 @@ void ui_task_fn(UArg a0, UArg a1) {
     while (1) {
         events = Event_pend(ui_event_h, Event_Id_NONE, ~Event_Id_NONE,  UI_AUTOREFRESH_TIMEOUT);
 
-        if (events & UI_EVENT_REFRESH)
+        if (events & UI_EVENT_REFRESH) {
             refreshed = 1;
+            process_seconds();
+            // Pop any HUD updates we get, because we're already refreshing.
+            Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_HUD_UPDATE, BIOS_NO_WAIT);
+        }
 
         if (pop_events(&events, UI_EVENT_DO_SAVE)) {
             // TODO: Consider locking this out in low-power mode?
@@ -440,7 +444,7 @@ void ui_task_fn(UArg a0, UArg a1) {
         if (refreshed) {
             // If we just finished refreshing the screen, pop any keyboard
             //  events off, to avoid spurious double-presses.
-            events = Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS,  BIOS_NO_WAIT);
+            Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS,  BIOS_NO_WAIT);
         }
 
     }

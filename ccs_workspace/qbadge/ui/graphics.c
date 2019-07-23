@@ -580,3 +580,28 @@ void fillRectangle(Graphics_Context *gr_context, Graphics_Rectangle *rect) {
         Graphics_drawLineH(gr_context, rect->xMin, rect->xMax, y);
     }
 }
+
+void drawRectangle_xy(Graphics_Context *gr_context, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+    Graphics_Rectangle rect;
+    rect = (Graphics_Rectangle) {
+        x0, y0,
+        x1, y1,
+    };
+
+    Graphics_drawRectangle(gr_context, &rect);
+}
+
+void fillRectangle_xy(Graphics_Context *gr_context, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+    Graphics_Rectangle rect;
+    rect = (Graphics_Rectangle) {
+        x0, y0,
+        x1, y1,
+    };
+
+    fillRectangle(gr_context, &rect);
+}
+
+void qc16gr_drawProgressBar(Graphics_Context *gr_context, uint16_t x, uint16_t y, uint16_t width, uint16_t height, uint32_t progress, uint32_t total) {
+    drawRectangle_xy(gr_context, x, y, x+width-1, y+height-1);
+    fillRectangle_xy(gr_context, x, y, x+(width*progress/total), y+height-1);
+}

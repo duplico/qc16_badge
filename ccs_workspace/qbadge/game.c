@@ -106,9 +106,10 @@ mission_t generate_mission() {
         // The vhandler has a max level it can assign:
         new_mission.element_levels[0] = rand() % (VHANDLER_MAX_LEVEL-1);
 
-        if (!(rand() % VHANDLER_SECOND_ELEMENT_ONE_IN)) {
+        if (1 || !(rand() % VHANDLER_SECOND_ELEMENT_ONE_IN)) { // TODO
             // There's a chance to assign a second element.
             // A second element is needed.
+            new_mission.element_levels[1] = rand() % (VHANDLER_MAX_LEVEL-1);
             if (rand() % 3) {
                 new_mission.element_types[1] = (element_type) ((uint8_t)new_mission.element_types[0]+3);
             } else {
@@ -118,6 +119,8 @@ mission_t generate_mission() {
         strncpy(handler_name_missionpicking, "vhandler", QC16_BADGE_NAME_LEN);
         handler_name_missionpicking[QC16_BADGE_NAME_LEN] = 0x00;
     }
+
+    // TODO: cap the secondary element at mine+1??? or something???
 
     // Is the mission too high-level for us? If so, reduce it:
     if (new_mission.element_levels[0] > badge_conf.element_level[new_mission.element_types[0]]) {
@@ -339,36 +342,18 @@ void mission_begin_by_id(uint8_t mission_id) {
 
 /// Attempt to start a mission, returning 1 for success and 0 for failure.
 uint8_t mission_begin() {
-    if (!badge_paired) {
-        for (uint8_t i=0; i<3; i++) {
-            // take the first one we qualify for
-            if (!badge_conf.mission_assigned[i]) {
-                continue;
-            }
-            if (mission_possible(&badge_conf.missions[i])) {
-                mission_begin_by_id(i);
-                Event_post(ui_event_h, UI_EVENT_REFRESH);
-                return 1;
-            }
-        }
-        return 0;
-    }
-
-    // Ok! So, we're paired. Need to decide which mission we'll do.
-
     // NB: For now, we ACCEPT the RACE CONDITION that the following could
     //     be executed simultaneously on each badge with different resulting
     //     missions:
 
     for (uint8_t i=0; i<6; i++) {
         mission_t *mission;
-
         if (i < 3) {
             if (!badge_conf.mission_assigned[i])
                 continue;
             mission = &badge_conf.missions[i];
         } else {
-            if (!paired_badge.mission_assigned[i])
+            if (!badge_paired || !paired_badge.mission_assigned[i])
                 continue;
             mission = &paired_badge.missions[i];
         }
@@ -386,10 +371,13 @@ uint8_t mission_begin() {
                 mission_begin_by_id(i);
             }
 
-            // Now, signal that we're starting it.
-            serial_mission_go(i, mission);
+            if (badge_paired) {
+                // Now, signal that we're starting it.
+                serial_mission_go(i, mission);
+            }
 
             // Aaand, we're done: the mission begins.
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
             return 1;
         }
     }

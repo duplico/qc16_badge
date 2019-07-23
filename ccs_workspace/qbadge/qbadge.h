@@ -9,6 +9,9 @@
 #define QBADGE_H_
 
 #include <stdint.h>
+
+#include <ti/sysbios/knl/Event.h>
+
 #include <qc16.h>
 
 // App-level configuration elements:
@@ -24,10 +27,15 @@
 #define VHANDLER_COOLDOWN_MIN_SECONDS  300
 #define VHANDLER_COOLDOWN_MAX_SECONDS 9000
 #define VHANDLER_MAX_LEVEL 3
-#define VHANDLER_SECOND_ELEMENT_ONE_IN 3
+//#define VHANDLER_SECOND_ELEMENT_ONE_IN 3
+#define VHANDLER_SECOND_ELEMENT_ONE_IN 2 // TODO
 
 #define MISSION_DURATION_MIN_SECONDS 600
 #define MISSION_DURATION_MAX_SECONDS 1000
+
+// UBLE stuff:
+#define UBLE_EVENT_UPDATE_ADV   Event_Id_00
+extern Event_Handle uble_event_h;
 
 // Hardware/driver-level configuration:
 

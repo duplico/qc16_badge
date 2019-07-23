@@ -31,6 +31,7 @@
 #include <ble/uble_bcast_scan.h>
 
 #include <badge.h>
+#include <qbadge.h>
 #include <qc16.h>
 #include <qc16_serial_common.h>
 
@@ -43,7 +44,6 @@
 
 // RTOS Event to queue application events
 #define UEB_QUEUE_EVT                         UTIL_QUEUE_EVENT_ID // Event_Id_30
-#define UBLE_EVENT_UPDATE_ADV   Event_Id_00
 
 // Application Events
 #define UBS_EVT_MICROBLESTACK   0x0002
@@ -64,7 +64,7 @@ typedef struct {
  */
 
 // Event globally used to post local events and pend on local events.
-static Event_Handle syncEvent;
+Event_Handle uble_event_h;
 
 // Queue object used for app messages
 static Queue_Struct appMsg;
@@ -198,7 +198,7 @@ static void UBLEBcastScan_init(void)
 {
 
     // Create an RTOS event used to wake up this application to process events.
-    syncEvent = Event_create(NULL, NULL);
+    uble_event_h = Event_create(NULL, NULL);
 
     // Create an RTOS queue for message from profile to be sent to app.
     appMsgQueue = Util_constructQueue(&appMsg);
@@ -237,7 +237,7 @@ static void UBLEBcastScan_taskFxn(UArg a0, UArg a1)
         // Waits for an event to be posted associated with the calling thread.
         // Note that an event associated with a thread is posted when a
         // message is queued to the message receive queue of the thread
-        events = Event_pend(syncEvent, Event_Id_NONE, UEB_QUEUE_EVT, BIOS_WAIT_FOREVER);
+        events = Event_pend(uble_event_h, Event_Id_NONE, UEB_QUEUE_EVT, BIOS_WAIT_FOREVER);
 
         // If RTOS queue is not empty, process app message.
         while (!Queue_empty(appMsgQueue))
@@ -388,7 +388,7 @@ static bStatus_t UBLEBcastScan_enqueueMsg(uint16 event, uint8 data)
         pMsg->data = data;
 
         // Enqueue the message.
-        status = Util_enqueueMsg(appMsgQueue, syncEvent, (uint8*) pMsg);
+        status = Util_enqueueMsg(appMsgQueue, uble_event_h, (uint8*) pMsg);
     }
     Hwi_restore(keyHwi);
     return status;
@@ -425,8 +425,8 @@ bool UBLEBcastScan_initBcast(void)
     /* Initilaize Micro GAP Broadcaster Role */
     if (SUCCESS == ugap_bcastInit(&bcastCBs))
     {
-        // TODO: Set this up, first:
-        uble_setParameter(UBLE_PARAM_ADVDATA, sizeof(advertData), advertData);
+        // This calls uble_setParameter for us:
+        UBLEBcastScan_bcast_advPrepareCB();
         return true;
     }
 

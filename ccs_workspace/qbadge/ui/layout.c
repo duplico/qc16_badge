@@ -103,7 +103,7 @@ void ui_draw_top_bar_remote_element_icons() {
         if (is_cbadge(paired_badge.badge_id)) {
             type = (element_type) (i+3);
         }
-        ui_draw_element(type, paired_badge.element_level[i], paired_badge.element_level_max[i], paired_badge.element_qty[i], icon_x, icon_y);
+        ui_draw_element(type, paired_badge.element_level[type], paired_badge.element_level_max[type], paired_badge.element_qty[type], icon_x, icon_y);
     }
 }
 

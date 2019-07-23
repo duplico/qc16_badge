@@ -211,7 +211,7 @@ void serial_ll_handle_rx() {
         // But, mission-doing is a thing!
         if (serial_header_in.opcode == SERIAL_OPCODE_GOMISSION) {
             mission_t *mission = (mission_t *) &serial_buffer_in[1];
-            // TODO: get our mission rewards!
+            complete_mission(mission);
         }
         break;
     }

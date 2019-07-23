@@ -154,7 +154,12 @@ void ui_pair_menu_do(UInt events) {
         case KB_OK:
             switch(ui_x_cursor) {
             case 0:
-                mission_begin();
+                if (mission_begin() && !is_cbadge(paired_badge.badge_id)) {
+                    // Only do this refresh for qbadges, because the cbadge
+                    //  will always respond with its updated stats,
+                    //  triggering a screen refresh.
+                    Event_post(ui_event_h, UI_EVENT_REFRESH);
+                }
                 break;
             case 1:
                 if (is_qbadge(paired_badge.badge_id)) {

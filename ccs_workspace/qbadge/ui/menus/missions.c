@@ -218,6 +218,7 @@ void ui_missions_do(UInt events) {
                     // Mission
                     // Choose & start a mission
                     if (mission_begin()) {
+                        Event_post(ui_event_h, UI_EVENT_REFRESH);
                         return;
                     }
                     if (!badge_conf.agent_present) {

@@ -225,7 +225,6 @@ int main( void )
             } else {
                 badge_conf.element_selected = ELEMENT_COCKTAILS;
             }
-            // TODO: if we're paired, send the button message.
         }
         if (s_button & BUTTON_PRESS_FLAGS_J2) { // flags
             if (badge_conf.element_selected == ELEMENT_FLAGS) {
@@ -233,7 +232,6 @@ int main( void )
             } else {
                 badge_conf.element_selected = ELEMENT_FLAGS;
             }
-            // TODO: if we're paired, send the button message.
         }
         if (s_button & BUTTON_PRESS_KEYS_J3) { // keys
             if (badge_conf.element_selected == ELEMENT_KEYS) {
@@ -241,7 +239,6 @@ int main( void )
             } else {
                 badge_conf.element_selected = ELEMENT_KEYS;
             }
-            // TODO: if we're paired, send the button message.
         }
         if (s_button & BUTTON_RELEASE_J1) {
         }

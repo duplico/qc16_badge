@@ -157,7 +157,9 @@ void serial_update_element() {
     if (!badge_paired) {
         return;
     }
-    serial_send(SERIAL_OPCODE_ELEMENT, (uint8_t *) badge_conf.element_selected, sizeof(element_type));
+    uint8_t i = (uint8_t) badge_conf.element_selected;
+
+    serial_send(SERIAL_OPCODE_ELEMENT, &i, sizeof(element_type));
 }
 
 void serial_mission_go(uint8_t local_mission_id, mission_t *mission) {
@@ -298,7 +300,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         }
 
         if (header->opcode == SERIAL_OPCODE_ELEMENT) {
-            memcpy(&paired_badge.element_selected, payload, sizeof(element_type));
+            paired_badge.element_selected = (element_type) payload[0];
             epd_do_partial = 1;
             Event_post(ui_event_h, UI_EVENT_REFRESH);
         }

@@ -228,6 +228,13 @@ void epd_phy_begin(uint8_t partial_update) {
 }
 
 void epd_phy_flush_buffer() {
+    static uint8_t i=0;
+    if (epd_do_partial) {
+        i++;
+        if (i==8) {
+            epd_do_partial = 0;
+        }
+    }
     epd_phy_begin(epd_do_partial);
     epd_do_partial = 0;
     uint16_t Width, Height;

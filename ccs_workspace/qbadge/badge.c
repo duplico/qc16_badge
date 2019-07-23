@@ -159,7 +159,7 @@ void config_init() {
     }
     // Check the stored config:
     // TODO
-    if (1 || !config_is_valid()) {
+    if (!config_is_valid()) {
 
         // If we're still here, the config source was invalid, and
         //  we must generate a new one.

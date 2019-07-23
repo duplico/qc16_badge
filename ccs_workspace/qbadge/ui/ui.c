@@ -311,6 +311,7 @@ void ui_task_fn(UArg a0, UArg a1) {
                 ui_textbox_unload(0);
             }
             ui_transition(UI_SCREEN_PAIR_MENU);
+            Event_post(led_event_h, LED_EVENT_FN_LIGHT);
             continue;
         }
 

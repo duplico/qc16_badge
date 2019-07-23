@@ -42,7 +42,7 @@ const char mission_menu_text[2][MAINMENU_NAME_MAX_LEN+1] = {
 uint8_t mission_picking = 0;
 mission_t candidate_mission;
 
-void ui_put_mission_at(mission_t *mission, uint16_t x, uint16_t y) {
+void ui_put_mission_at(mission_t *mission, uint8_t mission_id, uint16_t x, uint16_t y) {
     Graphics_Rectangle rect;
     rect.xMin=x;
     rect.yMin=y;
@@ -71,6 +71,8 @@ void ui_put_mission_at(mission_t *mission, uint16_t x, uint16_t y) {
             // We're paired, and the remote badge can fulfill this element,
             //  and this is the element the remote badge will fill (i.e.
             //  it's not the one that we fill).
+        } else if (!badge_conf.agent_present && badge_conf.agent_mission_id == mission_id) {
+            // We're on a mission, and this is the mission we're on.
         } else {
             // No badge can fulfill this element.
             fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+2, rect.yMin+1, rect.xMin+1+TOPBAR_ICON_WIDTH, rect.yMin+1+TOPBAR_ICON_HEIGHT);
@@ -84,7 +86,7 @@ void ui_draw_mission_icons() {
     mission_t mission;
 
     for (uint8_t i=0; i<3; i++) {
-        rect.xMin=124;
+        rect.xMin=119;
         rect.yMin=TOPBAR_HEIGHT+3+i*(TOPBAR_HEIGHT+2);
         rect.xMax=rect.xMin+TOPBAR_SEG_WIDTH_PADDED*2;
         rect.yMax=rect.yMin+TOPBAR_HEIGHT;
@@ -98,7 +100,7 @@ void ui_draw_mission_icons() {
         }
 
         // Draw the mission:
-        ui_put_mission_at(&mission, rect.xMin, rect.yMin);
+        ui_put_mission_at(&mission, i, rect.xMin, rect.yMin);
 
         // Is our agent doing this mission? If so, render that:
         if (!badge_conf.agent_present && badge_conf.agent_mission_id == i) {
@@ -121,6 +123,17 @@ void ui_draw_mission_icons() {
             fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+1, rect.yMin+1, rect.xMax-1, rect.yMax-1);
         }
     }
+
+    // If we're doing a paired mission, render that one.
+    if (!badge_conf.agent_present && badge_conf.agent_mission_id == 3) {
+        rect.xMin = rect.xMax+3;
+        rect.yMin=TOPBAR_HEIGHT+3+(TOPBAR_HEIGHT+2)/2;
+        rect.xMax=rect.xMin+TOPBAR_SEG_WIDTH_PADDED*2;
+        rect.yMax=rect.yMin+TOPBAR_HEIGHT;
+        ui_put_mission_at(&badge_conf.missions[3], 3, rect.xMin, rect.yMin);
+        qc16gr_drawImage(&ui_gr_context_landscape, &img_hud_agent, rect.xMin + (rect.xMax-rect.xMin)/2 - (img_hud_agent.xSize)/2, rect.yMax+2);
+    }
+
 }
 
 void ui_draw_mission_menu() {

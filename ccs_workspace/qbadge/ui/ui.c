@@ -134,6 +134,8 @@ void ui_transition(uint8_t destination) {
     ui_x_cursor = 0;
     ui_y_cursor = 0;
 
+    mission_picking = 0;
+
     switch(destination) {
     case UI_SCREEN_MAINMENU:
         ui_x_max = MAINMENU_ICON_COUNT-1;
@@ -146,7 +148,6 @@ void ui_transition(uint8_t destination) {
     case UI_SCREEN_MISSIONS:
         ui_x_max = 1;
         ui_y_max = 2;
-        mission_picking = 0;
         break;
     case UI_SCREEN_SCAN:
         ui_x_max = MAINMENU_ICON_COUNT-1;

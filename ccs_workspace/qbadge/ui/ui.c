@@ -278,11 +278,6 @@ void ui_task_fn(UArg a0, UArg a1) {
             Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_HUD_UPDATE, BIOS_NO_WAIT);
         }
 
-        if (pop_events(&events, UI_EVENT_DO_SAVE)) {
-            // TODO: Consider locking this out in low-power mode?
-            write_conf();
-        }
-
         // Timeouts only happen in the normal menu system & overlays:
         if (!events && ui_current < UI_SCREEN_PAIR_MENU) {
             // This is a timeout.
@@ -301,6 +296,11 @@ void ui_task_fn(UArg a0, UArg a1) {
             //  attention. Therefore, it's likely safe to do a full refresh.
             epd_do_partial = 0;
             continue;
+        }
+
+        if (pop_events(&events, UI_EVENT_DO_SAVE)) {
+            // TODO: Consider locking this out in low-power mode?
+            write_conf();
         }
 
         if (events & UI_EVENT_PAIRED) {

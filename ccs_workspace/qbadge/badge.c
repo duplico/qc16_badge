@@ -45,8 +45,11 @@ uint32_t qbadges_connected[QBADGE_BITFIELD_LONGS] = {0, };
 uint32_t cbadges_connected[CBADGE_BITFIELD_LONGS] = {0, };
 uint16_t qbadges_near_count=0;
 uint16_t qbadges_near_count_running=0;
-uint16_t handlers_near_count=0;
-uint16_t handlers_near_count_running=0;
+
+uint8_t handler_near_type=0;
+uint16_t handler_near_rssi=0;
+char handler_name_missionpicking[QC16_BADGE_NAME_LEN+1] = {0,};
+char handler_name[QC16_BADGE_NAME_LEN+1] = {0,};
 
 uint8_t mission_avail_levels[6] = {0,};
 
@@ -113,6 +116,10 @@ mission_t generate_mission() {
             new_mission.element_types[1] = (element_type) (rand() % 6);
             new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
         }
+
+        strncpy(handler_name_missionpicking, handler_name, QC16_BADGE_NAME_LEN);
+        handler_name_missionpicking[QC16_BADGE_NAME_LEN] = 0x00;
+
     } else {
         // vhandler mission.
         badge_conf.vhandler_return_time = Seconds_get() + VHANDLER_COOLDOWN_MIN_SECONDS + rand() % (VHANDLER_COOLDOWN_MAX_SECONDS - VHANDLER_COOLDOWN_MIN_SECONDS);
@@ -129,6 +136,8 @@ mission_t generate_mission() {
             // A second element is needed. We'll assign it totally randomly.
             new_mission.element_types[1] = (element_type) (rand() % 6);
         }
+        strncpy(handler_name_missionpicking, "vhandler", QC16_BADGE_NAME_LEN);
+        handler_name_missionpicking[QC16_BADGE_NAME_LEN] = 0x00;
     }
 
     // Is the mission too high-level for us? If so, reduce it:

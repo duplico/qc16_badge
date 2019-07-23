@@ -95,5 +95,6 @@ void ui_init();
 uint8_t ui_is_landscape();
 void ui_transition(uint8_t destination);
 void ui_draw_mission_icons();
+void ui_put_mission_at(mission_t *mission, uint8_t mission_id, uint16_t x, uint16_t y);
 
 #endif /* APPLICATION_UI_H_ */

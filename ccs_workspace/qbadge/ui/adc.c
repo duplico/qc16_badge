@@ -32,7 +32,8 @@ static QC16_ADCBuf0ChannelName curr_channel = ADCBUF_CH_VBAT;
 void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     void *completedADCBuffer, uint32_t completedChannel) {
     uint8_t target_brightness_level;
-    static uint8_t vbat_decivolts_prev = 0;
+    static int16_t vbat_centivolts_prev = 0;
+    int16_t vbat_centivolts_curr = 0;
 
     ADCBuf_adjustRawValues(handle, completedADCBuffer, 1, completedChannel);
 
@@ -62,8 +63,9 @@ void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
         break;
     case ADCBUF_CH_VBAT:
         ADCBuf_convertAdjustedToMicroVolts(handle, completedChannel, completedADCBuffer, &vbat_out_uvolts, conversion->samplesRequestedCount);
-        if (vbat_out_uvolts/100000 != vbat_decivolts_prev) {
-            vbat_decivolts_prev = vbat_out_uvolts/100000;
+        vbat_centivolts_curr = vbat_out_uvolts/10000;
+        if (vbat_centivolts_prev - vbat_centivolts_curr > 10 || vbat_centivolts_prev - vbat_centivolts_curr < -10) {
+            vbat_centivolts_prev = vbat_centivolts_curr;
             Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
         }
         break;

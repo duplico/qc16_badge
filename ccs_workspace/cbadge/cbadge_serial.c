@@ -83,7 +83,7 @@ void serial_pair() {
     while (serial_phy_state != SERIAL_PHY_STATE_IDLE);
     pair_payload_t *pair_payload_out = (pair_payload_t *) serial_buffer_out;
     memset(pair_payload_out, 0, sizeof(pair_payload_t));
-    pair_payload_out->agent_present = 0;
+    pair_payload_out->agent_present = 1; // Always 1 because we can always do a mission.
     pair_payload_out->badge_type = badge_conf.badge_type;
     pair_payload_out->badge_id = badge_conf.badge_id;
     pair_payload_out->clock_is_set = 0;

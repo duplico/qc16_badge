@@ -44,6 +44,7 @@ typedef struct {
     __packed uint8_t element_levels[2];
     __packed uint8_t element_rewards[2];
     __packed uint8_t element_progress[2];
+    __packed uint16_t duration_seconds;
 } mission_t;
 
 typedef struct {

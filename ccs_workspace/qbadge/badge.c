@@ -87,7 +87,7 @@ const uint8_t exp_required_per_level[6] = {
     255, // NB: must be unreachable
 };
 
-/// Generate and return a new mission.
+/// Generate and return a new mission. NB: GATE ON mission_getting_possible().
 mission_t generate_mission() {
     mission_t new_mission;
     new_mission.element_types[1] = ELEMENT_COUNT_NONE;
@@ -113,7 +113,8 @@ mission_t generate_mission() {
             new_mission.element_types[1] = (element_type) (rand() % 6);
             new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
         }
-    } else if (badge_conf.vhandler_present) {
+    } else {
+        // vhandler mission.
         badge_conf.vhandler_return_time = Seconds_get() + VHANDLER_COOLDOWN_MIN_SECONDS + rand() % (VHANDLER_COOLDOWN_MAX_SECONDS - VHANDLER_COOLDOWN_MIN_SECONDS);
         badge_conf.vhandler_return_time = Seconds_get() + 1; // TODO: remove
         badge_conf.vhandler_present = 0;
@@ -123,7 +124,7 @@ mission_t generate_mission() {
         // The vhandler has a max level it can assign:
         new_mission.element_levels[0] = rand() % (VHANDLER_MAX_LEVEL-1);
 
-        if (1 || !(rand() % VHANDLER_SECOND_ELEMENT_ONE_IN)) { // TODO
+        if (!(rand() % VHANDLER_SECOND_ELEMENT_ONE_IN)) {
             // There's a chance to assign a second element.
             // A second element is needed. We'll assign it totally randomly.
             new_mission.element_types[1] = (element_type) (rand() % 6);
@@ -141,6 +142,9 @@ mission_t generate_mission() {
         new_mission.element_rewards[i] = mission_reward_per_level[new_mission.element_levels[i]][0] + rand() % mission_reward_per_level[new_mission.element_levels[i]][1];
         new_mission.element_progress[i] = mission_exp_per_level[new_mission.element_levels[i]];
     }
+
+    // Determine the mission's duration:
+    new_mission.duration_seconds = MISSION_DURATION_MIN_SECONDS + rand() % (MISSION_DURATION_MAX_SECONDS - MISSION_DURATION_MIN_SECONDS);
 
     return new_mission;
 }
@@ -183,6 +187,10 @@ uint8_t mission_levels_qualify_for_element_id(mission_t *mission, uint8_t elemen
 }
 
 uint8_t mission_local_qualified_for_element_id(mission_t *mission, uint8_t element_position) {
+    if (!badge_conf.agent_present) {
+        return 0;
+    }
+
     return mission_levels_qualify_for_element_id(mission, element_position, badge_conf.element_level, badge_conf.element_selected, 0);
 }
 
@@ -193,7 +201,7 @@ uint8_t mission_local_qualified_for_element_id(mission_t *mission, uint8_t eleme
  ** in an unpaired situation).
  **/
 uint8_t mission_remote_qualified_for_element_id(mission_t *mission, uint8_t element_position) {
-    if (!badge_paired) {
+    if (!badge_paired || !paired_badge.agent_present) {
         return 0;
     }
 
@@ -311,7 +319,7 @@ uint8_t mission_solo_qualifies(uint8_t mission_id) {
 void mission_begin_by_id(uint8_t mission_id) {
     badge_conf.agent_mission_id = mission_id;
     badge_conf.agent_present = 0;
-    badge_conf.agent_return_time = Seconds_get() + 60;
+    badge_conf.agent_return_time = Seconds_get() + badge_conf.missions[mission_id].duration_seconds;
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
     Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
 }
@@ -378,6 +386,7 @@ void complete_mission_id(uint8_t mission_id) {
 
 void reset_scan_cycle(UArg a0) {
     if (qbadges_near_count_running != qbadges_near_count) {
+        qbadges_near_count = qbadges_near_count_running;
         Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
     }
     qbadges_near_count_running = 0;
@@ -531,6 +540,7 @@ uint8_t set_badge_seen(uint16_t id, char *name) {
         set_id_buf(id, (uint8_t *) qbadges_near);
         qbadges_near_count_running++;
         if (qbadges_near_count_running > qbadges_near_count) {
+            qbadges_near_count = qbadges_near_count_running;
             Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
         }
     }

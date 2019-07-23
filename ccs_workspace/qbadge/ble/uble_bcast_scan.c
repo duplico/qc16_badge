@@ -43,6 +43,7 @@
 
 // RTOS Event to queue application events
 #define UEB_QUEUE_EVT                         UTIL_QUEUE_EVENT_ID // Event_Id_30
+#define UBLE_EVENT_UPDATE_ADV   Event_Id_00
 
 // Application Events
 #define UBS_EVT_MICROBLESTACK   0x0002
@@ -120,8 +121,10 @@ uint8 advertData[30] =
 
 typedef struct {
     uint16_t badge_id;
-    uint16_t spare1;
-    uint16_t spare2;
+    __packed uint8_t badge_type;
+    __packed uint8_t spare1;
+    __packed uint8_t spare2;
+    __packed uint8_t spare3;
     uint16_t crc16;
 } qc16_ble_t;
 
@@ -204,7 +207,7 @@ static void UBLEBcastScan_init(void)
     uble_registerAntSwitchCB(NULL);
 
     uble_stackInit(UBLE_ADDRTYPE_PUBLIC, NULL, UBLEBcastScan_eventProxy,
-                   RF_TIME_CRITICAL);
+                   RF_TIME_RELAXED);
 
     UBLEBcastScan_initObserver();
     UBLEBcastScan_initBcast();
@@ -227,12 +230,14 @@ static void UBLEBcastScan_taskFxn(UArg a0, UArg a1)
     // Initialize application
     UBLEBcastScan_init();
 
+    UInt events;
+
     for (;;)
     {
         // Waits for an event to be posted associated with the calling thread.
         // Note that an event associated with a thread is posted when a
         // message is queued to the message receive queue of the thread
-        Event_pend(syncEvent, Event_Id_NONE, UEB_QUEUE_EVT, BIOS_WAIT_FOREVER);
+        events = Event_pend(syncEvent, Event_Id_NONE, UEB_QUEUE_EVT, BIOS_WAIT_FOREVER);
 
         // If RTOS queue is not empty, process app message.
         while (!Queue_empty(appMsgQueue))
@@ -256,6 +261,10 @@ static void UBLEBcastScan_taskFxn(UArg a0, UArg a1)
                 free(pMsg);
                 Hwi_restore(keyHwi);
             }
+        }
+
+        if (events & UBLE_EVENT_UPDATE_ADV) {
+            UBLEBcastScan_bcast_advPrepareCB();
         }
     }
 }
@@ -329,8 +338,10 @@ static void UBLEBcastScan_bcast_advPrepareCB(void) {
     qc16_ble_t *badge_frame = (qc16_ble_t *) &advertData[22];
     memcpy(name, badge_conf.handle, QC16_BADGE_NAME_LEN);
     badge_frame->badge_id = badge_conf.badge_id;
+    badge_frame->badge_type = badge_conf.badge_type;
     badge_frame->spare1 = 0;
     badge_frame->spare2 = 0;
+    badge_frame->spare3 = 0;
     badge_frame->crc16 = crc16_buf((uint8_t *) badge_frame, sizeof(qc16_ble_t)-2);
 
     uble_setParameter(UBLE_PARAM_ADVDATA, sizeof(advertData), advertData);
@@ -610,6 +621,8 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
 
         if (seems_queercon == 0xFF) {
             // this looks like a badge.
+
+            badge_frame->crc16 == crc16_buf((uint8_t *) badge_frame, sizeof(qc16_ble_t)-2);
             set_badge_seen(badge_frame->badge_id, name);
         }
     }

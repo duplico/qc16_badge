@@ -275,7 +275,7 @@ void ui_task_fn(UArg a0, UArg a1) {
         }
 
         // Timeouts only happen in the normal menu system & overlays:
-        if (!events && ui_current < UI_SCREEN_STORY1) {
+        if (!events && ui_current < UI_SCREEN_PAIR_MENU) {
             // This is a timeout.
             if (ui_colorpicking) {
                 ui_colorpicking_unload();

@@ -90,8 +90,8 @@ void ui_draw_mission_icons() {
     }
 
     for (uint8_t i=0; i<3; i++) {
-        rect.xMin=119;
-        rect.yMin=TOPBAR_HEIGHT+3+i*(TOPBAR_HEIGHT+2);
+        rect.xMin=MISSION_BOX_X;
+        rect.yMin=MISSION_BOX_Y + i*(TOPBAR_HEIGHT+2);
         rect.xMax=rect.xMin+TOPBAR_SEG_WIDTH_PADDED*2;
         rect.yMax=rect.yMin+TOPBAR_HEIGHT;
         if (mission_picking && i == ui_y_cursor) {

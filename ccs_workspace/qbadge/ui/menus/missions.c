@@ -85,6 +85,10 @@ void ui_draw_mission_icons() {
     Graphics_Rectangle rect;
     mission_t mission;
 
+    if (mission_picking && !badge_conf.agent_present && ui_y_cursor == badge_conf.agent_mission_id) {
+        ui_y_cursor = (ui_y_cursor+1) % 3;
+    }
+
     for (uint8_t i=0; i<3; i++) {
         rect.xMin=119;
         rect.yMin=TOPBAR_HEIGHT+3+i*(TOPBAR_HEIGHT+2);
@@ -104,7 +108,7 @@ void ui_draw_mission_icons() {
 
         // Is our agent doing this mission? If so, render that:
         if (!badge_conf.agent_present && badge_conf.agent_mission_id == i) {
-            Graphics_drawString(&ui_gr_context_landscape, "agent", 5, rect.xMax+1, rect.yMin+2, 0);
+            qc16gr_drawImage(&ui_gr_context_landscape, &img_hud_agent, rect.xMax + 2, rect.yMin + (rect.yMax-rect.yMin)/2 - (img_hud_agent.ySize)/2);
         }
 
         // If we're mission-picking, either:
@@ -115,8 +119,10 @@ void ui_draw_mission_icons() {
         if (mission_picking && i == ui_y_cursor) {
             // If we're mission picking, and this is the relevant mission...
             // Don't fade it, but DO mark it
-            Graphics_drawLine(&ui_gr_context_landscape, rect.xMax, rect.yMin/2+rect.yMax/2, rect.xMax+5, rect.yMin/2+rect.yMax/2+5);
-            Graphics_drawLine(&ui_gr_context_landscape, rect.xMax, rect.yMin/2+rect.yMax/2, rect.xMax+5, rect.yMin/2+rect.yMax/2-5);
+            qc16gr_drawImage(&ui_gr_context_landscape, &img_hud_handler, rect.xMax + 2, rect.yMin + (rect.yMax-rect.yMin)/2 - (img_hud_handler.ySize)/2);
+            // TODO: what if a handler shows up during this? then we'll be wrong...
+            Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
+            Graphics_drawString(&ui_gr_context_landscape, (int8_t *) handler_name_missionpicking, QC16_BADGE_NAME_LEN, rect.xMax + 2 + img_hud_handler.xSize + 2, rect.yMin+6, 0);
         } else if (mission_picking) {
             // If we're in mission picking mode, fade out the entire mission
             //  other than the one we're assigning.
@@ -198,7 +204,6 @@ void ui_missions_do(UInt events) {
                 memcpy(&badge_conf.missions[ui_y_cursor], &candidate_mission, sizeof(mission_t));
                 badge_conf.mission_assigned[ui_y_cursor] = 1;
                 Event_post(ui_event_h, UI_EVENT_DO_SAVE);
-                epd_do_partial = 1;
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
             } else {
                 if (ui_x_cursor == 0) {

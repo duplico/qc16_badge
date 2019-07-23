@@ -42,13 +42,15 @@ const char mission_menu_text[2][MAINMENU_NAME_MAX_LEN+1] = {
 uint8_t mission_picking = 0;
 mission_t candidate_mission;
 
-void ui_put_mission_at(mission_t *mission, uint8_t mission_id, uint16_t x, uint16_t y) {
+/// Draw a mission, returning 1 if it's doable.
+uint8_t ui_put_mission_at(mission_t *mission, uint8_t mission_id, uint16_t x, uint16_t y) {
     Graphics_Rectangle rect;
     rect.xMin=x;
     rect.yMin=y;
     rect.xMax=rect.xMin+TOPBAR_SEG_WIDTH_PADDED*2;
     rect.yMax=rect.yMin+TOPBAR_HEIGHT;
     Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+    uint8_t doable = 1;
 
     for (uint8_t i=0; i<2; i++) {
         rect.xMin=x;
@@ -76,9 +78,12 @@ void ui_put_mission_at(mission_t *mission, uint8_t mission_id, uint16_t x, uint1
         } else {
             // No badge can fulfill this element.
             fadeRectangle_xy(&ui_gr_context_landscape, rect.xMin+2, rect.yMin+1, rect.xMin+1+TOPBAR_ICON_WIDTH, rect.yMin+1+TOPBAR_ICON_HEIGHT);
+            doable = 0;
         }
         x += TOPBAR_SEG_WIDTH;
     }
+
+    return doable;
 }
 
 void ui_draw_mission_icons() {

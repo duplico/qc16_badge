@@ -35,31 +35,35 @@
 #include <ui/layout.h>
 
 const char pair_menu_text[3][MAINMENU_NAME_MAX_LEN+1] = {
-    "GO!",
     "Info",
     "Files",
+    "GO!",
 };
 
 const Graphics_Image *pair_menu_icons[3] = {
-    &img_pair_mission,
     &img_pair_cb,
     &img_pair_files,
+    &img_pair_mission,
 };
 
 uint8_t pairing_mission_count = 0;
+uint8_t pairing_mission_doable_count = 0;
 
 void ui_draw_pair_menu_icons() {
     uint8_t menu_mask = 0x00;
     uint16_t menu_x = 5;
 
     if (is_qbadge(paired_badge.badge_id)) {
-        menu_mask |= 0b100;
-    } else {
         menu_mask |= 0b010;
-    }
-    if (pairing_mission_count) {
-        menu_mask |= 0b001;
     } else {
+        menu_mask |= 0b001;
+    }
+
+    if (pairing_mission_doable_count) {
+        menu_mask |= 0b100;
+    }
+
+    if (!pairing_mission_count) {
         menu_x = 296/2 - img_pair_cb.xSize/2;
     }
 
@@ -115,7 +119,7 @@ void ui_draw_pair_missions() {
         rect.yMax=rect.yMin+TOPBAR_HEIGHT;
 
         // Draw the mission:
-        ui_put_mission_at(mission, candidate_mission_id, rect.xMin, rect.yMin);
+        pairing_mission_doable_count += ui_put_mission_at(mission, candidate_mission_id, rect.xMin, rect.yMin);
         pairing_mission_count++;
 
         rect.yMin+=TOPBAR_HEIGHT+2;
@@ -131,6 +135,8 @@ void ui_draw_pair_missions() {
 void ui_draw_pair_menu() {
     // Clear the buffer.
     Graphics_clearDisplay(&ui_gr_context_landscape);
+    pairing_mission_count = 0;
+    pairing_mission_doable_count = 0;
 
     ui_draw_top_bar();
     ui_draw_pair_missions();
@@ -153,7 +159,7 @@ void ui_pair_menu_do(UInt events) {
         switch(kb_active_key_masked) {
         case KB_OK:
             switch(ui_x_cursor) {
-            case 0:
+            case 2:
                 if (mission_begin() && !is_cbadge(paired_badge.badge_id)) {
                     // Only do this refresh for qbadges, because the cbadge
                     //  will always respond with its updated stats,
@@ -161,12 +167,11 @@ void ui_pair_menu_do(UInt events) {
                     Event_post(ui_event_h, UI_EVENT_REFRESH);
                 }
                 break;
+            case 0:
+                ui_transition(UI_SCREEN_PAIR_CB_INFO);
+                break;
             case 1:
-                if (is_qbadge(paired_badge.badge_id)) {
-                    ui_transition(UI_SCREEN_PAIR_FILE);
-                } else {
-                    ui_transition(UI_SCREEN_PAIR_CB_INFO);
-                }
+                ui_transition(UI_SCREEN_PAIR_FILE);
                 break;
             }
             break;

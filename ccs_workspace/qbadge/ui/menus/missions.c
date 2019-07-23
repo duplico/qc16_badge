@@ -139,6 +139,8 @@ void ui_draw_mission_icons() {
         rect.yMax=rect.yMin+TOPBAR_HEIGHT;
         ui_put_mission_at(&badge_conf.missions[3], 3, rect.xMin, rect.yMin);
         qc16gr_drawImage(&ui_gr_context_landscape, &img_hud_agent, rect.xMin + (rect.xMax-rect.xMin)/2 - (img_hud_agent.xSize)/2, rect.yMax+2);
+
+        qc16gr_drawProgressBar(&ui_gr_context_landscape, rect.xMin + (rect.xMax-rect.xMin)/2 - 24, rect.yMax + img_hud_agent.ySize+2 + 2, 48, 8, badge_conf.missions[3].duration_seconds - (badge_conf.agent_return_time - Seconds_get()), badge_conf.missions[3].duration_seconds);
     }
 
 }

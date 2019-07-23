@@ -90,7 +90,7 @@ void ui_draw_pair_missions() {
 
         if (candidate_mission_id > 2) {
             // Remote mission.
-            if (!paired_badge.missions_accepted[candidate_mission_id-3]) {
+            if (!paired_badge.mission_assigned[candidate_mission_id-3]) {
                 candidate_mission_id++;
                 continue;
             }

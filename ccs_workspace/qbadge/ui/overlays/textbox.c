@@ -72,7 +72,7 @@ void ui_textbox_draw() {
     uint16_t txt_top = 64 - 10;
 
     Graphics_Rectangle rect = {
-        .xMin = txt_left-5, .yMin = txt_top-3,
+        .xMin = txt_left-5, .yMin = txt_top-5,
         .xMax = txt_left + entry_width + 5, .yMax = txt_top + 20,
     };
 

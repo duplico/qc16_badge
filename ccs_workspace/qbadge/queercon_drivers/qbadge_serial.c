@@ -147,6 +147,16 @@ void serial_pair() {
     free(pair_payload_out);
 }
 
+void serial_mission_go(uint8_t local_mission_id, mission_t *mission) {
+    uint8_t *out_payload = malloc(sizeof(mission_t)+1);
+    out_payload[0] = local_mission_id;
+    memcpy(&out_payload[1], mission, sizeof(mission_t));
+
+    serial_send(SERIAL_OPCODE_GOMISSION, out_payload, sizeof(mission_t)+1);
+
+    free(out_payload);
+}
+
 void serial_rx_done(serial_header_t *header, uint8_t *payload) {
     // If this is called, it's already been validated.
     // NB: payload will be freed immediately after this returns, so
@@ -257,7 +267,6 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         }
         break;
     case SERIAL_LL_STATE_C_PAIRED:
-        // TODO: we DO care about element-selection buttons
         // TODO: we DO care about color-picking buttons
         // Check whether the "go on a mission!" button is pressed.
         if (header->opcode == SERIAL_OPCODE_GOMISSION) {

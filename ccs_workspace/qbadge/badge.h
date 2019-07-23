@@ -59,5 +59,6 @@ void save_anim(char *name);
 void load_anim_abs(char *pathname);
 void load_anim(char *name);
 void process_seconds();
+void radar_init();
 
 #endif /* BADGE_H_ */

@@ -228,12 +228,14 @@ void epd_phy_begin(uint8_t partial_update) {
 }
 
 void epd_phy_flush_buffer() {
-    static uint8_t i=0;
+    static uint8_t partial_refreshes=0;
     if (epd_do_partial) {
-        i++;
-        if (i==8) {
+        partial_refreshes++;
+        if (partial_refreshes==40) {
             epd_do_partial = 0;
         }
+    } else {
+        partial_refreshes = 0;
     }
     epd_phy_begin(epd_do_partial);
     epd_do_partial = 0;

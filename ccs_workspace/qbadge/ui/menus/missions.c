@@ -144,9 +144,9 @@ void ui_draw_mission_icons() {
 
 void ui_draw_mission_menu() {
     if (mission_picking) {
-        ui_draw_menu_icons(3, image_missionmenu_icons, mission_menu_text, 5, 0, TOPBAR_HEIGHT+8, 2);
+        ui_draw_menu_icons(0xff, 0b11, image_missionmenu_icons, mission_menu_text, 5, 0, TOPBAR_HEIGHT+8, 2);
     } else {
-        ui_draw_menu_icons(ui_x_cursor, image_missionmenu_icons, mission_menu_text, 5, 0, TOPBAR_HEIGHT+8, 2);
+        ui_draw_menu_icons(ui_x_cursor, 0b11, image_missionmenu_icons, mission_menu_text, 5, 0, TOPBAR_HEIGHT+8, 2);
     }
 
     if (!mission_getting_possible()) {

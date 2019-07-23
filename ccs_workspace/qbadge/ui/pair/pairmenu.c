@@ -59,14 +59,14 @@ uint8_t pairing_mission_count = 0;
 void ui_draw_pair_menu_icons() {
     // TODO: consolidate these:
     if (is_qbadge(paired_badge.badge_id)) {
-        ui_draw_menu_icons(ui_x_cursor, pair_menu_icons_q, pair_menu_text_q, 10, 5, TOPBAR_HEIGHT+8, 2);
+        ui_draw_menu_icons(ui_x_cursor, 0b11, pair_menu_icons_q, pair_menu_text_q, 10, 5, TOPBAR_HEIGHT+8, 2);
     } else {
         if (!badge_conf.agent_present) {
             // TODO: center just the one icon
             // TODO: also do this if we can't do any missions
-            ui_draw_menu_icons(ui_x_cursor, pair_menu_icons_c, pair_menu_text_c, 10, 5, TOPBAR_HEIGHT+8, 2);
+            ui_draw_menu_icons(ui_x_cursor, 0b11, pair_menu_icons_c, pair_menu_text_c, 10, 5, TOPBAR_HEIGHT+8, 2);
         } else {
-            ui_draw_menu_icons(ui_x_cursor, pair_menu_icons_c, pair_menu_text_c, 10, 5, TOPBAR_HEIGHT+8, 2);
+            ui_draw_menu_icons(ui_x_cursor, 0b11, pair_menu_icons_c, pair_menu_text_c, 10, 5, TOPBAR_HEIGHT+8, 2);
         }
     }
 }

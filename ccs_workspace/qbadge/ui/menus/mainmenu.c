@@ -40,7 +40,7 @@ const char mainmenu_icon[MAINMENU_ICON_COUNT][MAINMENU_NAME_MAX_LEN+1] = {
 };
 
 void ui_draw_main_menu_icons() {
-    ui_draw_menu_icons(ui_x_cursor, image_mainmenu_icons, mainmenu_icon, 10, 5, TOPBAR_HEIGHT+8, 4);
+    ui_draw_menu_icons(ui_x_cursor, 0xff, image_mainmenu_icons, mainmenu_icon, 10, 5, TOPBAR_HEIGHT+8, 4);
 }
 
 void ui_draw_main_menu() {

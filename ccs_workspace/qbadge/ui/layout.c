@@ -32,6 +32,8 @@
 #include <board.h>
 #include <ui/layout.h>
 
+uint8_t byte_rank(uint8_t v);
+
 void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capacity, uint32_t number, uint16_t x, uint16_t y) {
     // NB: We don't do much bounds checking, because none of the parameters
     //     meaningfully address anything.
@@ -249,14 +251,33 @@ void ui_draw_top_bar() {
     }
 }
 
-void ui_draw_menu_icons(uint8_t selected_index, const Graphics_Image **icons, const char text[][MAINMENU_NAME_MAX_LEN+1], uint16_t pad, uint16_t x, uint16_t y, uint8_t len) {
+void ui_draw_menu_icons(uint8_t selected_index, uint8_t icon_mask, const Graphics_Image **icons, const char text[][MAINMENU_NAME_MAX_LEN+1], uint16_t pad, uint16_t x, uint16_t y, uint8_t len) {
     Graphics_Rectangle rect;
     rect.yMin = y;
     rect.yMax = rect.yMin + icons[0]->ySize - 1;
+
+    if (icon_mask) {
+        while (!((0x01 << ui_x_cursor) & icon_mask)) {
+            if (!ui_x_cursor)
+                ui_x_cursor = ui_x_max;
+            else
+                ui_x_cursor--;
+        }
+    }
+
+    if (selected_index != 0xFF) {
+        selected_index = ui_x_cursor;
+    }
+
     for (uint8_t i=0; i<len; i++) {
         // NB: This depends on all icons being same width:
         rect.xMin = x + i*(icons[i]->xSize + pad);
         rect.xMax = rect.xMin + icons[i]->xSize - 1;
+
+        if (!((0x01 << i) & icon_mask)) {
+            // If this icon is masked, skip it.
+            continue;
+        }
 
         qc16gr_drawImage(&ui_gr_context_landscape, icons[i], rect.xMin, rect.yMin);
 

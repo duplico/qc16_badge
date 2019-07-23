@@ -556,7 +556,7 @@ uint8_t badge_near_curr(uint16_t id) {
 }
 
 // TODO: Also pass the payload:
-uint8_t set_badge_seen(uint16_t id, char *name) {
+void set_badge_seen(uint16_t id, char *name) {
     if (!is_qbadge(id) || id == QBADGE_ID_MAX_UNASSIGNED)
         return 0;
 

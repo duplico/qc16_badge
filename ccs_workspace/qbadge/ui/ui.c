@@ -158,7 +158,7 @@ void ui_transition(uint8_t destination) {
         // NB: ui_y_max will be set in the do_ function, so no need here.
         break;
     case UI_SCREEN_PAIR_MENU:
-        ui_x_max = 1;
+        ui_x_max = 2;
         ui_y_max = 0;
         break;
     case UI_SCREEN_PAIR_FILE:

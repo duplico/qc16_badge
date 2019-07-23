@@ -251,8 +251,10 @@ void ui_draw_top_bar() {
     }
 }
 
-void ui_draw_menu_icons(uint8_t selected_index, uint8_t icon_mask, const Graphics_Image **icons, const char text[][MAINMENU_NAME_MAX_LEN+1], uint16_t pad, uint16_t x, uint16_t y, uint8_t len) {
+void ui_draw_menu_icons(uint8_t selected_index, uint8_t icon_mask, uint8_t ghost_space, const Graphics_Image **icons, const char text[][MAINMENU_NAME_MAX_LEN+1], uint16_t pad, uint16_t x, uint16_t y, uint8_t len) {
     Graphics_Rectangle rect;
+    rect.xMin = x;
+    rect.xMax = rect.xMin + icons[0]->xSize - 1;
     rect.yMin = y;
     rect.yMax = rect.yMin + icons[0]->ySize - 1;
 
@@ -271,11 +273,13 @@ void ui_draw_menu_icons(uint8_t selected_index, uint8_t icon_mask, const Graphic
 
     for (uint8_t i=0; i<len; i++) {
         // NB: This depends on all icons being same width:
-        rect.xMin = x + i*(icons[i]->xSize + pad);
-        rect.xMax = rect.xMin + icons[i]->xSize - 1;
 
         if (!((0x01 << i) & icon_mask)) {
             // If this icon is masked, skip it.
+            if (ghost_space) {
+                rect.xMin = x += icons[i]->xSize + pad;
+                rect.xMax = rect.xMin + icons[i]->xSize - 1;
+            }
             continue;
         }
 
@@ -303,5 +307,8 @@ void ui_draw_menu_icons(uint8_t selected_index, uint8_t icon_mask, const Graphic
         } else {
             fadeRectangle(&ui_gr_context_landscape, &rect);
         }
+
+        rect.xMin = x += icons[i]->xSize + pad;
+        rect.xMax = rect.xMin + icons[i]->xSize - 1;
     }
 }

@@ -120,7 +120,7 @@ void ui_draw_mission_icons() {
             // If we're mission picking, and this is the relevant mission...
             // Don't fade it, but DO mark it
             qc16gr_drawImage(&ui_gr_context_landscape, &img_hud_handler, rect.xMax + 2, rect.yMin + (rect.yMax-rect.yMin)/2 - (img_hud_handler.ySize)/2);
-            // TODO: what if a handler shows up during this? then we'll be wrong...
+
             Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
             Graphics_drawString(&ui_gr_context_landscape, (int8_t *) handler_name_missionpicking, QC16_BADGE_NAME_LEN, rect.xMax + 2 + img_hud_handler.xSize + 2, rect.yMin+6, 0);
         } else if (mission_picking) {
@@ -143,23 +143,20 @@ void ui_draw_mission_icons() {
 }
 
 void ui_draw_mission_menu() {
+    uint8_t menu_mask = 0b00;
+
+    if (mission_getting_possible()) {
+        menu_mask |= 0b01;
+    }
+
+    if (badge_conf.agent_present) {
+        menu_mask |= 0b10;
+    }
+
     if (mission_picking) {
-        ui_draw_menu_icons(0xff, 0b11, image_missionmenu_icons, mission_menu_text, 5, 0, TOPBAR_HEIGHT+8, 2);
+        ui_draw_menu_icons(0xff, 0b11, 1, image_missionmenu_icons, mission_menu_text, 5, 0, TOPBAR_HEIGHT+8, 2);
     } else {
-        ui_draw_menu_icons(ui_x_cursor, 0b11, image_missionmenu_icons, mission_menu_text, 5, 0, TOPBAR_HEIGHT+8, 2);
-    }
-
-    if (!mission_getting_possible()) {
-        // There are no handlers nearby (not even the vhandler)
-        // Put an X over the mission-getting icon
-        Graphics_drawLine(&ui_gr_context_landscape, 0, TOPBAR_HEIGHT+8, 0+image_missionmenu_icons[0]->xSize, TOPBAR_HEIGHT+8+image_missionmenu_icons[0]->ySize);
-    }
-
-    if (!badge_conf.agent_present) {
-        // Agent is currently on a mission.
-        // Put an X over the mission-doing icon
-        uint16_t x=0+image_missionmenu_icons[0]->xSize+5;
-        Graphics_drawLine(&ui_gr_context_landscape, x, TOPBAR_HEIGHT+8, x+image_missionmenu_icons[1]->xSize, TOPBAR_HEIGHT+8+image_missionmenu_icons[1]->ySize);
+        ui_draw_menu_icons(ui_x_cursor, menu_mask, 1, image_missionmenu_icons, mission_menu_text, 5, 0, TOPBAR_HEIGHT+8, 2);
     }
 }
 

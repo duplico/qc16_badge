@@ -58,7 +58,7 @@ extern uint8_t ui_x_max;
 extern uint8_t ui_y_max;
 
 void ui_draw_top_bar();
-void ui_draw_menu_icons(uint8_t selected_index, uint8_t icon_mask, const Graphics_Image **icons, const char text[][MAINMENU_NAME_MAX_LEN+1], uint16_t pad, uint16_t x, uint16_t y, uint8_t len);
+void ui_draw_menu_icons(uint8_t selected_index, uint8_t icon_mask, uint8_t ghost_space, const Graphics_Image **icons, const char text[][MAINMENU_NAME_MAX_LEN+1], uint16_t pad, uint16_t x, uint16_t y, uint8_t len);
 void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capacity, uint32_t number, uint16_t x, uint16_t y);
 void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint16_t y);
 

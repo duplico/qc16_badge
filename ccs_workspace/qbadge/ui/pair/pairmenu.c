@@ -34,41 +34,36 @@
 #include <board.h>
 #include <ui/layout.h>
 
-const char pair_menu_text_c[2][MAINMENU_NAME_MAX_LEN+1] = {
+const char pair_menu_text[3][MAINMENU_NAME_MAX_LEN+1] = {
     "GO!",
     "Info",
-};
-
-const char pair_menu_text_q[2][MAINMENU_NAME_MAX_LEN+1] = {
-    "GO!",
     "Files",
 };
 
-const Graphics_Image *pair_menu_icons_c[2] = {
+const Graphics_Image *pair_menu_icons[3] = {
     &img_pair_mission,
     &img_pair_cb,
-};
-
-const Graphics_Image *pair_menu_icons_q[2] = {
-    &img_pair_mission,
     &img_pair_files,
 };
 
 uint8_t pairing_mission_count = 0;
 
 void ui_draw_pair_menu_icons() {
-    // TODO: consolidate these:
+    uint8_t menu_mask = 0x00;
+    uint16_t menu_x = 5;
+
     if (is_qbadge(paired_badge.badge_id)) {
-        ui_draw_menu_icons(ui_x_cursor, 0b11, pair_menu_icons_q, pair_menu_text_q, 10, 5, TOPBAR_HEIGHT+8, 2);
+        menu_mask |= 0b100;
     } else {
-        if (!badge_conf.agent_present) {
-            // TODO: center just the one icon
-            // TODO: also do this if we can't do any missions
-            ui_draw_menu_icons(ui_x_cursor, 0b11, pair_menu_icons_c, pair_menu_text_c, 10, 5, TOPBAR_HEIGHT+8, 2);
-        } else {
-            ui_draw_menu_icons(ui_x_cursor, 0b11, pair_menu_icons_c, pair_menu_text_c, 10, 5, TOPBAR_HEIGHT+8, 2);
-        }
+        menu_mask |= 0b010;
     }
+    if (pairing_mission_count) {
+        menu_mask |= 0b001;
+    } else {
+        menu_x = 296/2 - img_pair_cb.xSize/2;
+    }
+
+    ui_draw_menu_icons(ui_x_cursor, menu_mask, 0, pair_menu_icons, pair_menu_text, 10, menu_x, TOPBAR_HEIGHT+8, 3);
 }
 
 void ui_draw_pair_missions() {

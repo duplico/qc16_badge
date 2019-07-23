@@ -8,6 +8,8 @@
 #ifndef QUEERCON_DRIVERS_QBADGE_SERIAL_H_
 #define QUEERCON_DRIVERS_QBADGE_SERIAL_H_
 
+#include <qc16.h>
+
 #define BIT0 0b00000001
 #define BIT1 0b00000010
 #define BIT2 0b00000100
@@ -18,5 +20,6 @@
 #define BIT7 0b10000000
 
 void serial_init();
+void serial_mission_go(uint8_t local_mission_id, mission_t *mission);
 
 #endif /* QUEERCON_DRIVERS_QBADGE_SERIAL_H_ */

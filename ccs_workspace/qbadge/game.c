@@ -19,6 +19,7 @@
 #include <qbadge.h>
 
 #include "queercon_drivers/storage.h"
+#include <queercon_drivers/qbadge_serial.h>
 #include <ui/graphics.h>
 #include <ui/images.h>
 #include <ui/ui.h>
@@ -308,6 +309,11 @@ uint8_t mission_possible(mission_t *mission) {
             return 0;
         }
 
+        // Can't do single-element missions while paired.
+        if (mission->element_types[1] == ELEMENT_COUNT_NONE) {
+            return 0;
+        }
+
         uint8_t local_index = mission_element_id_we_fill(mission);
         uint8_t remote_index = mission_element_id_remote_fills(mission);
 
@@ -329,6 +335,67 @@ void mission_begin_by_id(uint8_t mission_id) {
     badge_conf.agent_return_time = Seconds_get() + badge_conf.missions[mission_id].duration_seconds;
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
     Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
+}
+
+/// Attempt to start a mission, returning 1 for success and 0 for failure.
+uint8_t mission_begin() {
+    if (!badge_paired) {
+        for (uint8_t i=0; i<3; i++) {
+            // take the first one we qualify for
+            if (!badge_conf.mission_assigned[i]) {
+                continue;
+            }
+            if (mission_possible(&badge_conf.missions[i])) {
+                mission_begin_by_id(i);
+                Event_post(ui_event_h, UI_EVENT_REFRESH);
+                return 1;
+            }
+        }
+        return 0;
+    }
+
+    // Ok! So, we're paired. Need to decide which mission we'll do.
+
+    // NB: For now, we ACCEPT the RACE CONDITION that the following could
+    //     be executed simultaneously on each badge with different resulting
+    //     missions:
+
+    for (uint8_t i=0; i<6; i++) {
+        mission_t *mission;
+
+        if (i < 3) {
+            if (!badge_conf.mission_assigned[i])
+                continue;
+            mission = &badge_conf.missions[i];
+        } else {
+            if (!paired_badge.mission_assigned[i])
+                continue;
+            mission = &paired_badge.missions[i];
+        }
+
+        if (mission_possible(mission)) {
+            // This is our mission!
+
+            // Is it remote?
+            if (i > 2) {
+                // Copy it into our 4th mission slot:
+                memcpy(&badge_conf.missions[3], mission, sizeof(mission_t));
+                badge_conf.mission_assigned[3] = 1;
+                mission_begin_by_id(3);
+            } else {
+                mission_begin_by_id(i);
+            }
+
+            // Now, signal that we're starting it.
+            serial_mission_go(i, mission);
+
+            // Aaand, we're done: the mission begins.
+            return 1;
+        }
+    }
+
+    // No mission was available.
+    return 0;
 }
 
 /// Complete and receive rewards from a mission.

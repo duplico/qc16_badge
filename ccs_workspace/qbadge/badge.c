@@ -40,6 +40,7 @@ pair_payload_t paired_badge = {0,};
 #define QBADGE_BITFIELD_LONGS 21
 #define CBADGE_BITFIELD_LONGS 47
 uint32_t qbadges_near[QBADGE_BITFIELD_LONGS] = {0, };
+uint32_t qbadges_near_curr[QBADGE_BITFIELD_LONGS] = {0, };
 uint32_t qbadges_seen[QBADGE_BITFIELD_LONGS] = {0, };
 uint32_t qbadges_connected[QBADGE_BITFIELD_LONGS] = {0, };
 uint32_t cbadges_connected[CBADGE_BITFIELD_LONGS] = {0, };
@@ -133,8 +134,12 @@ mission_t generate_mission() {
 
         if (!(rand() % VHANDLER_SECOND_ELEMENT_ONE_IN)) {
             // There's a chance to assign a second element.
-            // A second element is needed. We'll assign it totally randomly.
-            new_mission.element_types[1] = (element_type) (rand() % 6);
+            // A second element is needed.
+            if (rand() % 3) {
+                new_mission.element_types[1] = (element_type) ((uint8_t)new_mission.element_types[0]+3);
+            } else {
+                new_mission.element_types[1] = (element_type) (rand() % 6);
+            }
         }
         strncpy(handler_name_missionpicking, "vhandler", QC16_BADGE_NAME_LEN);
         handler_name_missionpicking[QC16_BADGE_NAME_LEN] = 0x00;
@@ -446,6 +451,9 @@ void write_conf() {
     storage_overwrite_file("/qbadge/conn_c", (uint8_t *) cbadges_connected, CBADGE_BITFIELD_LONGS*4);
     storage_overwrite_file("/qbadge/conn_q", (uint8_t *) qbadges_connected, QBADGE_BITFIELD_LONGS*4);
     storage_overwrite_file("/qbadge/seen_q", (uint8_t *) qbadges_seen, QBADGE_BITFIELD_LONGS*4);
+
+    // Now, update the BLE beacon.
+    Event_post(uble_event_h, UBLE_EVENT_UPDATE_ADV);
 }
 
 void write_anim_curr() {
@@ -515,16 +523,19 @@ void generate_config() {
 }
 
 uint8_t config_is_valid() {
+    // TODO: Implement
     return 1;
 }
 
 uint8_t badge_seen(uint16_t id) {
+    // TODO: SPIFFS instead
     if (is_qbadge(id) && check_id_buf(id, (uint8_t *) qbadges_seen))
         return 1;
     return 0;
 }
 
 uint8_t badge_connected(uint16_t id) {
+    // TODO: SPIFFS instead
     if (is_cbadge(id) && check_id_buf(id, (uint8_t *)cbadges_connected))
         return 1;
     if (is_qbadge(id) && check_id_buf(id, (uint8_t *)qbadges_connected))
@@ -538,11 +549,23 @@ uint8_t badge_near(uint16_t id) {
     return 0;
 }
 
+uint8_t badge_near_curr(uint16_t id) {
+    if (is_qbadge(id) && check_id_buf(id, (uint8_t *) qbadges_near_curr))
+        return 1;
+    return 0;
+}
+
+// TODO: Also pass the payload:
 uint8_t set_badge_seen(uint16_t id, char *name) {
     if (!is_qbadge(id) || id == QBADGE_ID_MAX_UNASSIGNED)
         return 0;
 
     // If we're here, it's a qbadge.
+
+    if (badge_near_curr(id)) {
+        // Already marked this cycle.
+        return;
+    }
 
     // Mark this badge as "nearby"
     if (!badge_near(id) && id != badge_conf.badge_id) {
@@ -599,7 +622,7 @@ void config_init() {
     }
     // Check the stored config:
     // TODO
-//    if (config_is_valid()) return;
+    if (config_is_valid()) return;
 
     // If we're still here, the config source was invalid, and
     //  we must generate a new one.

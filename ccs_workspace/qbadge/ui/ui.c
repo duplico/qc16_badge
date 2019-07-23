@@ -266,8 +266,13 @@ void ui_task_fn(UArg a0, UArg a1) {
 
     ui_transition(UI_SCREEN_MAINMENU);
 
+    uint8_t refreshed;
+
     while (1) {
         events = Event_pend(ui_event_h, Event_Id_NONE, ~Event_Id_NONE,  UI_AUTOREFRESH_TIMEOUT);
+
+        if (events & UI_EVENT_REFRESH)
+            refreshed = 1;
 
         if (pop_events(&events, UI_EVENT_DO_SAVE)) {
             // TODO: Consider locking this out in low-power mode?
@@ -380,7 +385,7 @@ void ui_task_fn(UArg a0, UArg a1) {
             // We need to refresh the screen if we're looking at missions,
             //  because there are UI elements there that depend on the
             //  selected element button.
-            if (ui_current == UI_SCREEN_MISSIONS) {
+            if (ui_current == UI_SCREEN_MISSIONS || ui_current == UI_SCREEN_PAIR_MENU) {
                 epd_do_partial = 1;
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
             }
@@ -430,6 +435,13 @@ void ui_task_fn(UArg a0, UArg a1) {
                 }
             }
         }
+
+        if (refreshed) {
+            // If we just finished refreshing the screen, pop any keyboard
+            //  events off, to avoid spurious double-presses.
+            events = Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS,  BIOS_NO_WAIT);
+        }
+
     }
 }
 

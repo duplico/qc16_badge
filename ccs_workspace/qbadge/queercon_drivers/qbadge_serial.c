@@ -28,6 +28,7 @@
 #include <queercon_drivers/storage.h>
 #include <ui/ui.h>
 #include <ui/leds.h>
+#include "epd.h"
 
 #define SERIAL_STACKSIZE 1900
 Task_Struct serial_task;
@@ -271,6 +272,13 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             }
 
         }
+
+        if (header->opcode == SERIAL_OPCODE_ELEMENT) {
+            memcpy(&paired_badge.element_selected, payload, sizeof(element_type));
+            epd_do_partial = 1;
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
+        }
+
         break;
 //    default:
     }

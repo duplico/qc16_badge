@@ -220,7 +220,10 @@ void ui_missions_do(UInt events) {
                     uint8_t mission_started = 0;
                     for (uint8_t i=0; i<3; i++) {
                         // take the first one we qualify for
-                        if (mission_solo_qualifies(i)) {
+                        if (!badge_conf.mission_assigned[i]) {
+                            continue;
+                        }
+                        if (mission_possible(&badge_conf.missions[i])) {
                             mission_started = 1;
                             mission_begin_by_id(i);
                             Event_post(ui_event_h, UI_EVENT_REFRESH);

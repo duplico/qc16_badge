@@ -15,14 +15,15 @@
 #include <qc16.h>
 
 // App-level configuration elements:
-#define UI_AUTOREFRESH_TIMEOUT 6000000
+#define UI_AUTOREFRESH_TIMEOUT 5500000
 #define UI_CLOCK_MS 15
 #define ADC_INTERVAL 125000
 #define UI_TEXT_FONT g_sFontCmss16
 #define BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH 1
 #define TEXTENTRY_MAX_LEN 40
 
-#define SCAN_PERIOD_SECONDS 45
+// NB: Should be longer than the UI autorefresh timeout
+#define SCAN_PERIOD_SECONDS 60
 
 #define VHANDLER_COOLDOWN_MIN_SECONDS  300
 #define VHANDLER_COOLDOWN_MAX_SECONDS 9000

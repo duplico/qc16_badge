@@ -260,10 +260,17 @@ void ui_draw_menu_icons(uint8_t selected_index, uint8_t icon_mask, uint8_t ghost
 
     if (icon_mask) {
         while (!((0x01 << ui_x_cursor) & icon_mask)) {
-            if (!ui_x_cursor)
-                ui_x_cursor = ui_x_max;
-            else
-                ui_x_cursor--;
+            if (kb_active_key_masked == KB_RIGHT) {
+                ui_x_cursor++;
+                if (ui_x_cursor > ui_x_max) {
+                    ui_x_cursor = 0;
+                }
+            } else {
+                if (!ui_x_cursor)
+                    ui_x_cursor = ui_x_max;
+                else
+                    ui_x_cursor--;
+            }
         }
     }
 

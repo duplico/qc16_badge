@@ -316,18 +316,38 @@ uint8_t mission_can_participate(mission_t *mission) {
     return mission_local_qualified_for_element_id(mission, 0) || mission_local_qualified_for_element_id(mission, 1);
 }
 
-/// Is a local-only mission complete-able by our badge?
-uint8_t mission_solo_qualifies(uint8_t mission_id) {
+/// Is a mission complete-able?
+uint8_t mission_possible(mission_t *mission) {
     if (!badge_conf.agent_present) {
         return 0; // can't do a mission without the agent.
     }
 
-    // Is this not a local-only mission?
-    if (badge_conf.missions[mission_id].element_types[1] != ELEMENT_COUNT_NONE) {
-        return 0;
-    }
+    if (!badge_paired) {
+        // Local mission.
+        // Is this not a local-only mission?
+        if (mission->element_types[1] != ELEMENT_COUNT_NONE) {
+            return 0;
+        }
 
-    return mission_local_qualified_for_element_id(&badge_conf.missions[mission_id], 0);
+        return mission_local_qualified_for_element_id(mission, 0);
+    } else {
+        if (!paired_badge.agent_present) {
+            return 0;
+        }
+
+        uint8_t local_index = mission_element_id_we_fill(mission);
+        uint8_t remote_index = mission_element_id_remote_fills(mission);
+
+        if (local_index == remote_index) {
+            return 0;
+        }
+
+        if (mission_local_qualified_for_element_id(mission, local_index)
+                && mission_remote_qualified_for_element_id(mission, remote_index)) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 void mission_begin_by_id(uint8_t mission_id) {

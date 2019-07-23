@@ -398,14 +398,7 @@ void complete_mission_id(uint8_t mission_id) {
     complete_mission(&badge_conf.missions[mission_id]);
 }
 
-void reset_scan_cycle(UArg a0) {
-    if (qbadges_near_count_running != qbadges_near_count) {
-        qbadges_near_count = qbadges_near_count_running;
-        Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
-    }
-    qbadges_near_count_running = 0;
-    memset((void *) qbadges_near, 0x00, 4*QBADGE_BITFIELD_LONGS);
-
+void process_seconds() {
     if (!badge_conf.agent_present && Seconds_get() > badge_conf.agent_return_time) {
         complete_mission_id(badge_conf.agent_mission_id);
     }
@@ -414,7 +407,19 @@ void reset_scan_cycle(UArg a0) {
         badge_conf.vhandler_present = 1;
         Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
     }
+}
 
+void reset_scan_cycle(UArg a0) {
+    if (qbadges_near_count_running != qbadges_near_count) {
+        qbadges_near_count = qbadges_near_count_running;
+        Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
+    }
+    qbadges_near_count_running = 0;
+    memset((void *) qbadges_near, 0x00, 4*QBADGE_BITFIELD_LONGS);
+
+    // TODO: Save time?
+
+    process_seconds();
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
 }
 
@@ -558,7 +563,7 @@ uint8_t badge_near_curr(uint16_t id) {
 // TODO: Also pass the payload:
 void set_badge_seen(uint16_t id, char *name) {
     if (!is_qbadge(id) || id == QBADGE_ID_MAX_UNASSIGNED)
-        return 0;
+        return;
 
     // If we're here, it's a qbadge.
 
@@ -580,16 +585,16 @@ void set_badge_seen(uint16_t id, char *name) {
     // Let's update its details/name in our records.
 
     if (id == QBADGE_ID_MAX_UNASSIGNED || id == CBADGE_ID_MAX_UNASSIGNED)
-            return 0;
+            return;
     if (badge_seen(id)) {
-        return 0;
+        return;
     }
 
     set_id_buf(id, (uint8_t *)qbadges_seen);
     badge_conf.qbadges_seen_count++;
 
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
-    return 1;
+    return;
 }
 
 uint8_t set_badge_connected(uint16_t id, char *handle) {
@@ -622,16 +627,16 @@ void config_init() {
     }
     // Check the stored config:
     // TODO
-    if (config_is_valid()) return;
+    if (1 || !config_is_valid()) {
 
-    // If we're still here, the config source was invalid, and
-    //  we must generate a new one.
-    generate_config();
+        // If we're still here, the config source was invalid, and
+        //  we must generate a new one.
+        generate_config();
 
-    // Now that we've created and saved a config, we're going to load it.
-    // This way we guarantee that all the proper start-up occurs.
-    load_conf();
-
+        // Now that we've created and saved a config, we're going to load it.
+        // This way we guarantee that all the proper start-up occurs.
+        load_conf();
+    }
 
     Clock_Params clockParams;
     Error_Block eb;

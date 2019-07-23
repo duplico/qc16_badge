@@ -109,6 +109,7 @@ void ui_draw_mission_icons() {
         // Is our agent doing this mission? If so, render that:
         if (!badge_conf.agent_present && badge_conf.agent_mission_id == i) {
             qc16gr_drawImage(&ui_gr_context_landscape, &img_hud_agent, rect.xMax + 2, rect.yMin + (rect.yMax-rect.yMin)/2 - (img_hud_agent.ySize)/2);
+            qc16gr_drawProgressBar(&ui_gr_context_landscape, rect.xMax + 2 + img_hud_agent.xSize + 2, rect.yMin + (rect.yMax-rect.yMin)/2 - (10)/2, 30, 10, mission.duration_seconds - (badge_conf.agent_return_time - Seconds_get()), mission.duration_seconds);
         }
 
         // If we're mission-picking, either:
@@ -232,9 +233,9 @@ void ui_missions_do(UInt events) {
                     if (!badge_conf.agent_present) {
                         ui_textbox_load("Agent already dispatched.");
                     } else if (badge_conf.element_selected == ELEMENT_COUNT_NONE) {
-                        ui_textbox_load("No elements equipped, can't do a mission.");
+                        ui_textbox_load("I can't do a mission without an element equipped.");
                     } else {
-                        ui_textbox_load("No suitable mission for current element.");
+                        ui_textbox_load("I can't do any of these missions.");
                     }
                 }
             }

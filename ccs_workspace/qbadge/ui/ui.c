@@ -175,6 +175,12 @@ void ui_screensaver_do(UInt events) {
     if (pop_events(&events, UI_EVENT_REFRESH)) {
         ui_draw_screensaver();
     }
+
+    if (events & UI_EVENT_HUD_UPDATE) {
+        // Do a partial redraw with the new numbers:
+        Event_post(ui_event_h, UI_EVENT_REFRESH);
+        epd_do_partial = 1;
+    }
 }
 
 /// Do basic menu system, returning 1 if we should skip the expected do function.
@@ -411,9 +417,7 @@ void ui_task_fn(UArg a0, UArg a1) {
             // If neither of our "overlay" options are in use, then we follow
             //  a normal state flow:
             if (ui_current == UI_SCREEN_IDLE) {
-                if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == KB_UP) {
-                } else if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == KB_DOWN) {
-                } else if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == KB_OK) {
+                if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == KB_OK) {
                     ui_transition(UI_SCREEN_MAINMENU);
                 }
                 ui_screensaver_do(events);

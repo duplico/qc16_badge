@@ -235,7 +235,7 @@ void ui_missions_do(UInt events) {
                     } else if (badge_conf.element_selected == ELEMENT_COUNT_NONE) {
                         ui_textbox_load("I can't do a mission without an element equipped.");
                     } else {
-                        ui_textbox_load("I can't do any of these missions.");
+                        ui_textbox_load("We don't have any suitable missions right now.");
                     }
                 }
             }

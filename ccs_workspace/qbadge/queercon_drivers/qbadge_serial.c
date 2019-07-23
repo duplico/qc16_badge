@@ -122,6 +122,7 @@ void serial_enter_c_idle() {
 
 /// Send the pairing payload from this badge.
 void serial_pair() {
+    // TODO: Check coverage here:
     pair_payload_t *pair_payload_out = malloc(sizeof(pair_payload_t));
     memset(pair_payload_out, 0, sizeof(pair_payload_t));
     pair_payload_out->agent_present = badge_conf.agent_present;
@@ -131,6 +132,10 @@ void serial_pair() {
     memcpy(pair_payload_out->element_level_max, badge_conf.element_level_max, 3*sizeof(element_type));
     memcpy(pair_payload_out->element_level_progress, badge_conf.element_level_progress, 3);
     memcpy(pair_payload_out->element_qty, badge_conf.element_qty, sizeof(badge_conf.element_qty[0])*3);
+    for (uint8_t i=0; i<3; i++) {
+        pair_payload_out->mission_assigned[i] = badge_conf.mission_assigned[i];
+    }
+    memcpy(pair_payload_out->missions, badge_conf.missions, sizeof(mission_t)*3);
     memcpy(pair_payload_out->handle, badge_conf.handle, QC16_BADGE_NAME_LEN);
     pair_payload_out->handle[QC16_BADGE_NAME_LEN] = 0x00;
     pair_payload_out->last_clock = Seconds_get();
@@ -145,6 +150,14 @@ void serial_pair() {
     serial_send(SERIAL_OPCODE_PAIR, (uint8_t *) pair_payload_out, sizeof(pair_payload_t));
 
     free(pair_payload_out);
+}
+
+/// If we're paired, update our selected element.
+void serial_update_element() {
+    if (!badge_paired) {
+        return;
+    }
+    serial_send(SERIAL_OPCODE_ELEMENT, (uint8_t *) badge_conf.element_selected, sizeof(element_type));
 }
 
 void serial_mission_go(uint8_t local_mission_id, mission_t *mission) {
@@ -279,11 +292,19 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
                 // It's a mission from the local badge.
                 mission_begin_by_id(payload[1] - 3);
             }
-
+            // TODO: Get rid of this because we'll always get an update???
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
         }
 
         if (header->opcode == SERIAL_OPCODE_ELEMENT) {
             memcpy(&paired_badge.element_selected, payload, sizeof(element_type));
+            epd_do_partial = 1;
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
+        }
+
+        if (header->opcode == SERIAL_OPCODE_PAIR) {
+            // This is a data update for our pair partner.
+            memcpy(&paired_badge, payload, sizeof(pair_payload_t));
             epd_do_partial = 1;
             Event_post(ui_event_h, UI_EVENT_REFRESH);
         }

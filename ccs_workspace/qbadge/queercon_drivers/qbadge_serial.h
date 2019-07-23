@@ -21,5 +21,6 @@
 
 void serial_init();
 void serial_mission_go(uint8_t local_mission_id, mission_t *mission);
+void serial_update_element();
 
 #endif /* QUEERCON_DRIVERS_QBADGE_SERIAL_H_ */

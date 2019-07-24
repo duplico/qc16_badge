@@ -51,6 +51,26 @@ typedef struct {
 } mission_t;
 
 typedef struct {
+    uint32_t element_qty_cumulative[3];
+    uint32_t missions_run;
+    uint16_t qbadges_seen_count;
+    uint16_t qbadges_uber_seen_count;
+    uint16_t qbadges_handler_seen_count;
+    uint16_t qbadges_connected_count;
+    uint16_t qbadges_uber_connected_count;
+    uint16_t qbadges_handler_connected_count;
+    uint16_t cbadges_connected_count;
+    uint16_t cbadges_handler_connected_count;
+    uint16_t cbadges_uber_connected_count;
+    uint16_t qbadges_in_system;
+    uint16_t qbadge_ubers_in_system;
+    uint16_t qbadge_handlers_in_system;
+    uint16_t cbadges_in_system;
+    uint16_t cbadge_ubers_in_system;
+    uint16_t cbadge_handlers_in_system;
+} badge_stats_t;
+
+typedef struct {
     uint16_t badge_id;
     uint8_t initialized;
     uint8_t badge_type;
@@ -58,40 +78,44 @@ typedef struct {
     uint8_t element_level_max[3];
     uint8_t element_level_progress[3];
     uint32_t element_qty[3];
-    uint16_t qbadges_seen_count;
-    uint16_t qbadges_connected_count;
-    uint16_t cbadges_connected_count;
-    uint16_t qbadge_max_id;
-    uint16_t cbadge_max_id;
+    element_type element_selected;
     uint32_t last_clock;
     uint8_t clock_is_set;
     uint8_t agent_present;
     uint8_t agent_mission_id;
-    uint8_t vhandler_present;
     uint32_t agent_return_time;
+    uint8_t vhandler_present;
     uint32_t vhandler_return_time;
-    element_type element_selected;
     uint8_t mission_assigned[4];
     mission_t missions[4];
     char current_photo[QC16_PHOTO_NAME_LEN+1];
     char handle[QC16_BADGE_NAME_LEN + 1];
+    badge_stats_t stats;
 } qbadge_conf_t;
 
 typedef struct {
+    /// The badge's ID, between CBADGE_ID_START and CBADGE_ID_MAX_UNASSIGNED
     uint16_t badge_id;
-    uint8_t active;
-    uint8_t activated;
+    /// Whether the badge has been assigned an ID or is otherwise "in use"
     uint8_t initialized;
+    /// Whether the badge has ever run under its own power:
+    uint8_t activated;
+    /// Uber or handler, and handler type if relevant.
     uint8_t badge_type;
+    /// The currently selected element on this badge
     element_type element_selected;
+    /// This badge's element levels, global IDs [2..4]
     uint8_t element_level[3];
+    /// Progress toward the next level in each element:
     uint8_t element_level_progress[3];
+    /// Quantity of each cbadge element on this badge:
     uint32_t element_qty[3];
-    uint16_t qbadges_connected_count;
-    uint16_t cbadges_connected_count;
-    uint16_t qbadge_max_id;
-    uint16_t cbadge_max_id;
+    /// This badge's assigned handle.
     char handle[QC16_BADGE_NAME_LEN + 1];
+    /// Running statistics:
+    badge_stats_t stats;
+    /// Check:
+    uint16_t crc16;
 } cbadge_conf_t;
 
 #define CBADGE_QTY_PLUS1    1
@@ -100,10 +124,10 @@ typedef struct {
 #define CBADGE_QTY_PLUS4    500
 
 #define QBADGE_ID_START 0
-#define QBADGES_IN_SYSTEM 650
+#define QBADGE_COUNT_INITIAL 650
 #define QBADGE_ID_MAX_UNASSIGNED 999
 #define CBADGE_ID_START 1000
-#define CBADGES_IN_SYSTEM 1550
+#define CBADGE_COUNT_INITIAL 1550
 #define CBADGE_ID_MAX_UNASSIGNED 9999
 
 #define CONTROLLER_ID 22222
@@ -114,7 +138,6 @@ typedef struct {
 #define BADGE_TYPE_CBADGE_NORMAL 101
 #define BADGE_TYPE_CBADGE_HANDLER 102
 #define BADGE_TYPE_CBADGE_UBER 103
-#define BADGE_TYPE_CBADGE_SEQUEERITY 104
 
 #define BADGE_TYPE_QBADGE_NORMAL 201
 #define BADGE_TYPE_QBADGE_UBER 202

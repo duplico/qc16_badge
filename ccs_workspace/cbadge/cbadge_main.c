@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <string.h>
 
 #include <msp430fr2111.h>
 
@@ -36,13 +37,14 @@ volatile uint8_t f_ms = 0x00;
 uint16_t animation_step_ms = 0;
 uint16_t animation_step_curr_ms = 0;
 
-//#pragma PERSISTENT(badge_conf)
-cbadge_conf_t badge_conf = {
-    .activated=0,
-    .active=0,
-    .badge_id=CBADGE_ID_MAX_UNASSIGNED,
-    .initialized=0,
-};
+cbadge_conf_t badge_conf;
+#pragma PERSISTENT(badge_conf_persistent)
+cbadge_conf_t badge_conf_persistent = {0,};
+#pragma PERSISTENT(badge_conf_persistent_backup)
+cbadge_conf_t badge_conf_persistent_backup = {0,};
+
+/// This cbadge is currently running under its own power.
+uint8_t badge_active = 0;
 
 pair_payload_t paired_badge = {0,};
 
@@ -129,17 +131,47 @@ void init_io() {
     P2OUT = 0x00;
 }
 
-void init_conf() {
-    if (!badge_conf.initialized) {
-        // this is first boot.
-        badge_conf.initialized=1;
-        badge_conf.badge_id=CBADGE_ID_MAX_UNASSIGNED;
-        badge_conf.activated=0;
-        badge_conf.element_qty[0] = 25;
-        badge_conf.element_qty[1] = 250;
-        badge_conf.element_qty[2] = 987654321;
+void write_conf() {
+    badge_conf.crc16 = crc16_buf((uint8_t *) &badge_conf, sizeof(cbadge_conf_t) - 2);
+    __bic_SR_register(GIE);
+    // Unlock FRAM access:
+    SYSCFG0 = FRWPPW | PFWP_0;
+    memcpy(&badge_conf_persistent, &badge_conf, sizeof(cbadge_conf_t));
+    memcpy(&badge_conf_persistent_backup, &badge_conf_persistent, sizeof(cbadge_conf_t));
+    // Lock FRAM access:
+    SYSCFG0 = FRWPPW | PFWP_1;
+    __bis_SR_register(GIE);
+}
+
+void generate_config() {
+    // We treat this like FIRST BOOT. Need to initialize the config.
+    badge_conf.badge_id = CBADGE_ID_MAX_UNASSIGNED;
+    badge_conf.initialized = 0;
+    badge_conf.activated = 0;
+    badge_conf.badge_type = BADGE_TYPE_CBADGE_NORMAL;
+    badge_conf.element_selected = ELEMENT_COUNT_NONE;
+    for (uint8_t i=0; i<3; i++) {
+        badge_conf.element_level[i] = 0;
+        badge_conf.element_level_progress[i] = 0;
+        badge_conf.element_qty[i] = 0;
     }
-    badge_conf.active=0;
+    memcpy(badge_conf.handle, "cbadge", 7);
+    write_conf();
+}
+
+void init_conf() {
+    if (badge_conf_persistent.crc16 == crc16_buf((uint8_t *) &badge_conf_persistent, sizeof(cbadge_conf_t) - 2)) {
+        // Good CRC on the persistent config.
+        memcpy(&badge_conf, &badge_conf_persistent, sizeof(cbadge_conf_t));
+    } else if (badge_conf_persistent_backup.crc16 == crc16_buf((uint8_t *) &badge_conf_persistent_backup, sizeof(cbadge_conf_t) - 2)) {
+        // Good CRC on the persistent config's backup. Use it.
+        memcpy(&badge_conf, &badge_conf_persistent_backup, sizeof(cbadge_conf_t));
+        // Fix the primary copy:
+        write_conf();
+    } else {
+        // We have no good configs. Need to create a new mind-brain.
+        generate_config();
+    }
 }
 
 /// Perform basic initialization of the cbadge.

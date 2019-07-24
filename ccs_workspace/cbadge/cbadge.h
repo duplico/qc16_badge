@@ -51,7 +51,9 @@ volatile extern uint8_t f_serial_phy;
 extern uint8_t s_connected;
 extern uint8_t s_paired;
 extern uint8_t s_level_up;
+extern uint8_t badge_active;
 
 void complete_mission(mission_t *mission);
+void write_conf();
 
 #endif /* CBADGE_H_ */

@@ -110,7 +110,7 @@ void set_badge_seen(uint16_t id, char *name) {
     }
 
     set_id_buf(id, (uint8_t *)qbadges_seen);
-    badge_conf.qbadges_seen_count++;
+    badge_conf.stats.qbadges_seen_count++;
 
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
     return;
@@ -129,10 +129,10 @@ uint8_t set_badge_connected(uint16_t id, char *handle) {
 
     if (is_qbadge(id)) {
         set_id_buf(id, (uint8_t *)qbadges_connected);
-        badge_conf.qbadges_connected_count++;
+        badge_conf.stats.qbadges_connected_count++;
     } else if (is_cbadge(id)) {
         set_id_buf(id, (uint8_t *)cbadges_connected);
-        badge_conf.cbadges_connected_count++;
+        badge_conf.stats.cbadges_connected_count++;
     }
 
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);

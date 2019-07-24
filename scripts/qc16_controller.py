@@ -20,6 +20,8 @@ ImageMeta = namedtuple('Image', 'bPP xSize ySize numColors pPalette pPixel')
 DUMPQ_FMT = '<B'
 DUMPA_FMT = '<L'
 
+ID_FMT = '<H'
+
 SERIAL_OPCODE_HELO=0x01
 SERIAL_OPCODE_ACK=0x02
 SERIAL_ELEMENT=0x03
@@ -37,7 +39,16 @@ CONTROLLER_ID=29635
 
 QC16_CRC_SEED = 0xB68F
 
-# TODO: add CRC function
+QBADGE_ID_START = 0
+QBADGE_ID_MAX_UNASSIGNED = 999
+CBADGE_ID_START = 1000
+CBADGE_ID_MAX_UNASSIGNED = 9999
+
+def is_qbadge(id):
+    return id >= QBADGE_ID_START and id <= QBADGE_ID_MAX_UNASSIGNED
+
+def is_cbadge(id):
+    return id >= CBADGE_ID_START and id <= CBADGE_ID_MAX_UNASSIGNED
 
 def crc16_buf(sbuf):
     crc = QC16_CRC_SEED
@@ -56,7 +67,11 @@ def validate_header(header):
         raise TimeoutError("No response from badge.")
     if (header[0] != 0xAC):
         raise ValueError("Bad sync byte received.")
-    # TODO: Additional validation
+    if crc16_buf(header[1:-2]) != struct.unpack(CRC_FMT, header[-2:])[0]:
+        print(crc16_buf(header[1:-2]))
+        print(struct.unpack(CRC_FMT, header[-2:]))
+        print(header)
+        raise ValueError("Bad CRC from badge.")
 
 def await_serial(ser, opcode=None):
     resp = ser.read(11)
@@ -130,20 +145,6 @@ def send_qcimage(ser, image, payload_len=128):
             curr_end = len(image.bytes)
 
         txbuf += image.bytes[curr_start:curr_end]
-
-        # TODO: The following retry approach requires a seqnum
-        # tries = 3
-        # while tries:
-        #     try:
-        #         send_message(ser, SERIAL_OPCODE_APPFILE, payload=txbuf)
-        #         await_ack(ser)
-        #         break
-        #     except TimeoutError:
-        #         if tries:
-        #             print(tries)
-        #             tries-=1
-        #         else:
-        #             raise
         
         # Just crash if we miss an ACK:
         send_message(ser, SERIAL_OPCODE_APPFILE, payload=txbuf)
@@ -171,27 +172,39 @@ def main():
     parser.add_argument('port', help="The serial port to use for this connection.")
     
     cmd_parsers = parser.add_subparsers(dest='command')
-    # cmd_parsers.required = True
     # Commands:
+
     #   Set ID
+    id_parser = cmd_parsers.add_parser('setid')
+    id_parser.add_argument('id', type=int)
+
     #   Send image
     image_parser = cmd_parsers.add_parser('image')
     image_parser.add_argument('--name', '-n', type=str, help="The alphanumeric filename for the image") # TODO: Validate
     image_parser.add_argument('path', type=str, help="Path to the image to place on the badge")
-    image_parser.add_argument('--landscape', action='store_true')
     #   Send animation
+
     #   Set handle (cbadge only)
+
     #   Promote (uber or handler)
     promote_parser = cmd_parsers.add_parser('promote')
     promote_parser.add_argument('--uber', action='store_true')
-    promote_parser.add_argument('--handler', action='store_true')
-    # TODO: Add type to handler flag
+    promote_parser.add_argument('--handler', type=int, dest='element', help="The element is: 0=key/lock, 1=flag/camera, 2=cocktail/coin")
 
     # Dump
     dump_parser = cmd_parsers.add_parser('dump')
     dump_parser.add_argument('pillar', type=int, help="The pillar ID. (0=key/lock, 1=flag/camera, 2=cocktail/coin)")
 
     args = parser.parse_args()
+
+    # Do some bounds checking:
+    if args.command == 'dump' and (args.pillar > 2 or args.pillar < 0):
+        raise ValueError("Valid pillar IDs are 0, 1, and 2.")
+    if args.command == 'promote' and (args.element > 2 or args.element < 0):
+        raise ValueError("Valid handler element IDs are 0, 1, and 2.")
+    if args.command == 'image':
+        # Get our errors out of the way before connecting:
+        img = QcImage(path=args.path, name=args.name.encode('utf-8'), photo=True)
 
     # pyserial object, with a 1 second timeout on reads.
     ser = serial.Serial(args.port, 230400, parity=serial.PARITY_NONE, timeout=args.timeout)
@@ -202,21 +215,27 @@ def main():
 
     # Send the message requested by the user
     if args.command == 'image':
-        img = QcImage(path=args.path, name=args.name.encode('utf-8'), landscape=args.landscape)
         send_qcimage(ser, img, payload_len=32)
+
     if args.command == 'dump':
+        if args.pillar > 2 or args.pillar < 0:
+            raise ValueError("Valid pillar IDs are 0, 1, and 2.")
         dump(ser, args.pillar)
-    # ID
-    # Handle
-    # Uber?
-    # Handler?
-    # Element qty, level, progress
-    # cb connected
-    # qb seen
-    # qb connected
+
+    if args.command == 'setid':
+        if is_cbadge(badge_id) and is_qbadge(args.id):
+            print("Can't give a qbadge ID to a cbadge.")
+        elif is_qbadge(badge_id) and is_cbadge(args.id):
+            print("Can't give a cbadge ID to a qbadge.")
+        elif not is_cbadge(args.id) and not is_qbadge(args.id):
+            print("Supplied ID must be in range for cbadge or qbadge.")
+        else:
+            # Ok, good to assign ID.
+            send_message(ser, SERIAL_OPCODE_SETID, payload=struct.pack(ID_FMT, args.id))
+            badge_id = await_ack(ser)
 
     disconnect(ser)
-
+    print("Disconnected from badge %d." % badge_id)
     # Exit
 
 

@@ -54,20 +54,20 @@ typedef struct {
     uint32_t element_qty_cumulative[3];
     uint32_t missions_run;
     uint16_t qbadges_seen_count;
-    uint16_t qbadges_uber_seen_count;
-    uint16_t qbadges_handler_seen_count;
+    __packed uint8_t qbadges_uber_seen_count;
+    __packed uint8_t qbadges_handler_seen_count;
     uint16_t qbadges_connected_count;
-    uint16_t qbadges_uber_connected_count;
-    uint16_t qbadges_handler_connected_count;
+    __packed uint8_t qbadges_uber_connected_count;
+    __packed uint8_t qbadges_handler_connected_count;
     uint16_t cbadges_connected_count;
-    uint16_t cbadges_handler_connected_count;
-    uint16_t cbadges_uber_connected_count;
+    __packed uint8_t cbadges_handler_connected_count;
+    __packed uint8_t cbadges_uber_connected_count;
     uint16_t qbadges_in_system;
-    uint16_t qbadge_ubers_in_system;
-    uint16_t qbadge_handlers_in_system;
+    __packed uint8_t qbadge_ubers_in_system;
+    __packed uint8_t qbadge_handlers_in_system;
     uint16_t cbadges_in_system;
-    uint16_t cbadge_ubers_in_system;
-    uint16_t cbadge_handlers_in_system;
+    __packed uint8_t cbadge_ubers_in_system;
+    __packed uint8_t cbadge_handlers_in_system;
 } badge_stats_t;
 
 typedef struct {
@@ -130,22 +130,18 @@ typedef struct {
 #define CBADGE_COUNT_INITIAL 1550
 #define CBADGE_ID_MAX_UNASSIGNED 9999
 
-#define CONTROLLER_ID 22222
+#define CONTROLLER_ID 29635
 #define PHONE_ID 22223
+#define PILLAR_ID 20001
 
-#define BADGE_TYPE_INVALID 0
+// TYPE FLAG (BIT7=UBER; BIT6=HANDLER; BIT5-3=unused BIT2-0=ELEMENT)
 
-#define BADGE_TYPE_CBADGE_NORMAL 101
-#define BADGE_TYPE_CBADGE_HANDLER 102
-#define BADGE_TYPE_CBADGE_UBER 103
+#define BADGE_TYPE_UBER_MASK 0b10000000
+#define BADGE_TYPE_HANDLER_MASK 0b01000000
 
-#define BADGE_TYPE_QBADGE_NORMAL 201
-#define BADGE_TYPE_QBADGE_UBER 202
-#define BADGE_TYPE_QBADGE_HANDLER 203
-
-#define BADGE_TYPE_BRIDGE 301
-#define BADGE_TYPE_PILLAR 302
-
-#define BADGE_TYPE_CONTROLLER 401
+#define BADGE_TYPE_NORMAL 0x00
+#define BADGE_TYPE_UBER BADGE_TYPE_UBER_MASK
+#define BADGE_TYPE_UBER_HANDLER (BADGE_TYPE_UBER_MASK | BADGE_TYPE_HANDLER_MASK)
+#define BADGE_TYPE_HANDLER BADGE_TYPE_HANDLER_MASK
 
 #endif /* QC16_H_ */

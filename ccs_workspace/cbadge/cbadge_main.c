@@ -148,7 +148,7 @@ void generate_config() {
     badge_conf.badge_id = CBADGE_ID_MAX_UNASSIGNED;
     badge_conf.initialized = 0;
     badge_conf.activated = 0;
-    badge_conf.badge_type = BADGE_TYPE_CBADGE_NORMAL;
+    badge_conf.badge_type = BADGE_TYPE_NORMAL;
     badge_conf.element_selected = ELEMENT_COUNT_NONE;
     for (uint8_t i=0; i<3; i++) {
         badge_conf.element_level[i] = 0;

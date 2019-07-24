@@ -60,6 +60,9 @@ QBADGE_ID_MAX_UNASSIGNED = 999
 CBADGE_ID_START = 1000
 CBADGE_ID_MAX_UNASSIGNED = 9999
 
+BADGE_TYPE_UBER_MASK = 0b10000000
+BADGE_TYPE_HANDLER_MASK = 0b01000000
+
 def is_qbadge(id):
     return id >= QBADGE_ID_START and id <= QBADGE_ID_MAX_UNASSIGNED
 
@@ -206,6 +209,9 @@ def main():
     promote_parser.add_argument('--handler', action='store_true', help="Make this badge a handler")
     promote_parser.add_argument('specialty', type=int, help="Element ID: 0=key/lock, 1=flag/camera, 2=cocktail/coin")
 
+    #  Demote (remove uber/handler status)
+    promote_parser = cmd_parsers.add_parser('demote')
+
     # Dump
     dump_parser = cmd_parsers.add_parser('dump')
     dump_parser.add_argument('pillar', type=int, help="The pillar ID. (0=key/lock, 1=flag/camera, 2=cocktail/coin)")
@@ -271,6 +277,22 @@ def main():
         header, payload = await_serial(ser, SERIAL_OPCODE_PAIR)
         print(len(payload))
         print(Pair._make(struct.unpack(PAIR_FMT, payload)))
+
+    if args.command == 'promote':
+        badge_type = args.specialty
+        if args.uber:
+            badge_type = badge_type | BADGE_TYPE_UBER_MASK
+        if args.handler:
+            badge_type = badge_type | BADGE_TYPE_HANDLER_MASK
+        send_message(ser, SERIAL_OPCODE_SETTYPE, payload=bytes([badge_type]))
+        await_ack(ser)
+    
+    if args.command == 'demote':
+        send_message(ser, SERIAL_OPCODE_SETTYPE, payload=bytes([0]))
+        await_ack(ser)
+
+
+
 
     disconnect(ser)
     print("Disconnected from badge %d." % badge_id)

@@ -30,6 +30,7 @@ QC16_BADGE_NAME_LEN = 12
 PAIR_FMT = '<HBBBBBBBBBBBBBBBBBBBLLLLLLLBBBBBBBBBBBHBBBBBBBBHBBBBBBBBHBBB%ds' % (QC16_BADGE_NAME_LEN+1)
 Pair = namedtuple('Pair', 'badge_id badge_type element_level_locks element_level_coins element_level_cameras element_level_keys element_level_cocktails element_level_flags element_level_max_locks element_level_max_coins element_level_max_cameras element_level_max_keys element_level_max_cocktails element_level_max_flags element_level_progress_locks element_level_progress_coins element_level_progress_cameras element_level_progress_keys element_level_progress_cocktails element_level_progress_flags element_level_qty_locks element_level_qty_coins element_level_qty_cameras element_level_qty_keys element_level_qty_cocktails element_level_qty_flags last_clock clock_is_set agent_present element_selected mission0_element_type_0 mission0_element_type_1 mission0_element_level_0 mission0_element_level_1 mission0_element_reward_0 mission0_element_reward_1 mission0_element_progress_0 mission0_element_progress_1 mission0_duration_seconds mission1_element_type_0 mission1_element_type_1 mission1_element_level_0 mission1_element_level_1 mission1_element_reward_0 mission1_element_reward_1 mission1_element_progress_0 mission1_element_progress_1 mission1_duration_seconds mission2_element_type_0 mission2_element_type_1 mission2_element_level_0 mission2_element_level_1 mission2_element_reward_0 mission2_element_reward_1 mission2_element_progress_0 mission2_element_progress_1 mission2_duration_seconds mission0_assigned mission1_assigned mission2_assigned handle')
 
+HANDLE_MAX_LEN = 12
 
 SERIAL_OPCODE_HELO=0x01
 SERIAL_OPCODE_ACK=0x02
@@ -202,6 +203,8 @@ def main():
     image_parser.add_argument('--name', '-n', required=True, type=str, help="The alphanumeric filename for the image")
     image_parser.add_argument('path', type=str, help="Path to the image to place on the badge")
     #   Set handle (cbadge only)
+    handle_parser = cmd_parsers.add_parser('handle')
+    handle_parser.add_argument('new_handle', type=str, help='The handle to assign the badge.')
 
     #   Promote (uber or handler)
     promote_parser = cmd_parsers.add_parser('promote')
@@ -222,6 +225,8 @@ def main():
     args = parser.parse_args()
 
     # Do some bounds checking:
+    if args.command == 'handle' and len(args.new_handle) > HANDLE_MAX_LEN:
+        parser.error("Max length for a handle is %d" % HANDLE_MAX_LEN)
     if args.command == 'dump' and (args.pillar > 2 or args.pillar < 0):
         parser.error("Valid pillar IDs are 0, 1, and 2.")
     if args.command == 'promote' and (args.specialty > 2 or args.specialty < 0):
@@ -291,7 +296,11 @@ def main():
         send_message(ser, SERIAL_OPCODE_SETTYPE, payload=bytes([0]))
         await_ack(ser)
 
-
+    if args.command == 'handle':
+        handle = args.new_handle.encode('utf-8')
+        handle += b'\x00'
+        send_message(ser, SERIAL_OPCODE_SETNAME, handle)
+        await_ack(ser)
 
 
     disconnect(ser)

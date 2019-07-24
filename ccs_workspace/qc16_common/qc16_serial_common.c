@@ -58,6 +58,53 @@ uint8_t validate_header(serial_header_t *header) {
         return 0;
     }
 
+    switch(header->opcode) {
+    // All these have zero length payloads:
+    case SERIAL_OPCODE_HELO:
+    case SERIAL_OPCODE_ACK:
+    case SERIAL_OPCODE_STAT1Q:
+    case SERIAL_OPCODE_STAT2Q:
+    case SERIAL_OPCODE_ENDFILE:
+    case SERIAL_OPCODE_DISCON:
+        if (header->payload_len) {
+            return 0;
+        }
+        break;
+    case SERIAL_OPCODE_ELEMENT:
+        if (header->payload_len != sizeof(element_type)) {
+            return 0;
+        }
+        break;
+    case SERIAL_OPCODE_SETID:
+        if (header->payload_len != sizeof(uint16_t)) {
+            return 0;
+        }
+        break;
+    case SERIAL_OPCODE_SETNAME:
+        if (!header->payload_len || header->payload_len > QC16_BADGE_NAME_LEN+1) {
+            return 0;
+        }
+        break;
+    case SERIAL_OPCODE_DUMPQ:
+        if (header->payload_len != sizeof(element_type)) {
+            return 0;
+        }
+        break;
+    case SERIAL_OPCODE_SETTYPE:
+        if (header->payload_len != 1) {
+            return 0;
+        }
+        break;
+    case SERIAL_OPCODE_PAIR:
+        if (header->payload_len != sizeof(pair_payload_t)) {
+            return 0;
+        }
+    case SERIAL_OPCODE_GOMISSION:
+        if (header->payload_len != sizeof(mission_t)+1) {
+            return 0;
+        }
+    }
+
     return 1;
 }
 

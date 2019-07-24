@@ -22,9 +22,21 @@ DUMPA_FMT = '<L'
 
 ID_FMT = '<H'
 
+STATA_FMT = '<LLLLHBBHBBHHHBBBBBB'
+Stats = namedtuple('Stats', 'element_qty_cumulative_place element_qty_cumulative_pride element_qty_cumulative_party missions_run qbadges_connected_count qbadges_uber_connected_count qbadges_handler_connected_count cbadges_connected_count cbadges_handler_connected_count cbadges_uber_connected_count qbadges_in_system cbadges_in_system qbadges_seen_count qbadges_uber_seen_count qbadges_handler_seen_count qbadge_ubers_in_system qbadge_handlers_in_system cbadge_ubers_in_system cbadge_handlers_in_system')
+
+QC16_BADGE_NAME_LEN = 12
+
+PAIR_FMT = '<HBBBBBBBBBBBBBBBBBBBLLLLLLLBBBBBBBBBBBHBBBBBBBBHBBBBBBBBHBBB%ds' % (QC16_BADGE_NAME_LEN+1)
+Pair = namedtuple('Pair', 'badge_id badge_type element_level_locks element_level_coins element_level_cameras element_level_keys element_level_cocktails element_level_flags element_level_max_locks element_level_max_coins element_level_max_cameras element_level_max_keys element_level_max_cocktails element_level_max_flags element_level_progress_locks element_level_progress_coins element_level_progress_cameras element_level_progress_keys element_level_progress_cocktails element_level_progress_flags element_level_qty_locks element_level_qty_coins element_level_qty_cameras element_level_qty_keys element_level_qty_cocktails element_level_qty_flags last_clock clock_is_set agent_present element_selected mission0_element_type_0 mission0_element_type_1 mission0_element_level_0 mission0_element_level_1 mission0_element_reward_0 mission0_element_reward_1 mission0_element_progress_0 mission0_element_progress_1 mission0_duration_seconds mission1_element_type_0 mission1_element_type_1 mission1_element_level_0 mission1_element_level_1 mission1_element_reward_0 mission1_element_reward_1 mission1_element_progress_0 mission1_element_progress_1 mission1_duration_seconds mission2_element_type_0 mission2_element_type_1 mission2_element_level_0 mission2_element_level_1 mission2_element_reward_0 mission2_element_reward_1 mission2_element_progress_0 mission2_element_progress_1 mission2_duration_seconds mission0_assigned mission1_assigned mission2_assigned handle')
+
+
 SERIAL_OPCODE_HELO=0x01
 SERIAL_OPCODE_ACK=0x02
 SERIAL_ELEMENT=0x03
+SERIAL_OPCODE_STAT1Q=0x04
+SERIAL_OPCODE_STAT2Q=0x05
+SERIAL_OPCODE_STATA=0x06
 SERIAL_OPCODE_PUTFILE=0x09
 SERIAL_OPCODE_APPFILE=0x0A
 SERIAL_OPCODE_ENDFILE=0x0B
@@ -33,6 +45,10 @@ SERIAL_OPCODE_SETNAME=0x0D
 SERIAL_OPCODE_DUMPQ=0x0E
 SERIAL_OPCODE_DUMPA=0x0F
 SERIAL_OPCODE_DISCON=0x10
+SERIAL_OPCODE_SETTYPE=0x11
+SERIAL_OPCODE_PAIR=0x12
+SERIAL_OPCODE_GETFILE=0x13
+SERIAL_OPCODE_GOMISSION=0x14
 
 SERIAL_ID_ANY=0xffff
 CONTROLLER_ID=29635
@@ -182,26 +198,30 @@ def main():
     image_parser = cmd_parsers.add_parser('image')
     image_parser.add_argument('--name', '-n', required=True, type=str, help="The alphanumeric filename for the image")
     image_parser.add_argument('path', type=str, help="Path to the image to place on the badge")
-    #   Send animation
-
     #   Set handle (cbadge only)
 
     #   Promote (uber or handler)
     promote_parser = cmd_parsers.add_parser('promote')
     promote_parser.add_argument('--uber', action='store_true')
-    promote_parser.add_argument('--handler', type=int, dest='element', help="The element is: 0=key/lock, 1=flag/camera, 2=cocktail/coin")
+    promote_parser.add_argument('--handler', action='store_true', help="Make this badge a handler")
+    promote_parser.add_argument('specialty', type=int, help="Element ID: 0=key/lock, 1=flag/camera, 2=cocktail/coin")
 
     # Dump
     dump_parser = cmd_parsers.add_parser('dump')
     dump_parser.add_argument('pillar', type=int, help="The pillar ID. (0=key/lock, 1=flag/camera, 2=cocktail/coin)")
 
+    # Stats
+    image_parser = cmd_parsers.add_parser('stats')
+
     args = parser.parse_args()
 
     # Do some bounds checking:
     if args.command == 'dump' and (args.pillar > 2 or args.pillar < 0):
-        raise ValueError("Valid pillar IDs are 0, 1, and 2.")
-    if args.command == 'promote' and (args.element > 2 or args.element < 0):
-        raise ValueError("Valid handler element IDs are 0, 1, and 2.")
+        parser.error("Valid pillar IDs are 0, 1, and 2.")
+    if args.command == 'promote' and (args.specialty > 2 or args.specialty < 0):
+        parser.error("Valid handler element IDs are 0, 1, and 2.")
+    if args.command == 'promote' and not (args.handler or args.uber):
+        parser.error('Promote requires at least one of --uber or --handler.')
     if args.command == 'image':
         # Get our errors out of the way before connecting:
         n = args.name
@@ -242,6 +262,15 @@ def main():
             # Ok, good to assign ID.
             send_message(ser, SERIAL_OPCODE_SETID, payload=struct.pack(ID_FMT, args.id))
             badge_id = await_ack(ser)
+
+    if args.command == 'stats':
+        send_message(ser, SERIAL_OPCODE_STAT1Q)
+        header, payload = await_serial(ser, SERIAL_OPCODE_STATA)
+        print(Stats._make(struct.unpack(STATA_FMT, payload)))
+        send_message(ser, SERIAL_OPCODE_STAT2Q)
+        header, payload = await_serial(ser, SERIAL_OPCODE_PAIR)
+        print(len(payload))
+        print(Pair._make(struct.unpack(PAIR_FMT, payload)))
 
     disconnect(ser)
     print("Disconnected from badge %d." % badge_id)

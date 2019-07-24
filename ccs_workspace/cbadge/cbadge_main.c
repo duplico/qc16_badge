@@ -135,6 +135,9 @@ void init_conf() {
         badge_conf.initialized=1;
         badge_conf.badge_id=CBADGE_ID_MAX_UNASSIGNED;
         badge_conf.activated=0;
+        badge_conf.element_qty[0] = 25;
+        badge_conf.element_qty[1] = 250;
+        badge_conf.element_qty[2] = 987654321;
     }
     badge_conf.active=0;
 }

@@ -239,7 +239,6 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             }
         }
 
-
         if (header->opcode == SERIAL_OPCODE_PAIR) {
             // We got a request to pair, so we should respond and consider
             //  ourselved paired.
@@ -258,6 +257,21 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
                 serial_ll_state = SERIAL_LL_STATE_NC_PRX;
             }
         }
+
+        if (header->opcode == SERIAL_OPCODE_DUMPQ) {
+            uint8_t pillar_id = payload[0];
+            if (pillar_id > 3) {
+                // Invalid pillar, do nothing.
+                break;
+            }
+            uint32_t qty;
+            qty = badge_conf.element_qty[pillar_id];
+            serial_send(SERIAL_OPCODE_DUMPA, (uint8_t *) &qty, sizeof(uint32_t));
+            badge_conf.element_qty[pillar_id] = 0;
+            Event_post(ui_event_h, UI_EVENT_DO_SAVE);
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
+        }
+
         break;
     case SERIAL_LL_STATE_C_FILE_RX:
         if (header->opcode == SERIAL_OPCODE_ENDFILE) {

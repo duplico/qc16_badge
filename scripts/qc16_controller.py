@@ -180,7 +180,7 @@ def main():
 
     #   Send image
     image_parser = cmd_parsers.add_parser('image')
-    image_parser.add_argument('--name', '-n', type=str, help="The alphanumeric filename for the image") # TODO: Validate
+    image_parser.add_argument('--name', '-n', required=True, type=str, help="The alphanumeric filename for the image")
     image_parser.add_argument('path', type=str, help="Path to the image to place on the badge")
     #   Send animation
 
@@ -204,7 +204,13 @@ def main():
         raise ValueError("Valid handler element IDs are 0, 1, and 2.")
     if args.command == 'image':
         # Get our errors out of the way before connecting:
-        img = QcImage(path=args.path, name=args.name.encode('utf-8'), photo=True)
+        n = args.name
+        if not n.startswith('/photos/'):
+            n = '/photos/%s' % n
+        if len(n) > 36:
+            print("File path length is too long.")
+            exit(1)
+        img = QcImage(path=args.path, name=n.encode('utf-8'), photo=True)
 
     # pyserial object, with a 1 second timeout on reads.
     ser = serial.Serial(args.port, 230400, parity=serial.PARITY_NONE, timeout=args.timeout)
@@ -215,7 +221,10 @@ def main():
 
     # Send the message requested by the user
     if args.command == 'image':
-        send_qcimage(ser, img, payload_len=32)
+        if is_qbadge(badge_id):
+            send_qcimage(ser, img, payload_len=32)
+        else:
+            print("Can only send images to qbadges.")
 
     if args.command == 'dump':
         if args.pillar > 2 or args.pillar < 0:

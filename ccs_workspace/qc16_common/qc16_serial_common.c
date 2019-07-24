@@ -99,10 +99,12 @@ uint8_t validate_header(serial_header_t *header) {
         if (header->payload_len != sizeof(pair_payload_t)) {
             return 0;
         }
+        break;
     case SERIAL_OPCODE_GOMISSION:
         if (header->payload_len != sizeof(mission_t)+1) {
             return 0;
         }
+        break;
     }
 
     return 1;

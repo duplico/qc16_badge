@@ -103,6 +103,13 @@ void serial_pair() {
     serial_send_start(SERIAL_OPCODE_PAIR, sizeof(pair_payload_t));
 }
 
+void serial_send_stats() {
+    // Guard against clobbering anything:
+    while (serial_phy_state != SERIAL_PHY_STATE_IDLE);
+    memcpy((void *)serial_buffer_out, &badge_conf.stats, sizeof(badge_stats_t));
+    serial_send_start(SERIAL_OPCODE_STATA, sizeof(badge_stats_t));
+}
+
 void serial_element_update() {
     // Guard against clobbering anything:
     while (serial_phy_state != SERIAL_PHY_STATE_IDLE);
@@ -198,14 +205,35 @@ void serial_ll_handle_rx() {
         }
         break;
     case SERIAL_LL_STATE_C_IDLE:
+        // cbadges must implement the following commands from idle:
+        // * STAT1Q - send a copy of badge_conf.stats
+        // * STAT2Q - send a pairing message (but not pair)
+        // * SETID  - ONLY FROM CONTROLLER - set ID and respond with ACK. //TODO: validate
+        // * SETNAME - Set my handle
+        // * DUMPQ - Reply with a DUMPA
+        // * DISCON - Simulate a physical disconnection.
+        // * SETTYPE - Promote myself to uber or handler, respond with ACK. (CONTROLLER ONLY) //TODO: validate only from controller
+        // * PAIR - Begin pairing.
         serial_ll_timeout_ms = SERIAL_C_DIO_POLL_MS;
-        if (serial_header_in.opcode == SERIAL_OPCODE_DISCON) {
-            serial_enter_prx();
-            serial_ll_state = SERIAL_LL_STATE_NC_PRX;
-        } else if (serial_header_in.opcode == SERIAL_OPCODE_PAIR) {
-            serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
-            s_paired = 1;
+
+        if (serial_header_in.opcode == SERIAL_OPCODE_STAT1Q) {
+            serial_send_stats();
+
+        } else if (serial_header_in.opcode == SERIAL_OPCODE_STAT2Q) {
             serial_pair();
+
+        } else if (serial_header_in.opcode == SERIAL_OPCODE_SETID) {
+            memcpy(&badge_conf.badge_id, (uint8_t *) serial_buffer_in, sizeof(badge_conf.badge_id));
+            write_conf();
+            serial_send_start(SERIAL_OPCODE_ACK, 0);
+
+        } else if (serial_header_in.opcode == SERIAL_OPCODE_SETNAME) {
+            memcpy(&badge_conf.handle, (uint8_t *) serial_buffer_in, QC16_BADGE_NAME_LEN);
+            // Guarantee null term:
+            badge_conf.handle[QC16_BADGE_NAME_LEN] = 0x00;
+            write_conf();
+            serial_send_start(SERIAL_OPCODE_ACK, 0);
+
         } else if (serial_header_in.opcode == SERIAL_OPCODE_DUMPQ) {
             uint8_t pillar_id = serial_buffer_in[0];
             if (pillar_id > 3) {
@@ -213,6 +241,21 @@ void serial_ll_handle_rx() {
                 break;
             }
             serial_dump_answer(pillar_id);
+
+        } else if (serial_header_in.opcode == SERIAL_OPCODE_DISCON) {
+            serial_enter_prx();
+            serial_ll_state = SERIAL_LL_STATE_NC_PRX;
+
+        } else if (serial_header_in.opcode == SERIAL_OPCODE_SETTYPE) {
+            badge_conf.badge_type = serial_buffer_in[0] & 0b11000000;
+            write_conf();
+            serial_send_start(SERIAL_OPCODE_ACK, 0);
+
+        } else if (serial_header_in.opcode == SERIAL_OPCODE_PAIR) {
+            serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
+            s_paired = 1;
+            serial_pair();
+
         }
         break;
     case SERIAL_LL_STATE_C_PAIRING:
@@ -228,9 +271,17 @@ void serial_ll_handle_rx() {
         if (serial_header_in.opcode == SERIAL_OPCODE_GOMISSION) {
             mission_t *mission = (mission_t *) &serial_buffer_in[1];
             complete_mission(mission);
+        } else if (serial_header_in.opcode == SERIAL_OPCODE_SETNAME) {
+            memcpy(&badge_conf.handle, (uint8_t *) serial_buffer_in, QC16_BADGE_NAME_LEN);
+            // Guarantee null term:
+            badge_conf.handle[QC16_BADGE_NAME_LEN] = 0x00;
+            write_conf();
+            // Don't ACK, but rather send a pairing update with our new handle:
+            serial_pair();
         }
         break;
     }
+    // TODO: lock out RX until this function returns
 }
 
 void serial_phy_handle_rx() {

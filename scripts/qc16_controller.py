@@ -3,6 +3,7 @@ import sys
 import json
 import struct
 import argparse
+from collections import namedtuple
 
 import serial
 
@@ -10,17 +11,18 @@ from image_reformer import QcImage
 
 HEADER_FMT_NOCRCs   = '<BBHH'
 HEADER_FMT   = '<BBHHHH'
+SerialHeader = namedtuple('Header', 'opcode payload_len from_id to_id crc16_payload crc16_header')
 CRC_FMT = '<H'
+
 IMG_META_FMT = '<BxHHHII'
+ImageMeta = namedtuple('Image', 'bPP xSize ySize numColors pPalette pPixel')
+
+DUMPQ_FMT = '<B'
+DUMPA_FMT = '<L'
 
 SERIAL_OPCODE_HELO=0x01
 SERIAL_OPCODE_ACK=0x02
-SERIAL_OPCODE_BTN_J1=0x03
-SERIAL_OPCODE_BTN_J2=0x04
-SERIAL_OPCODE_BTN_J3=0x05
-SERIAL_OPCODE_BTN_F1=0x06
-SERIAL_OPCODE_BTN_F2=0x07
-SERIAL_OPCODE_BTN_F3=0x08
+SERIAL_ELEMENT=0x03
 SERIAL_OPCODE_PUTFILE=0x09
 SERIAL_OPCODE_APPFILE=0x0A
 SERIAL_OPCODE_ENDFILE=0x0B
@@ -51,16 +53,29 @@ def crc16_buf(sbuf):
 
 def validate_header(header):
     if len(header) < 11:
-        raise TimeoutError()
+        raise TimeoutError("No response from badge.")
     if (header[0] != 0xAC):
-        raise ValueError()
+        raise ValueError("Bad sync byte received.")
     # TODO: Additional validation
 
-def await_ack(ser):
+def await_serial(ser, opcode=None):
     resp = ser.read(11)
     validate_header(resp)
-    opcode, payload_len, from_id, badge_type, crc16_payload, crc16_header = struct.unpack(HEADER_FMT, resp[1:])
-    return from_id
+    header = SerialHeader._make(struct.unpack(HEADER_FMT, resp[1:]))
+    if opcode and header.opcode != opcode:
+        raise ValueError("Unexpected opcode received: %d" % header.opcode)
+    if header.payload_len:
+        payload = ser.read(header.payload_len)
+        if len(payload) != header.payload_len:
+            raise TimeoutError()
+        # TODO: payload_struct
+        return header, payload
+    return header, None
+
+
+def await_ack(ser):
+    header, payload = await_serial(ser, opcode=SERIAL_OPCODE_ACK)
+    return header.from_id
 
 
 def send_message(ser, opcode, payload=b'', src_id=CONTROLLER_ID, dst_id=SERIAL_ID_ANY):
@@ -89,7 +104,7 @@ def connect_poll(ser):
 def disconnect(ser):
     send_message(ser, SERIAL_OPCODE_DISCON)
 
-def send_qcimage(ser, image, payload_len=256):
+def send_qcimage(ser, image, payload_len=128):
     curr_start = 0 # Inclusive
     curr_end = curr_start + payload_len # Exclusive
     txbuf = b''
@@ -142,6 +157,13 @@ def send_qcimage(ser, image, payload_len=256):
     send_message(ser, SERIAL_OPCODE_ENDFILE)
     await_ack(ser)
 
+def dump(ser, pillar_id):
+    assert pillar_id<3
+    send_message(ser, SERIAL_OPCODE_DUMPQ, payload=bytes([pillar_id]))
+    header, payload = await_serial(ser, opcode=SERIAL_OPCODE_DUMPA)
+    qty = struct.unpack(DUMPA_FMT, payload)[0]
+    print("Received %d qty of requested element from badge %d." % (qty, header.from_id))
+
 def main():
     parser = argparse.ArgumentParser(prog='qc16_controller.py')
 
@@ -163,7 +185,11 @@ def main():
     promote_parser = cmd_parsers.add_parser('promote')
     promote_parser.add_argument('--uber', action='store_true')
     promote_parser.add_argument('--handler', action='store_true')
+    # TODO: Add type to handler flag
 
+    # Dump
+    dump_parser = cmd_parsers.add_parser('dump')
+    dump_parser.add_argument('pillar', type=int, help="The pillar ID. (0=key/lock, 1=flag/camera, 2=cocktail/coin)")
 
     args = parser.parse_args()
 
@@ -178,7 +204,8 @@ def main():
     if args.command == 'image':
         img = QcImage(path=args.path, name=args.name.encode('utf-8'), landscape=args.landscape)
         send_qcimage(ser, img, payload_len=32)
-
+    if args.command == 'dump':
+        dump(ser, args.pillar)
     # ID
     # Handle
     # Uber?

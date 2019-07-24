@@ -127,9 +127,9 @@ void generate_config() {
     badge_conf.element_level_max[1] = 2;
     badge_conf.element_level_max[2] = 2;
 
-    badge_conf.element_qty[0] = 0;
-    badge_conf.element_qty[1] = 0;
-    badge_conf.element_qty[2] = 0;
+    badge_conf.element_qty[0] = 5;
+    badge_conf.element_qty[1] = 700;
+    badge_conf.element_qty[2] = 123456789;
 
     badge_conf.vhandler_present=1;
 
@@ -159,7 +159,7 @@ void config_init() {
     }
     // Check the stored config:
     // TODO
-    if (!config_is_valid()) {
+    if (1 || !config_is_valid()) {
 
         // If we're still here, the config source was invalid, and
         //  we must generate a new one.

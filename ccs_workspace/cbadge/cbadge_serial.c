@@ -106,8 +106,17 @@ void serial_pair() {
 void serial_element_update() {
     // Guard against clobbering anything:
     while (serial_phy_state != SERIAL_PHY_STATE_IDLE);
-    memcpy(serial_buffer_out, &badge_conf.element_selected, sizeof(element_type));
+    memcpy((void *)serial_buffer_out, &badge_conf.element_selected, sizeof(element_type));
     serial_send_start(SERIAL_OPCODE_ELEMENT, sizeof(element_type));
+}
+
+void serial_dump_answer(uint8_t pillar_id) {
+    // Guard against clobbering anything:
+    while (serial_phy_state != SERIAL_PHY_STATE_IDLE);
+    memcpy((void *)serial_buffer_out, &badge_conf.element_qty[pillar_id], sizeof(uint32_t));
+    serial_send_start(SERIAL_OPCODE_DUMPA, sizeof(uint32_t));
+    badge_conf.element_qty[pillar_id] = 0;
+    // TODO: dump animation
 }
 
 void serial_ll_timeout() {
@@ -197,6 +206,13 @@ void serial_ll_handle_rx() {
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
             s_paired = 1;
             serial_pair();
+        } else if (serial_header_in.opcode == SERIAL_OPCODE_DUMPQ) {
+            uint8_t pillar_id = serial_buffer_in[0];
+            if (pillar_id > 3) {
+                // Invalid pillar, do nothing.
+                break;
+            }
+            serial_dump_answer(pillar_id);
         }
         break;
     case SERIAL_LL_STATE_C_PAIRING:
@@ -220,7 +236,7 @@ void serial_ll_handle_rx() {
 void serial_phy_handle_rx() {
     // We just got a complete serial message
     //  (header and, possibly, payload).
-    if (!validate_header(&serial_header_in)) {
+    if (!validate_header((serial_header_t *) &serial_header_in)) {
         return;
     }
 

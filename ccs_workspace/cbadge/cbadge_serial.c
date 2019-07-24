@@ -12,20 +12,18 @@
 #include <cbadge.h>
 #include <cbadge_serial.h>
 
-volatile serial_header_t serial_header_in = {0,};
-serial_header_t serial_header_out = {0,};
-volatile uint8_t *serial_header_buf;
-volatile uint8_t serial_buffer_in[SERIAL_BUFFER_LEN] = {0,};
-volatile uint8_t serial_buffer_out[SERIAL_BUFFER_LEN] = {0,};
-uint8_t serial_phy_mode_ptx = 0;
-volatile uint8_t serial_phy_state = 0;
-volatile uint8_t serial_phy_index = 0;
-volatile uint8_t serial_phy_timeout_counter = 0;
+volatile serial_header_t serial_header_in; // Needs no initialization.
+serial_header_t serial_header_out; // Needs no initialization.
+volatile uint8_t serial_buffer_in[SERIAL_BUFFER_LEN]; // Needs no initialization.
+volatile uint8_t serial_buffer_out[SERIAL_BUFFER_LEN]; // Needs no initialization
+uint8_t serial_phy_mode_ptx; // Needs no initialization.
+volatile uint8_t serial_phy_state; // 0-init is fine.
+volatile uint8_t serial_phy_index; // Initialized in ISR.
+volatile uint8_t serial_phy_timeout_counter; // 0-init is fine.
 
-uint16_t connected_badge_id;
-
-uint8_t serial_ll_state;
-uint16_t serial_ll_timeout_ms;
+uint16_t connected_badge_id; // initialized in code
+uint8_t serial_ll_state; // initialized in code
+uint16_t serial_ll_timeout_ms; // initialized in code
 
 void serial_enter_ptx() {
     // Swap to the alternate/PTX USCI config:
@@ -254,6 +252,7 @@ void serial_ll_handle_rx() {
 
         } else if (serial_header_in.opcode == SERIAL_OPCODE_PAIR) {
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
+            connected_badge_id = serial_header_in.from_id;
             s_paired = 1;
             serial_pair();
 
@@ -262,6 +261,7 @@ void serial_ll_handle_rx() {
     case SERIAL_LL_STATE_C_PAIRING:
         if (serial_header_in.opcode == SERIAL_OPCODE_PAIR) {
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
+            connected_badge_id = serial_header_in.from_id;
             s_paired = 1;
         }
         break;

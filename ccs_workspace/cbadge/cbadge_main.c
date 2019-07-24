@@ -14,43 +14,43 @@ volatile uint8_t main_loop_ticks_curr=0;
 volatile uint8_t button_poll_this_ms = 0;
 
 /// Signal indicating that the badge is self-powered for the first time.
-uint8_t s_activated = 0x00;
+uint8_t s_activated;
 /// Signal for all captouch button events.
-uint8_t s_button = 0x00;
+uint8_t s_button;
 /// Signal for the serial link-layer connection event.
-uint8_t s_connected = 0;
+uint8_t s_connected;
 /// Signal that this badge is paired with a qbadge.
-uint8_t s_paired = 0;
+uint8_t s_paired;
 /// Signal that element ID s_level_up-1 has leveled up!
-uint8_t s_level_up = 0;
+uint8_t s_level_up;
 /// Signal to do the next step in our current animation.
-uint8_t s_animation_step = 0;
+uint8_t s_animation_step;
 /// Interrupt flag for the serial PHY
-volatile uint8_t f_serial_phy = 0x00;
+volatile uint8_t f_serial_phy;
 /// Interrupt flag indicating it's time to poll a captouch button.
-volatile uint8_t f_button_poll = 0x00;
+volatile uint8_t f_button_poll;
 /// Interrupt flag indicating it's time to do another PWM time step.
-volatile uint8_t f_pwm_loop = 0x00;
+volatile uint8_t f_pwm_loop;
 /// Interrupt flag indicating 1 ms has passed.
-volatile uint8_t f_ms = 0x00;
+volatile uint8_t f_ms;
 
-uint16_t animation_ms_remaining = 0;
-uint16_t animation_step_ms = 0;
-uint16_t animation_step_curr_ms = 0;
+uint16_t animation_ms_remaining;
+uint16_t animation_step_ms;
+uint16_t animation_step_curr_ms;
+uint8_t animation_type;
+uint8_t animation_type_prev;
 
 cbadge_conf_t badge_conf;
 #pragma PERSISTENT(badge_conf_persistent)
-cbadge_conf_t badge_conf_persistent = {0,};
+cbadge_conf_t badge_conf_persistent;
 #pragma PERSISTENT(badge_conf_persistent_backup)
-cbadge_conf_t badge_conf_persistent_backup = {0,};
+cbadge_conf_t badge_conf_persistent_backup;
 
 /// This cbadge is currently running under its own power.
-uint8_t badge_active = 0;
+uint8_t badge_active;
 
-pair_payload_t paired_badge = {0,};
+pair_payload_t paired_badge;
 
-uint8_t display_type = DISPLAY_OFF;
-uint8_t display_type_prev = DISPLAY_OFF;
 
 /// Initialize clock signals and the three system clocks.
 /**
@@ -181,11 +181,11 @@ void init_conf() {
 void set_display_type(uint8_t dest_type) {
     if (dest_type < 0x10) {
         // Indefinite type
-        display_type = dest_type;
+        animation_type = dest_type;
     } else {
         // Temporary type
-        display_type_prev = display_type;
-        display_type = dest_type;
+        animation_type_prev = animation_type;
+        animation_type = dest_type;
     }
 }
 
@@ -200,7 +200,12 @@ void init() {
     init_serial();
 
     if (!badge_conf.initialized) {
-        display_type = DISPLAY_ON;
+        set_display_type(DISPLAY_ON);
+    } else if (badge_active) {
+        set_display_type(DISPLAY_ACTIVATED);
+    } else {
+        // Just plugged into a badge.
+        set_display_type(DISPLAY_OFF);
     }
 
     // Set up the WDT to do our time loop.
@@ -220,6 +225,11 @@ int main( void )
     uint8_t pwm_levels[3] = {0,0,0};
 
     while (1) {
+        if (s_activated) {
+            set_display_type(DISPLAY_ACTIVATED);
+            s_activated = 0;
+        }
+
         if (f_pwm_loop) {
             pwm_level_curr++;
 

@@ -74,6 +74,9 @@ void complete_mission(mission_t *mission) {
     // Clear our current element when the mission ends:
     badge_conf.element_selected = ELEMENT_COUNT_NONE;
 
+    // Save.
+    write_conf();
+
     // Notify our pairing partner of our updated stats:
     serial_pair();
 }

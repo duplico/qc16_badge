@@ -104,7 +104,7 @@ void load_anim(char *name) {
     load_anim_abs(pathname);
 }
 
-void save_photo(Graphics_Image *image, char *name) {
+void save_photo(const Graphics_Image *image, char *name) {
     spiffs_file fd;
     char pathname[SPIFFS_OBJ_NAME_LEN] = "/photos/";
     strcpy(&pathname[8], name);

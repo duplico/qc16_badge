@@ -122,7 +122,7 @@ void serial_dump_answer(uint8_t pillar_id) {
 void serial_ll_timeout() {
     switch(serial_ll_state) {
     case SERIAL_LL_STATE_NC_PRX:
-        if (!badge_conf.active) {
+        if (!badge_active) {
             serial_ll_timeout_ms = PRX_TIME_MS;
             break; // If we're not active, we never leave PRX.
         }
@@ -257,15 +257,16 @@ void init_serial() {
         // We are being externally powered, because at least one of
         //  DIO1_PTX and DIO2_PRX are asserted (and we have those
         //  set as inputs with pull-down resistors)
-        badge_conf.active = 0;
+        badge_active = 0;
     } else if (badge_conf.badge_id != CBADGE_ID_MAX_UNASSIGNED) {
         // We are under our own power.
         if (!badge_conf.activated) {
             badge_conf.activated = 1;
             // This badge was just turned on under its own power for the first time!
             s_activated = 1;
+            write_conf();
         }
-        badge_conf.active = 1;
+        badge_active = 1;
     }
 
     // Pause the UART peripheral:

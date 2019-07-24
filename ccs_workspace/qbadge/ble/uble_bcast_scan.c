@@ -104,19 +104,21 @@ uint8 advertData[30] =
  'O',
  ' ',
  ' ',
+ ' ',
+ ' ',
+ ' ', // index 20
  // Queercon data: ID, current icon, etc
    11, // length of this data including the data type byte
    GAP_ADTYPE_MANUFACTURER_SPECIFIC, // manufacturer specific adv data type // 0xff
    0xD3, // Company ID - Fixed (queercon)
    0x04, // Company ID - Fixed (queercon)
-   0x00, // Badge ID MSB //.22
-   0x00, // Badge ID LSB //.23
+   0x00, // Badge ID MSB //.25
+   0x00, // Badge ID LSB //.26
    0x00, // TYPE FLAG (BIT7=UBER; BIT6=HANDLER; BIT5-3=unused BIT2-0=ELEMENT)
    0x00, // SPARE
    0x00, // SPARE
-   0x00, // SPARE
-   0x00, // CHECK // .28
-   0x00, // CHECK // .29
+   0x00, // CHECK // .30
+   0x00, // CHECK // .31
 };
 
 typedef struct {

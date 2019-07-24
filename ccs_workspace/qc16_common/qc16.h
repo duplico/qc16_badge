@@ -21,7 +21,7 @@
 #define MISSIONS_TO_LEVEL4 8
 #define MISSIONS_TO_LEVEL5 8
 
-#define QC16_BADGE_NAME_LEN 9
+#define QC16_BADGE_NAME_LEN 12
 
 #define QC16_PHOTO_NAME_LEN 16
 #define QC16_COLOR_NAME_LEN 16
@@ -53,9 +53,6 @@ typedef struct {
 typedef struct {
     uint32_t element_qty_cumulative[3];
     uint32_t missions_run;
-    uint16_t qbadges_seen_count;
-    __packed uint8_t qbadges_uber_seen_count;
-    __packed uint8_t qbadges_handler_seen_count;
     uint16_t qbadges_connected_count;
     __packed uint8_t qbadges_uber_connected_count;
     __packed uint8_t qbadges_handler_connected_count;
@@ -63,12 +60,30 @@ typedef struct {
     __packed uint8_t cbadges_handler_connected_count;
     __packed uint8_t cbadges_uber_connected_count;
     uint16_t qbadges_in_system;
+    uint16_t cbadges_in_system;
+    uint16_t qbadges_seen_count;
+    __packed uint8_t qbadges_uber_seen_count;
+    __packed uint8_t qbadges_handler_seen_count;
     __packed uint8_t qbadge_ubers_in_system;
     __packed uint8_t qbadge_handlers_in_system;
-    uint16_t cbadges_in_system;
     __packed uint8_t cbadge_ubers_in_system;
     __packed uint8_t cbadge_handlers_in_system;
-} badge_stats_t;
+} qbadge_stats_t;
+
+// NB: It's (probably) important that this is a strict subset of the above,
+//     and, moreover, that it be the leading subset of the above.
+typedef struct {
+    uint32_t element_qty_cumulative[3];
+    uint32_t missions_run;
+    uint16_t qbadges_connected_count;
+    __packed uint8_t qbadges_uber_connected_count;
+    __packed uint8_t qbadges_handler_connected_count;
+    uint16_t cbadges_connected_count;
+    __packed uint8_t cbadges_handler_connected_count;
+    __packed uint8_t cbadges_uber_connected_count;
+    uint16_t qbadges_in_system;
+    uint16_t cbadges_in_system;
+} cbadge_stats_t;
 
 typedef struct {
     uint16_t badge_id;
@@ -90,7 +105,7 @@ typedef struct {
     mission_t missions[4];
     char current_photo[QC16_PHOTO_NAME_LEN+1];
     char handle[QC16_BADGE_NAME_LEN + 1];
-    badge_stats_t stats;
+    qbadge_stats_t stats;
 } qbadge_conf_t;
 
 typedef struct {
@@ -113,7 +128,7 @@ typedef struct {
     /// This badge's assigned handle.
     char handle[QC16_BADGE_NAME_LEN + 1];
     /// Running statistics:
-    badge_stats_t stats;
+    cbadge_stats_t stats;
     /// Check:
     uint16_t crc16;
 } cbadge_conf_t;

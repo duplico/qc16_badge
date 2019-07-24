@@ -208,11 +208,11 @@ void serial_ll_handle_rx() {
         // cbadges must implement the following commands from idle:
         // * STAT1Q - send a copy of badge_conf.stats
         // * STAT2Q - send a pairing message (but not pair)
-        // * SETID  - ONLY FROM CONTROLLER - set ID and respond with ACK. //TODO: validate
+        // * SETID  - ONLY FROM CONTROLLER - set ID and respond with ACK.
         // * SETNAME - Set my handle
         // * DUMPQ - Reply with a DUMPA
         // * DISCON - Simulate a physical disconnection.
-        // * SETTYPE - Promote myself to uber or handler, respond with ACK. (CONTROLLER ONLY) //TODO: validate only from controller
+        // * SETTYPE - Promote myself to uber or handler, respond with ACK. (CONTROLLER ONLY)
         // * PAIR - Begin pairing.
         serial_ll_timeout_ms = SERIAL_C_DIO_POLL_MS;
 

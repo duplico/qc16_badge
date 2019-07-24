@@ -34,6 +34,7 @@ volatile uint8_t f_pwm_loop = 0x00;
 /// Interrupt flag indicating 1 ms has passed.
 volatile uint8_t f_ms = 0x00;
 
+uint16_t animation_ms_remaining = 0;
 uint16_t animation_step_ms = 0;
 uint16_t animation_step_curr_ms = 0;
 
@@ -47,6 +48,9 @@ cbadge_conf_t badge_conf_persistent_backup = {0,};
 uint8_t badge_active = 0;
 
 pair_payload_t paired_badge = {0,};
+
+uint8_t display_type = DISPLAY_OFF;
+uint8_t display_type_prev = DISPLAY_OFF;
 
 /// Initialize clock signals and the three system clocks.
 /**
@@ -174,6 +178,17 @@ void init_conf() {
     }
 }
 
+void set_display_type(uint8_t dest_type) {
+    if (dest_type < 0x10) {
+        // Indefinite type
+        display_type = dest_type;
+    } else {
+        // Temporary type
+        display_type_prev = display_type;
+        display_type = dest_type;
+    }
+}
+
 /// Perform basic initialization of the cbadge.
 void init() {
     // Stop the watchdog timer.
@@ -183,6 +198,10 @@ void init() {
     init_clocks();
     init_io();
     init_serial();
+
+    if (!badge_conf.initialized) {
+        display_type = DISPLAY_ON;
+    }
 
     // Set up the WDT to do our time loop.
     WDTCTL = TICK_WDT_BITS;

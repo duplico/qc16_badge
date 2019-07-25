@@ -35,7 +35,7 @@ volatile uint8_t f_pwm_loop;
 volatile uint8_t f_ms;
 
 /// The brightness level of each light
-uint16_t pwm_levels[3];
+uint8_t pwm_levels[3];
 
 uint16_t animation_ms_remaining;
 uint16_t animation_step_ms;
@@ -287,7 +287,7 @@ int main( void )
     // TODO: Implement mining
 
     uint8_t current_button = 0;
-    uint16_t pwm_level_curr = 0;
+    uint8_t pwm_level_curr = 0;
 
     while (1) {
         if (s_activated) {

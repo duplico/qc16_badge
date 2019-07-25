@@ -253,6 +253,7 @@ void serial_ll_handle_rx() {
         } else if (serial_header_in.opcode == SERIAL_OPCODE_PAIR) {
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
             s_paired = 1;
+            badge_conf.element_selected = ELEMENT_COUNT_NONE;
             serial_pair();
         }
         break;

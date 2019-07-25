@@ -154,17 +154,11 @@ void write_conf() {
 
 void generate_config() {
     // We treat this like FIRST BOOT. Need to initialize the config.
+    // The run time initializes badge_conf to all 0s for us.
     badge_conf.badge_id = CBADGE_ID_MAX_UNASSIGNED;
-    badge_conf.in_service = 0;
     badge_conf.initialized = 1;
-    badge_conf.activated = 0;
     badge_conf.badge_type = BADGE_TYPE_NORMAL;
     badge_conf.element_selected = ELEMENT_COUNT_NONE;
-    for (uint8_t i=0; i<3; i++) {
-        badge_conf.element_level[i] = 0;
-        badge_conf.element_level_progress[i] = 0;
-        badge_conf.element_qty[i] = 0;
-    }
     memcpy(badge_conf.handle, "cbadge", 7);
     // TODO: Confirm that the badges_connected buffers are zeroed out.
     write_conf();
@@ -420,9 +414,6 @@ int main( void )
                     if (mining_progress[badge_conf.element_selected-3] > 10) {
                         set_display_type(DISPLAY_LEVELUP);
                         badge_conf.element_qty[badge_conf.element_selected-3]++;
-                        if (!(badge_conf.element_qty[badge_conf.element_selected-3] % 16) && badge_conf.element_level[badge_conf.element_selected-3]<5) {
-                            badge_conf.element_level[badge_conf.element_selected-3]++;
-                        }
                         mining_progress[badge_conf.element_selected-3] = 0;
                     }
                     mining_ms = 0;

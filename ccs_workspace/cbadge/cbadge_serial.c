@@ -180,6 +180,10 @@ void serial_ll_ms_tick() {
 }
 
 void serial_ll_handle_rx() {
+    // Note: the proper operation of this function depends on an alternating
+    //       RX/TX mode of operation; that is, there's a danger that if the
+    //       remote badge sends multiple messages in a row, the header and
+    //       payload could get clobbered.
     switch(serial_ll_state) {
     case SERIAL_LL_STATE_NC_PRX:
         // Expecting a HELO.
@@ -282,7 +286,6 @@ void serial_ll_handle_rx() {
         }
         break;
     }
-    // TODO: lock out RX until this function returns
 }
 
 void serial_phy_handle_rx() {

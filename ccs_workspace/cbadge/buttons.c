@@ -88,6 +88,8 @@ void button_poll(uint8_t button_id) {
             // BUTTON PRESSED:
             s_button |= button_bit;
         }
+    } else {
+        button_state &= ~button_bit;
     }
 
 }

@@ -468,6 +468,9 @@ int main( void )
                 serial_pair();
             } else if (is_cbadge(connected_badge_id)) {
                 set_display_type(DISPLAY_NEWPAIR_ACTIVATED);
+                // When plugging into a powered cbadge, we're temporarily
+                //  also active, and therefore capable of mining!
+                badge_active++;
             }
 
             s_connected = 0;

@@ -54,6 +54,7 @@ extern uint8_t s_button;
 extern uint8_t s_activated;
 volatile extern uint8_t f_serial_phy;
 extern uint8_t s_connected;
+extern uint8_t s_disconnected;
 extern uint8_t s_paired;
 extern uint8_t s_level_up;
 extern uint8_t badge_active;

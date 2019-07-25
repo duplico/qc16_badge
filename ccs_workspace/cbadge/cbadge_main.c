@@ -290,6 +290,7 @@ int main( void )
     while (1) {
         if (s_activated) {
             set_display_type(DISPLAY_MINING);
+            set_display_type(DISPLAY_NEWPAIR_ACTIVATED);
             s_activated = 0;
         }
 

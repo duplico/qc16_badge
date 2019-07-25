@@ -25,11 +25,8 @@
 #include "badge.h"
 
 // Radar constructs:
-uint32_t qbadges_near[QBADGE_BITFIELD_LONGS] = {0, };
-uint32_t qbadges_near_curr[QBADGE_BITFIELD_LONGS] = {0, };
-uint32_t qbadges_seen[QBADGE_BITFIELD_LONGS] = {0, };
-uint32_t qbadges_connected[QBADGE_BITFIELD_LONGS] = {0, };
-uint32_t cbadges_connected[CBADGE_BITFIELD_LONGS] = {0, };
+uint8_t qbadges_near[BITFIELD_BYTES_QBADGE] = {0, };
+uint8_t qbadges_near_curr[BITFIELD_BYTES_QBADGE] = {0, };
 uint16_t qbadges_near_count=0;
 uint16_t qbadges_near_count_running=0;
 
@@ -45,7 +42,8 @@ void reset_scan_cycle(UArg a0) {
         Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
     }
     qbadges_near_count_running = 0;
-    memset((void *) qbadges_near, 0x00, 4*QBADGE_BITFIELD_LONGS);
+    memcpy(qbadges_near, qbadges_near_curr, BITFIELD_BYTES_QBADGE);
+    memset((void *) qbadges_near_curr, 0x00, BITFIELD_BYTES_QBADGE);
 
     process_seconds();
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
@@ -53,17 +51,13 @@ void reset_scan_cycle(UArg a0) {
 
 uint8_t badge_seen(uint16_t id) {
     // TODO: SPIFFS instead
-    if (is_qbadge(id) && check_id_buf(id, (uint8_t *) qbadges_seen))
-        return 1;
+//    if (is_qbadge(id) && check_id_buf(id, (uint8_t *) qbadges_seen))
+//        return 1;
     return 0;
 }
 
 uint8_t badge_connected(uint16_t id) {
     // TODO: SPIFFS instead
-    if (is_cbadge(id) && check_id_buf(id, (uint8_t *)cbadges_connected))
-        return 1;
-    if (is_qbadge(id) && check_id_buf(id, (uint8_t *)qbadges_connected))
-        return 1;
     return 0;
 }
 
@@ -109,8 +103,8 @@ void set_badge_seen(uint16_t id, char *name) {
         return;
     }
 
-    set_id_buf(id, (uint8_t *)qbadges_seen);
-    badge_conf.stats.qbadges_seen_count++;
+//    set_id_buf(id, (uint8_t *)qbadges_seen);
+//    badge_conf.stats.qbadges_seen_count++;
 
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
     return;
@@ -127,13 +121,14 @@ uint8_t set_badge_connected(uint16_t id, char *handle) {
         return 0;
     }
 
-    if (is_qbadge(id)) {
-        set_id_buf(id, (uint8_t *)qbadges_connected);
-        badge_conf.stats.qbadges_connected_count++;
-    } else if (is_cbadge(id)) {
-        set_id_buf(id, (uint8_t *)cbadges_connected);
-        badge_conf.stats.cbadges_connected_count++;
-    }
+    // TODO: This is the wrong way:
+//    if (is_qbadge(id)) {
+//        set_id_buf(id, (uint8_t *)qbadges_connected);
+//        badge_conf.stats.qbadges_connected_count++;
+//    } else if (is_cbadge(id)) {
+//        set_id_buf(id, (uint8_t *)cbadges_connected);
+//        badge_conf.stats.cbadges_connected_count++;
+//    }
 
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
     return 1;

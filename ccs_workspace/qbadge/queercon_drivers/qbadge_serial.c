@@ -63,7 +63,7 @@ const PIN_Config serial_gpio_ptx[] = {
 void serial_send(uint8_t opcode, uint8_t *payload, uint8_t payload_len) {
     serial_header_t header_out;
     header_out.opcode = opcode;
-    header_out.to_id = SERIAL_ID_ANY;
+    header_out.badge_type = badge_conf.badge_type;
     header_out.from_id = badge_conf.badge_id;
     header_out.payload_len = payload_len;
     if (payload_len) {

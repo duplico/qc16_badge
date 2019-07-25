@@ -18,7 +18,7 @@
 
 #define KEY_LVL (2000) // Should be about 1000 per ms
 
-#define SERIAL_PHY_TIMEOUT_MS 10
+#define SERIAL_PHY_TIMEOUT_MS 15
 
 #define SERIAL_DIO_OUT P1OUT
 #define SERIAL_DIO_IN P1IN

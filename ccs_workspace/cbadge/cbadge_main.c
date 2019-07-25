@@ -209,10 +209,10 @@ void set_display_type(uint8_t dest_type) {
         pwm_levels[2] = PWM_LEVELS-1;
         break;
     case DISPLAY_ELEMENT:
-        animation_step_ms = 75;
+        animation_step_ms = 60;
         break;
     case DISPLAY_MINING:
-        animation_step_ms = 200;
+        animation_step_ms = 220;
         break;
     case DISPLAY_LEVELUP:
         animation_step_ms=20;
@@ -465,6 +465,7 @@ int main( void )
             if (serial_phy_mode_ptx && is_qbadge(connected_badge_id)) {
                 // The PTX is the side that sends the pairing message
                 set_display_type(DISPLAY_OFF);
+                serial_ll_state = SERIAL_LL_STATE_C_PAIRING;
                 serial_pair();
             } else if (is_cbadge(connected_badge_id)) {
                 badge_conf.stats.cbadges_connected_count++;
@@ -481,10 +482,10 @@ int main( void )
             // We're now disconnected.
             badge_conf.element_selected = ELEMENT_COUNT_NONE;
             set_display_type(DISPLAY_MINING);
-            s_disconnected = 0;
             if (is_cbadge(connected_badge_id)) {
                 badge_active--;
             }
+            s_disconnected = 0;
         }
 
         if (s_paired) {

@@ -317,7 +317,7 @@ void init_serial() {
             s_activated = 1;
             write_conf();
         }
-        badge_active = 1;
+        badge_active = 24;
     }
 
     // Pause the UART peripheral:

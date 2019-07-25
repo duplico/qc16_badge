@@ -253,7 +253,9 @@ void init() {
     // Just plugged in (or put in batteries).
     // By default the display will be off.
 
-    animation_type = !badge_conf.in_service;
+    if (!badge_conf.in_service) {
+        set_display_type(DISPLAY_ON);
+    }
 
     // Set up the WDT to do our time loop.
     WDTCTL = TICK_WDT_BITS;

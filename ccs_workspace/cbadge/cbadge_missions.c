@@ -44,6 +44,8 @@ void complete_mission(mission_t *mission) {
         return;
     }
 
+    set_display_type(DISPLAY_GOMISSION);
+
     uint8_t element_selected_index = (uint8_t) badge_conf.element_selected - 3;
 
     // Ok! WE DID IT.
@@ -70,6 +72,8 @@ void complete_mission(mission_t *mission) {
             badge_conf.element_level[element_selected_index] = 5;
         else
             set_display_type(DISPLAY_LEVELUP);
+    } else {
+        badge_conf.element_selected = ELEMENT_COUNT_NONE;
     }
 
     // Save.

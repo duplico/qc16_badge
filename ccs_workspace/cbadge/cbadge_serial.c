@@ -155,17 +155,15 @@ void serial_ll_timeout() {
         serial_ll_state = SERIAL_LL_STATE_NC_PRX;
         break;
     default:
+        serial_ll_timeout_ms = SERIAL_C_DIO_POLL_MS;
         if (
                 (serial_phy_mode_ptx && !(SERIAL_DIO_IN & SERIAL_DIO2_PRX))
                 || (!serial_phy_mode_ptx && !(SERIAL_DIO_IN & SERIAL_DIO1_PTX))
         ) {
-            // TODO: Flag a disconnection.
             // We read connection-sense LOW, so we're unplugged.
             serial_enter_prx();
             serial_ll_state = SERIAL_LL_STATE_NC_PRX;
-            // TODO: send a flag to the event loop.
-        } else {
-            serial_ll_timeout_ms = SERIAL_C_DIO_POLL_MS;
+            s_disconnected = 1;
         }
         break;
     }
@@ -244,6 +242,7 @@ void serial_ll_handle_rx() {
         } else if (serial_header_in.opcode == SERIAL_OPCODE_DISCON) {
             serial_enter_prx();
             serial_ll_state = SERIAL_LL_STATE_NC_PRX;
+            s_disconnected = 1;
 
         } else if (serial_header_in.opcode == SERIAL_OPCODE_SETTYPE) {
             badge_conf.badge_type = serial_buffer_in[0] & 0b11000000;

@@ -434,7 +434,6 @@ __interrupt void serial_isr() {
                 serial_phy_state = SERIAL_PHY_STATE_IDLE;
                 serial_phy_index = 0;
                 // Done.
-                f_serial_phy = SERIAL_TX_DONE;
                 LPM3_EXIT;
             } else {
                 // Need to send another.

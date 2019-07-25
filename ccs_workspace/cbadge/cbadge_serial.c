@@ -225,8 +225,8 @@ void serial_ll_handle_rx() {
         } else if (serial_header_in.opcode == SERIAL_OPCODE_SETID) {
             memcpy(&badge_conf.badge_id, (uint8_t *) serial_buffer_in, sizeof(badge_conf.badge_id));
             write_conf();
+            set_display_type(DISPLAY_OFF);
             serial_send_start(SERIAL_OPCODE_ACK, 0);
-
         } else if (serial_header_in.opcode == SERIAL_OPCODE_SETNAME) {
             memcpy(&badge_conf.handle, (uint8_t *) serial_buffer_in, QC16_BADGE_NAME_LEN);
             // Guarantee null term:

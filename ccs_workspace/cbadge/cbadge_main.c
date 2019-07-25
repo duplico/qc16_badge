@@ -264,7 +264,6 @@ void init() {
     __bis_SR_register(GIE);
 }
 
-// TODO: connect animation isn't working
 // TODO: test level-up
 
 int main( void )
@@ -276,8 +275,7 @@ int main( void )
 
     while (1) {
         if (s_activated) {
-            // set_display_type(DISPLAY_MINING);
-            // TODO: This will be OFF until we press a button...
+            set_display_type(DISPLAY_MINING);
             set_display_type(DISPLAY_NEWPAIR_ACTIVATED);
             s_activated = 0;
         }

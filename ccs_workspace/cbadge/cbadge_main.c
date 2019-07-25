@@ -274,7 +274,8 @@ int main( void )
 
     while (1) {
         if (s_activated) {
-            set_display_type(DISPLAY_MINING);
+            // set_display_type(DISPLAY_MINING);
+            // TODO: This will be OFF until we press a button...
             set_display_type(DISPLAY_NEWPAIR_ACTIVATED);
             s_activated = 0;
         }
@@ -359,10 +360,8 @@ int main( void )
                 // Send our updated element.
                 serial_element_update();
                 set_display_type(DISPLAY_ELEMENT);
-            } else if (badge_active && badge_conf.element_selected != ELEMENT_COUNT_NONE) {
+            } else if (badge_active) {
                 set_display_type(DISPLAY_MINING);
-            } else {
-                set_display_type(DISPLAY_OFF);
             }
 
             s_button = 0;
@@ -392,10 +391,9 @@ int main( void )
                         set_display_type(animation_type_prev);
                     }
                 }
-
             }
 
-            if (badge_active && badge_conf.element_selected != ELEMENT_COUNT_NONE) {
+            if (badge_active && serial_ll_state != SERIAL_LL_STATE_C_PAIRED && badge_conf.element_selected != ELEMENT_COUNT_NONE) {
                 mining_ms++;
                 if (mining_ms >= 1000) {
                     // Been a second, time to make progress.
@@ -467,6 +465,7 @@ int main( void )
                 set_display_type(DISPLAY_OFF);
                 serial_pair();
             } else if (is_cbadge(connected_badge_id)) {
+                badge_conf.stats.cbadges_connected_count++;
                 set_display_type(DISPLAY_NEWPAIR_ACTIVATED);
                 // When plugging into a powered cbadge, we're temporarily
                 //  also active, and therefore capable of mining!

@@ -159,7 +159,7 @@ void generate_config() {
     badge_conf.badge_id = CBADGE_ID_MAX_UNASSIGNED;
     badge_conf.initialized = 1;
     badge_conf.element_selected = ELEMENT_COUNT_NONE;
-    memcpy(badge_conf.handle, "cb", 3); // TODO: if we have space, lengthen
+    // The handle is all zeroes. Empty string. That's fine.
     write_conf();
 }
 

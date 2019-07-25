@@ -19,6 +19,8 @@ uint8_t s_activated;
 uint8_t s_button;
 /// Signal for the serial link-layer connection event.
 uint8_t s_connected;
+/// Signal for the serial link-layer disconnection event.
+uint8_t s_disconnected;
 /// Signal that this badge is paired with a qbadge.
 uint8_t s_paired;
 /// Signal that element ID s_level_up-1 has leveled up!
@@ -157,7 +159,7 @@ void generate_config() {
     badge_conf.badge_id = CBADGE_ID_MAX_UNASSIGNED;
     badge_conf.initialized = 1;
     badge_conf.element_selected = ELEMENT_COUNT_NONE;
-    memcpy(badge_conf.handle, "cb", 3);
+    memcpy(badge_conf.handle, "cb", 3); // TODO: if we have space, lengthen
     write_conf();
 }
 
@@ -469,6 +471,16 @@ int main( void )
             }
 
             s_connected = 0;
+        }
+
+        if (s_disconnected) {
+            // We're now disconnected.
+            badge_conf.element_selected = ELEMENT_COUNT_NONE;
+            set_display_type(DISPLAY_MINING);
+            s_disconnected = 0;
+            if (is_cbadge(connected_badge_id)) {
+                badge_active--;
+            }
         }
 
         if (s_paired) {

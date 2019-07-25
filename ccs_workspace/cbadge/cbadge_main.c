@@ -397,6 +397,14 @@ int main( void )
                     animation_step_curr_ms = 0;
                     s_animation_step = 1;
                 }
+
+                if (animation_type >= 0x10) {
+                    animation_ms_remaining--;
+                    if (!animation_ms_remaining) {
+                        set_display_type(animation_type_prev);
+                    }
+                }
+
             }
 
             if (badge_active && badge_conf.element_selected != ELEMENT_COUNT_NONE) {
@@ -450,13 +458,6 @@ int main( void )
                 pwm_levels[1] = pwm_levels[0];
                 pwm_levels[2] = pwm_levels[0];
                 break;
-            }
-
-            if (animation_type >= 0x10) {
-                animation_ms_remaining--;
-                if (!animation_ms_remaining) {
-                    set_display_type(animation_type_prev);
-                }
             }
 
             s_animation_step = 0;

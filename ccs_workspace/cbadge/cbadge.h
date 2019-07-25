@@ -64,5 +64,6 @@ extern uint8_t missions_assigned[3];
 void complete_mission(mission_t *mission);
 void write_conf();
 uint8_t set_badge_connected(uint16_t id);
+void set_display_type(uint8_t dest_type);
 
 #endif /* CBADGE_H_ */

@@ -15,9 +15,6 @@
 
 #include "buttons.h"
 
-mission_t current_missions[3];
-uint8_t missions_assigned[3];
-
 const uint8_t exp_required_per_level[6] = {
     EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1,
     EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1+EXP_PER_LEVEL1*MISSIONS_TO_LEVEL2,
@@ -74,9 +71,6 @@ void complete_mission(mission_t *mission) {
         else
             set_display_type(DISPLAY_LEVELUP);
     }
-
-    // Clear our current element when the mission ends:
-    badge_conf.element_selected = ELEMENT_COUNT_NONE;
 
     // Save.
     write_conf();

@@ -41,7 +41,6 @@ uint16_t animation_ms_remaining;
 uint16_t animation_step_ms;
 uint16_t animation_step_curr_ms;
 uint8_t animation_type;
-uint8_t animation_type_detail;
 uint8_t animation_type_prev;
 
 cbadge_conf_t badge_conf;
@@ -157,20 +156,18 @@ void generate_config() {
     // The run time initializes badge_conf to all 0s for us.
     badge_conf.badge_id = CBADGE_ID_MAX_UNASSIGNED;
     badge_conf.initialized = 1;
-    badge_conf.badge_type = BADGE_TYPE_NORMAL;
     badge_conf.element_selected = ELEMENT_COUNT_NONE;
-    memcpy(badge_conf.handle, "cbadge", 7);
-    // TODO: Confirm that the badges_connected buffers are zeroed out.
+    memcpy(badge_conf.handle, "cb", 3);
     write_conf();
 }
 
 void init_conf() {
-    if (badge_conf_persistent.initialized != 1) {
+    if (!badge_conf_persistent.initialized) {
         // Need to generate a config.
         generate_config();
     } else {
         memcpy(&badge_conf, &badge_conf_persistent, sizeof(cbadge_conf_t));
-        if (!badge_conf.in_service && (badge_conf.badge_id != CBADGE_ID_MAX_UNASSIGNED || badge_conf.stats.qbadges_connected_count > 3)) {
+        if (!badge_conf.in_service && badge_conf.badge_id != CBADGE_ID_MAX_UNASSIGNED) {
             // If we have a real ID, or we've plugged into a few qbadges,
             //  we're going to go ahead and say this is the config that
             //  we'll run with.
@@ -251,14 +248,10 @@ void init() {
     init_io();
     init_serial();
 
-    if (!badge_conf.in_service) {
-        set_display_type(DISPLAY_ON);
-    } else if (badge_active) {
-        set_display_type(DISPLAY_MINING);
-    } else {
-        // Just plugged into a badge.
-        set_display_type(DISPLAY_OFF);
-    }
+    // Just plugged in (or put in batteries).
+    // By default the display will be off.
+
+    animation_type = !badge_conf.in_service;
 
     // Set up the WDT to do our time loop.
     WDTCTL = TICK_WDT_BITS;
@@ -267,16 +260,12 @@ void init() {
     __bis_SR_register(GIE);
 }
 
-// TODO: If active, on disconnect, go back to mining.
 // TODO: connect animation isn't working
 // TODO: test level-up
-// TODO: pressing button should re-select animation
 
 int main( void )
 {
     init();
-
-    // TODO: Implement mining
 
     uint8_t current_button = 0;
     uint8_t pwm_level_curr = 0;
@@ -410,11 +399,11 @@ int main( void )
                     // Been a second, time to make progress.
                     mining_progress[badge_conf.element_selected-3] += 1 + badge_conf.stats.cbadges_connected_count / 128;
 
-//                    if (mining_progress[badge_conf.element_selected-3] > 100) {
-                    if (mining_progress[badge_conf.element_selected-3] > 10) {
+                    if (mining_progress[badge_conf.element_selected-3] > 100) {
                         set_display_type(DISPLAY_LEVELUP);
                         badge_conf.element_qty[badge_conf.element_selected-3]++;
                         mining_progress[badge_conf.element_selected-3] = 0;
+                        write_conf();
                     }
                     mining_ms = 0;
                 }
@@ -468,12 +457,12 @@ int main( void )
         if (s_connected) {
             // We are now connected.
             // This is the new idle animation:
-            set_display_type(DISPLAY_OFF);
 
             // Are we connected to a qbadge? (That's the one that we pair with)
             //  And, if so, do we happen to be configured as the PTX?
             if (serial_phy_mode_ptx && is_qbadge(connected_badge_id)) {
                 // The PTX is the side that sends the pairing message
+                set_display_type(DISPLAY_OFF);
                 serial_pair();
             } else if (is_cbadge(connected_badge_id)) {
                 set_display_type(DISPLAY_NEWPAIR_ACTIVATED);

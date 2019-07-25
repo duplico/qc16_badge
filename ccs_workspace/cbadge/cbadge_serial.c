@@ -260,8 +260,6 @@ void serial_ll_handle_rx() {
         if (serial_header_in.opcode == SERIAL_OPCODE_PAIR) {
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
             s_paired = 1;
-            memcpy(current_missions, ((pair_payload_t *)serial_buffer_in)->missions, sizeof(mission_t)*3);
-            memcpy(missions_assigned, ((pair_payload_t *)serial_buffer_in)->mission_assigned, 3);
         }
         break;
     case SERIAL_LL_STATE_C_PAIRED:

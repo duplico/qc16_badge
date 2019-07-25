@@ -35,7 +35,7 @@ volatile uint8_t f_pwm_loop;
 volatile uint8_t f_ms;
 
 /// The brightness level of each light
-uint8_t pwm_levels[3];
+uint16_t pwm_levels[3];
 
 uint16_t animation_ms_remaining;
 uint16_t animation_step_ms;
@@ -265,6 +265,8 @@ void init() {
         set_display_type(DISPLAY_OFF);
     }
 
+    set_display_type(DISPLAY_MINING); // TODO: not this.
+
     // Set up the WDT to do our time loop.
     WDTCTL = TICK_WDT_BITS;
     // Enable interrupt for the WDT:
@@ -285,7 +287,7 @@ int main( void )
     // TODO: Implement mining
 
     uint8_t current_button = 0;
-    uint8_t pwm_level_curr = 0;
+    uint16_t pwm_level_curr = 0;
 
     while (1) {
         if (s_activated) {

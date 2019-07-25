@@ -264,8 +264,6 @@ void init() {
     __bis_SR_register(GIE);
 }
 
-// TODO: test level-up
-
 int main( void )
 {
     init();
@@ -416,10 +414,6 @@ int main( void )
             }
 
             f_ms = 0;
-        }
-
-        if (f_serial_phy == SERIAL_TX_DONE) {
-            f_serial_phy = 0;
         }
 
         if (s_animation_step) {

@@ -208,20 +208,21 @@ void set_display_type(uint8_t dest_type) {
         // Nothing to do.
         break;
     case DISPLAY_NEWPAIR_ACTIVATED:
-        animation_step_ms = 100;
+        // Scroll!
+        animation_step_ms = 75;
     case DISPLAY_ON:
         pwm_levels[0] = PWM_LEVELS-1;
         pwm_levels[1] = PWM_LEVELS-1;
         pwm_levels[2] = PWM_LEVELS-1;
         break;
     case DISPLAY_ELEMENT:
-        animation_step_ms = 100;
+        animation_step_ms = 75;
         break;
     case DISPLAY_MINING:
-        animation_step_ms = 300;
+        animation_step_ms = 200;
         break;
     case DISPLAY_LEVELUP:
-        animation_step_ms=75;
+        animation_step_ms=20;
         break;
     case DISPLAY_GOMISSION:
         // Blink!
@@ -265,8 +266,6 @@ void init() {
         set_display_type(DISPLAY_OFF);
     }
 
-    set_display_type(DISPLAY_MINING); // TODO: not this.
-
     // Set up the WDT to do our time loop.
     WDTCTL = TICK_WDT_BITS;
     // Enable interrupt for the WDT:
@@ -277,7 +276,6 @@ void init() {
 // TODO: If active, on disconnect, go back to mining.
 // TODO: connect animation isn't working
 // TODO: test level-up
-// TODO: more PWM levels?
 // TODO: pressing button should re-select animation
 
 int main( void )
@@ -376,8 +374,10 @@ int main( void )
                 // Send our updated element.
                 serial_element_update();
                 set_display_type(DISPLAY_ELEMENT);
-            } else if (badge_active) {
+            } else if (badge_active && badge_conf.element_selected != ELEMENT_COUNT_NONE) {
                 set_display_type(DISPLAY_MINING);
+            } else {
+                set_display_type(DISPLAY_OFF);
             }
 
             s_button = 0;
@@ -416,13 +416,17 @@ int main( void )
                     // Been a second, time to make progress.
                     mining_progress[badge_conf.element_selected-3] += 1 + badge_conf.stats.cbadges_connected_count / 128;
 
-                    if (mining_progress[badge_conf.element_selected-3] > 100) {
+//                    if (mining_progress[badge_conf.element_selected-3] > 100) {
+                    if (mining_progress[badge_conf.element_selected-3] > 10) {
                         set_display_type(DISPLAY_LEVELUP);
-                        badge_conf.element_level[badge_conf.element_selected-3]++;
+                        badge_conf.element_qty[badge_conf.element_selected-3]++;
+                        if (!(badge_conf.element_qty[badge_conf.element_selected-3] % 16) && badge_conf.element_level[badge_conf.element_selected-3]<5) {
+                            badge_conf.element_level[badge_conf.element_selected-3]++;
+                        }
                         mining_progress[badge_conf.element_selected-3] = 0;
                     }
+                    mining_ms = 0;
                 }
-                mining_ms = 0;
             }
 
             f_ms = 0;
@@ -441,25 +445,29 @@ int main( void )
                     break;
                 }
                 pwm_levels[badge_conf.element_selected-3]++;
-                if (pwm_levels[badge_conf.element_selected-3] >= PWM_LEVELS+3) { // TODO: overflow?
+                if (pwm_levels[badge_conf.element_selected-3] >= PWM_LEVELS) {
                     pwm_levels[badge_conf.element_selected-3] = 0;
                 }
                 break;
             case DISPLAY_GOMISSION:
-                if (pwm_levels[0]) {
-                    pwm_levels[0] = PWM_LEVELS-1;
-                    pwm_levels[1] = PWM_LEVELS-1;
-                    pwm_levels[2] = PWM_LEVELS-1;
-                } else {
-                    pwm_levels[0] = 0;
-                    pwm_levels[1] = 0;
-                    pwm_levels[2] = 0;
-                }
-                break;
-            case DISPLAY_NEWPAIR_ACTIVATED:
                 pwm_levels[0] = pwm_levels[0] ? 0 : PWM_LEVELS - 1;
                 pwm_levels[1] = pwm_levels[0];
                 pwm_levels[2] = pwm_levels[0];
+                break;
+            case DISPLAY_NEWPAIR_ACTIVATED:
+                if (pwm_levels[0]) {
+                    pwm_levels[0] = 0;
+                    pwm_levels[1] = PWM_LEVELS-1;
+                    pwm_levels[2] = 0;
+                } else if (pwm_levels[1]) {
+                    pwm_levels[0] = 0;
+                    pwm_levels[1] = 0;
+                    pwm_levels[2] = PWM_LEVELS-1;
+                } else {
+                    pwm_levels[0] = PWM_LEVELS-1;
+                    pwm_levels[1] = 0;
+                    pwm_levels[2] = 0;
+                }
                 break;
             }
 
@@ -476,8 +484,8 @@ int main( void )
             if (serial_phy_mode_ptx && is_qbadge(connected_badge_id)) {
                 // The PTX is the side that sends the pairing message
                 serial_pair();
-            } else {
-                // TODO: What's the idle animation when connected to a cbadge?
+            } else if (is_cbadge(connected_badge_id)) {
+                set_display_type(DISPLAY_NEWPAIR_ACTIVATED);
             }
 
             s_connected = 0;
@@ -485,7 +493,6 @@ int main( void )
 
         if (s_paired) {
             badge_conf.element_selected = ELEMENT_COUNT_NONE;
-
             s_paired = 0;
         }
 

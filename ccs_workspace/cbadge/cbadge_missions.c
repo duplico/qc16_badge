@@ -59,10 +59,9 @@ void complete_mission(mission_t *mission) {
 
     // Now, let's look at progress.
     // First, we'll add the level-up amount.
-    // NB: This is constructed in a way that means a byte won't be able to
-    //     overflow. So, it's OK to blindly add the progress reward,
-    //     and then check what happened.
-    badge_conf.element_level_progress[element_selected_index] += mission->element_progress[element_position];
+    if (badge_conf.element_level[element_selected_index] < 5) {
+        badge_conf.element_level_progress[element_selected_index] += mission->element_progress[element_position];
+    }
 
     // NB: We don't need to constrain progress by level cap, because cbadges
     //     do not have level caps.
@@ -72,6 +71,8 @@ void complete_mission(mission_t *mission) {
         badge_conf.element_level[element_selected_index]++;
         if (badge_conf.element_level[element_selected_index] > 5)
             badge_conf.element_level[element_selected_index] = 5;
+        else
+            set_display_type(DISPLAY_LEVELUP);
     }
 
     // Clear our current element when the mission ends:

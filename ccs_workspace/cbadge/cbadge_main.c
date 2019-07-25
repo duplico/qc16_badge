@@ -388,6 +388,12 @@ int main( void )
                 if (animation_type >= 0x10) {
                     animation_ms_remaining--;
                     if (!animation_ms_remaining) {
+                        if (animation_type == DISPLAY_LEVELUP && serial_ll_state == SERIAL_LL_STATE_C_PAIRED) {
+                            // We just finished leveling up from a qbadge
+                            //  mission, so need to clear our element.
+                            // We don't do this for ALL level-ups because
+                            badge_conf.element_selected = ELEMENT_COUNT_NONE;
+                        }
                         set_display_type(animation_type_prev);
                     }
                 }
@@ -462,6 +468,7 @@ int main( void )
             //  And, if so, do we happen to be configured as the PTX?
             if (serial_phy_mode_ptx && is_qbadge(connected_badge_id)) {
                 // The PTX is the side that sends the pairing message
+                badge_conf.element_selected = ELEMENT_COUNT_NONE;
                 set_display_type(DISPLAY_OFF);
                 serial_ll_state = SERIAL_LL_STATE_C_PAIRING;
                 serial_pair();
@@ -479,15 +486,18 @@ int main( void )
         if (s_disconnected) {
             // We're now disconnected.
             badge_conf.element_selected = ELEMENT_COUNT_NONE;
-            set_display_type(DISPLAY_MINING);
             if (is_cbadge(connected_badge_id)) {
                 badge_active--;
+            }
+            if (badge_active) {
+                set_display_type(DISPLAY_MINING);
+            } else {
+                set_display_type(DISPLAY_OFF);
             }
             s_disconnected = 0;
         }
 
         if (s_paired) {
-            badge_conf.element_selected = ELEMENT_COUNT_NONE;
             s_paired = 0;
         }
 

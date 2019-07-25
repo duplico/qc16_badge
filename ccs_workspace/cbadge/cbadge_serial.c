@@ -73,6 +73,7 @@ void serial_send_start(uint8_t opcode, uint8_t payload_len) {
     crc16_header_apply(&serial_header_out);
     serial_phy_state = SERIAL_PHY_STATE_IDLE;
     UCA0TXBUF = SERIAL_PHY_SYNC_WORD;
+    serial_phy_timeout_counter = SERIAL_PHY_TIMEOUT_MS;
     // The interrupts will take it from here.
 }
 
@@ -253,7 +254,6 @@ void serial_ll_handle_rx() {
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
             s_paired = 1;
             serial_pair();
-
         }
         break;
     case SERIAL_LL_STATE_C_PAIRING:

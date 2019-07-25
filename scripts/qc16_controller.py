@@ -10,8 +10,8 @@ import serial
 from image_reformer import QcImage
 
 HEADER_FMT_NOCRCs   = '<BBHH'
-HEADER_FMT   = '<BBHHHH'
-SerialHeader = namedtuple('Header', 'opcode payload_len from_id to_id crc16_payload crc16_header')
+HEADER_FMT   = '<BBHBBHH'
+SerialHeader = namedtuple('Header', 'opcode payload_len from_id badge_type spare crc16_payload crc16_header')
 CRC_FMT = '<H'
 
 IMG_META_FMT = '<BxHHHII'
@@ -22,8 +22,8 @@ DUMPA_FMT = '<L'
 
 ID_FMT = '<H'
 
-STATA_FMT = '<LLLLHBBHBBHHHBBBBBB'
-Stats = namedtuple('Stats', 'element_qty_cumulative_place element_qty_cumulative_pride element_qty_cumulative_party missions_run qbadges_connected_count qbadges_uber_connected_count qbadges_handler_connected_count cbadges_connected_count cbadges_handler_connected_count cbadges_uber_connected_count qbadges_in_system cbadges_in_system qbadges_seen_count qbadges_uber_seen_count qbadges_handler_seen_count qbadge_ubers_in_system qbadge_handlers_in_system cbadge_ubers_in_system cbadge_handlers_in_system')
+STATA_FMT = '<HHLLLLBBBBHHHBBBBBB'
+Stats = namedtuple('Stats', 'qbadges_connected_count cbadges_connected_count missions_run element_qty_cumulative_place element_qty_cumulative_pride element_qty_cumulative_party qbadges_uber_connected_count qbadges_handler_connected_count cbadges_handler_connected_count cbadges_uber_connected_count qbadges_in_system cbadges_in_system qbadges_seen_count qbadges_uber_seen_count qbadges_handler_seen_count qbadge_ubers_in_system qbadge_handlers_in_system cbadge_ubers_in_system cbadge_handlers_in_system')
 
 QC16_BADGE_NAME_LEN = 12
 
@@ -198,6 +198,8 @@ def main():
     id_parser = cmd_parsers.add_parser('setid')
     id_parser.add_argument('id', type=int)
 
+    id_parser = cmd_parsers.add_parser('autoid')
+
     #   Send image
     image_parser = cmd_parsers.add_parser('image')
     image_parser.add_argument('--name', '-n', required=True, type=str, help="The alphanumeric filename for the image")
@@ -242,6 +244,15 @@ def main():
             print("File path length is too long.")
             exit(1)
         img = QcImage(path=args.path, name=n.encode('utf-8'), photo=True)
+    
+    if (args.command == 'autoid'):
+        script_path = os.path.dirname(os.path.realpath(__file__))
+        autoid_file = os.path.join(script_path, 'autoid_next')
+        if os.path.isfile(autoid_file):
+            with open(autoid_file) as f:
+                next_id = int(f.read().strip())
+        else:
+            next_id = CBADGE_ID_START
 
     # pyserial object, with a 1 second timeout on reads.
     ser = serial.Serial(args.port, 230400, parity=serial.PARITY_NONE, timeout=args.timeout)
@@ -258,14 +269,28 @@ def main():
             print("Can only send images to qbadges.")
 
     if args.command == 'dump':
-        if args.pillar > 2 or args.pillar < 0:
-            raise ValueError("Valid pillar IDs are 0, 1, and 2.")
         dump(ser, args.pillar)
 
+    if args.command == 'autoid':
+        if not is_cbadge(badge_id):
+            print("Can only do autoid on cbadges.")
+        elif badge_id != CBADGE_ID_MAX_UNASSIGNED:
+            print("This badge already has id %d." % badge_id)
+        else:
+            # Ok to assign.
+            send_message(ser, SERIAL_OPCODE_SETID, payload=struct.pack(ID_FMT, next_id))
+            badge_id = await_ack(ser)
+            if badge_id == next_id:
+                with open(autoid_file, 'w') as f:
+                    f.write(str(next_id+1))
+                
+            
+        
+
     if args.command == 'setid':
-        if is_cbadge(badge_id) and is_qbadge(args.id):
+        if is_cbadge(badge_id) and not is_cbadge(args.id):
             print("Can't give a qbadge ID to a cbadge.")
-        elif is_qbadge(badge_id) and is_cbadge(args.id):
+        elif is_qbadge(badge_id) and is_qbadge(args.id):
             print("Can't give a cbadge ID to a qbadge.")
         elif not is_cbadge(args.id) and not is_qbadge(args.id):
             print("Supplied ID must be in range for cbadge or qbadge.")

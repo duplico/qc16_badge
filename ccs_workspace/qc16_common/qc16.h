@@ -26,8 +26,8 @@
 #define QC16_PHOTO_NAME_LEN 16
 #define QC16_COLOR_NAME_LEN 16
 
-#define QBADGE_BITFIELD_LONGS 21
-#define CBADGE_BITFIELD_LONGS 47
+#define BITFIELD_BYTES_QBADGE 82
+#define BITFIELD_BYTES_CBADGE 200
 
 // Maximum length of a serial payload (the max work buffer length)
 #define SERIAL_BUFFER_LEN 128
@@ -51,12 +51,12 @@ typedef struct {
 } mission_t;
 
 typedef struct {
-    uint32_t element_qty_cumulative[3];
-    uint32_t missions_run;
     uint16_t qbadges_connected_count;
+    uint16_t cbadges_connected_count;
+    uint32_t missions_run;
+    uint32_t element_qty_cumulative[3];
     __packed uint8_t qbadges_uber_connected_count;
     __packed uint8_t qbadges_handler_connected_count;
-    uint16_t cbadges_connected_count;
     __packed uint8_t cbadges_handler_connected_count;
     __packed uint8_t cbadges_uber_connected_count;
     uint16_t qbadges_in_system;
@@ -73,16 +73,8 @@ typedef struct {
 // NB: It's (probably) important that this is a strict subset of the above,
 //     and, moreover, that it be the leading subset of the above.
 typedef struct {
-    uint32_t element_qty_cumulative[3];
-    uint32_t missions_run;
     uint16_t qbadges_connected_count;
-    __packed uint8_t qbadges_uber_connected_count;
-    __packed uint8_t qbadges_handler_connected_count;
     uint16_t cbadges_connected_count;
-    __packed uint8_t cbadges_handler_connected_count;
-    __packed uint8_t cbadges_uber_connected_count;
-    uint16_t qbadges_in_system;
-    uint16_t cbadges_in_system;
 } cbadge_stats_t;
 
 typedef struct {
@@ -111,8 +103,10 @@ typedef struct {
 typedef struct {
     /// The badge's ID, between CBADGE_ID_START and CBADGE_ID_MAX_UNASSIGNED
     uint16_t badge_id;
-    /// Whether the badge has been assigned an ID or is otherwise "in use"
+    /// Whether the badge has a config created for it.
     uint8_t initialized;
+    /// Whether the badge has been assigned an ID or is otherwise "in use"
+    uint8_t in_service;
     /// Whether the badge has ever run under its own power:
     uint8_t activated;
     /// Uber or handler, and handler type if relevant.
@@ -129,8 +123,6 @@ typedef struct {
     char handle[QC16_BADGE_NAME_LEN + 1];
     /// Running statistics:
     cbadge_stats_t stats;
-    /// Check:
-    uint16_t crc16;
 } cbadge_conf_t;
 
 #define CBADGE_QTY_PLUS1    1

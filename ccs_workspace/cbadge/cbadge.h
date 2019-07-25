@@ -37,23 +37,17 @@
 #define BUTTON_PRESS_COCKTAILS_J1 BIT0
 #define BUTTON_PRESS_FLAGS_J2 BIT1
 #define BUTTON_PRESS_KEYS_J3 BIT2
-#define BUTTON_RELEASE_J1 BIT4
-#define BUTTON_RELEASE_J2 BIT5
-#define BUTTON_RELEASE_J3 BIT6
 
 #define SERIAL_RX_DONE 1
 #define SERIAL_TX_DONE 2
 
 #define DISPLAY_OFF 0
 #define DISPLAY_ON 1
-#define DISPLAY_BADELEMENT 2
-#define DISPLAY_GOODELEMENT 3
-#define DISPLAY_ACTIVATED 4
-#define DISPLAY_MINING 5
-#define DISPLAY_LEVELUP 0x10
+#define DISPLAY_ELEMENT 2
+#define DISPLAY_MINING 3
+#define DISPLAY_LEVELUP 0x10 // TODO: When levelup is done, if we're connected, clear my current element.
 #define DISPLAY_GOMISSION 0x11
-#define DISPLAY_NEWPAIR 0x12
-#define DISPLAY_CONNECTED 0x13
+#define DISPLAY_NEWPAIR_ACTIVATED 0x12
 
 extern cbadge_conf_t badge_conf;
 extern uint8_t s_button;
@@ -64,7 +58,11 @@ extern uint8_t s_paired;
 extern uint8_t s_level_up;
 extern uint8_t badge_active;
 
+extern mission_t current_missions[3];
+extern uint8_t missions_assigned[3];
+
 void complete_mission(mission_t *mission);
 void write_conf();
+uint8_t set_badge_connected(uint16_t id);
 
 #endif /* CBADGE_H_ */

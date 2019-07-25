@@ -59,9 +59,6 @@ uint8_t conf_file_exists() {
 
 void load_conf() {
     storage_read_file("/qbadge/conf", (uint8_t *) (&badge_conf), sizeof(badge_conf));
-    storage_read_file("/qbadge/conn_c", (uint8_t *) cbadges_connected, 47*4);
-    storage_read_file("/qbadge/conn_q", (uint8_t *) qbadges_connected, 47*4);
-    storage_read_file("/qbadge/seen_q", (uint8_t *) qbadges_seen, 47*4);
     load_anim(".current");
     // Turn on the LED for my current light:
     Event_post(led_event_h, LED_EVENT_FN_LIGHT);
@@ -73,9 +70,6 @@ void write_conf() {
     badge_conf.last_clock = Seconds_get();
 
     storage_overwrite_file("/qbadge/conf", (uint8_t *) (&badge_conf), sizeof(badge_conf));
-    storage_overwrite_file("/qbadge/conn_c", (uint8_t *) cbadges_connected, CBADGE_BITFIELD_LONGS*4);
-    storage_overwrite_file("/qbadge/conn_q", (uint8_t *) qbadges_connected, QBADGE_BITFIELD_LONGS*4);
-    storage_overwrite_file("/qbadge/seen_q", (uint8_t *) qbadges_seen, QBADGE_BITFIELD_LONGS*4);
 
     // Now, update the BLE beacon.
     Event_post(uble_event_h, UBLE_EVENT_UPDATE_ADV);

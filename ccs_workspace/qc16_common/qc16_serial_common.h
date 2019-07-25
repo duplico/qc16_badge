@@ -49,7 +49,8 @@ typedef struct {
     __packed uint8_t opcode;
     __packed uint8_t payload_len;
     uint16_t from_id;
-    uint16_t to_id;
+    __packed uint8_t badge_type;
+    __packed uint8_t spare;
     uint16_t crc16_payload;
     uint16_t crc16_header;
 } serial_header_t;
@@ -74,6 +75,7 @@ uint16_t crc16_buf(volatile uint8_t *sbuf, uint8_t len);
 uint16_t crc_build(uint8_t data, uint8_t start_over);
 void crc16_header_apply(serial_header_t *header);
 uint8_t validate_header(serial_header_t *header);
+uint8_t validate_header_simple(serial_header_t *header);
 uint8_t is_cbadge(uint16_t id);
 uint8_t is_qbadge(uint16_t id);
 uint8_t check_id_buf(uint16_t id, uint8_t *buf);

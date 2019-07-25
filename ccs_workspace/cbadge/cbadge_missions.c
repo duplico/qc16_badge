@@ -15,6 +15,9 @@
 
 #include "buttons.h"
 
+mission_t current_missions[3];
+uint8_t missions_assigned[3];
+
 const uint8_t exp_required_per_level[6] = {
     EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1,
     EXP_PER_LEVEL0*MISSIONS_TO_LEVEL1+EXP_PER_LEVEL1*MISSIONS_TO_LEVEL2,

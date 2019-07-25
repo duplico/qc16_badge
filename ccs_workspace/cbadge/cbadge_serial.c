@@ -66,7 +66,7 @@ void serial_send_start(uint8_t opcode, uint8_t payload_len) {
     // Block until the PHY is idle.
     while (serial_phy_state != SERIAL_PHY_STATE_IDLE);
     serial_header_out.opcode = opcode;
-    serial_header_out.to_id = SERIAL_ID_ANY;
+    serial_header_out.badge_type = badge_conf.badge_type;
     serial_header_out.from_id = badge_conf.badge_id;
     serial_header_out.payload_len = payload_len;
     serial_header_out.crc16_payload = crc16_buf(serial_buffer_out, payload_len);
@@ -105,7 +105,7 @@ void serial_send_stats() {
     // Guard against clobbering anything:
     while (serial_phy_state != SERIAL_PHY_STATE_IDLE);
     memcpy((void *)serial_buffer_out, &badge_conf.stats, sizeof(cbadge_stats_t));
-    memset(serial_buffer_out, 0x00, sizeof(qbadge_stats_t)-sizeof(cbadge_stats_t));
+    memset((void *)serial_buffer_out, 0x00, sizeof(qbadge_stats_t)-sizeof(cbadge_stats_t));
     serial_send_start(SERIAL_OPCODE_STATA, sizeof(qbadge_stats_t));
 }
 
@@ -122,7 +122,6 @@ void serial_dump_answer(uint8_t pillar_id) {
     memcpy((void *)serial_buffer_out, &badge_conf.element_qty[pillar_id], sizeof(uint32_t));
     serial_send_start(SERIAL_OPCODE_DUMPA, sizeof(uint32_t));
     badge_conf.element_qty[pillar_id] = 0;
-    // TODO: dump animation
 }
 
 void serial_ll_timeout() {
@@ -190,6 +189,7 @@ void serial_ll_handle_rx() {
             // Need to send an ACK.
             serial_send_start(SERIAL_OPCODE_ACK, 0);
             // Once that completes, we'll be connected.
+            connected_badge_id = serial_header_in.from_id;
             serial_ll_state = SERIAL_LL_STATE_C_IDLE;
             serial_ll_timeout_ms = SERIAL_C_DIO_POLL_MS;
             s_connected = 1;
@@ -198,6 +198,7 @@ void serial_ll_handle_rx() {
     case SERIAL_LL_STATE_NC_PTX:
         // We sent a HELO when we entered this state, so we need an ACK.
         if (serial_header_in.opcode == SERIAL_OPCODE_ACK) {
+            connected_badge_id = serial_header_in.from_id;
             serial_ll_state = SERIAL_LL_STATE_C_IDLE;
             serial_ll_timeout_ms = SERIAL_C_DIO_POLL_MS;
             s_connected = 1;
@@ -252,7 +253,6 @@ void serial_ll_handle_rx() {
 
         } else if (serial_header_in.opcode == SERIAL_OPCODE_PAIR) {
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
-            connected_badge_id = serial_header_in.from_id;
             s_paired = 1;
             serial_pair();
 
@@ -261,8 +261,9 @@ void serial_ll_handle_rx() {
     case SERIAL_LL_STATE_C_PAIRING:
         if (serial_header_in.opcode == SERIAL_OPCODE_PAIR) {
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
-            connected_badge_id = serial_header_in.from_id;
             s_paired = 1;
+            memcpy(current_missions, ((pair_payload_t *)serial_buffer_in)->missions, sizeof(mission_t)*3);
+            memcpy(missions_assigned, ((pair_payload_t *)serial_buffer_in)->mission_assigned, 3);
         }
         break;
     case SERIAL_LL_STATE_C_PAIRED:
@@ -279,6 +280,8 @@ void serial_ll_handle_rx() {
             write_conf();
             // Don't ACK, but rather send a pairing update with our new handle:
             serial_pair();
+        } else if (serial_header_in.opcode == SERIAL_OPCODE_ELEMENT && serial_buffer_in[0] == 123) {
+            set_badge_connected(connected_badge_id);
         }
         break;
     }
@@ -288,7 +291,7 @@ void serial_ll_handle_rx() {
 void serial_phy_handle_rx() {
     // We just got a complete serial message
     //  (header and, possibly, payload).
-    if (!validate_header((serial_header_t *) &serial_header_in)) {
+    if (!validate_header_simple((serial_header_t *) &serial_header_in)) {
         return;
     }
 
@@ -310,7 +313,7 @@ void init_serial() {
         //  DIO1_PTX and DIO2_PRX are asserted (and we have those
         //  set as inputs with pull-down resistors)
         badge_active = 0;
-    } else if (badge_conf.badge_id != CBADGE_ID_MAX_UNASSIGNED) {
+    } else if (badge_conf.in_service) {
         // We are under our own power.
         if (!badge_conf.activated) {
             badge_conf.activated = 1;

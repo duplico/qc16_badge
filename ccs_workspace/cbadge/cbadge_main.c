@@ -34,23 +34,30 @@ volatile uint8_t f_pwm_loop;
 /// Interrupt flag indicating 1 ms has passed.
 volatile uint8_t f_ms;
 
+/// The brightness level of each light
+uint8_t pwm_levels[3];
+
 uint16_t animation_ms_remaining;
 uint16_t animation_step_ms;
 uint16_t animation_step_curr_ms;
 uint8_t animation_type;
+uint8_t animation_type_detail;
 uint8_t animation_type_prev;
 
 cbadge_conf_t badge_conf;
 #pragma PERSISTENT(badge_conf_persistent)
-cbadge_conf_t badge_conf_persistent;
-#pragma PERSISTENT(badge_conf_persistent_backup)
-cbadge_conf_t badge_conf_persistent_backup;
+cbadge_conf_t badge_conf_persistent = {0,};
+
+#pragma PERSISTENT(qbadges_connected)
+uint8_t qbadges_connected[BITFIELD_BYTES_QBADGE] = {0,};
 
 /// This cbadge is currently running under its own power.
 uint8_t badge_active;
 
 pair_payload_t paired_badge;
 
+uint8_t mining_progress[3];
+uint16_t mining_ms;
 
 /// Initialize clock signals and the three system clocks.
 /**
@@ -136,12 +143,10 @@ void init_io() {
 }
 
 void write_conf() {
-    badge_conf.crc16 = crc16_buf((uint8_t *) &badge_conf, sizeof(cbadge_conf_t) - 2);
     __bic_SR_register(GIE);
     // Unlock FRAM access:
     SYSCFG0 = FRWPPW | PFWP_0;
     memcpy(&badge_conf_persistent, &badge_conf, sizeof(cbadge_conf_t));
-    memcpy(&badge_conf_persistent_backup, &badge_conf_persistent, sizeof(cbadge_conf_t));
     // Lock FRAM access:
     SYSCFG0 = FRWPPW | PFWP_1;
     __bis_SR_register(GIE);
@@ -150,7 +155,8 @@ void write_conf() {
 void generate_config() {
     // We treat this like FIRST BOOT. Need to initialize the config.
     badge_conf.badge_id = CBADGE_ID_MAX_UNASSIGNED;
-    badge_conf.initialized = 0;
+    badge_conf.in_service = 0;
+    badge_conf.initialized = 1;
     badge_conf.activated = 0;
     badge_conf.badge_type = BADGE_TYPE_NORMAL;
     badge_conf.element_selected = ELEMENT_COUNT_NONE;
@@ -160,33 +166,84 @@ void generate_config() {
         badge_conf.element_qty[i] = 0;
     }
     memcpy(badge_conf.handle, "cbadge", 7);
+    // TODO: Confirm that the badges_connected buffers are zeroed out.
     write_conf();
 }
 
 void init_conf() {
-    if (badge_conf_persistent.crc16 == crc16_buf((uint8_t *) &badge_conf_persistent, sizeof(cbadge_conf_t) - 2)) {
-        // Good CRC on the persistent config.
-        memcpy(&badge_conf, &badge_conf_persistent, sizeof(cbadge_conf_t));
-    } else if (badge_conf_persistent_backup.crc16 == crc16_buf((uint8_t *) &badge_conf_persistent_backup, sizeof(cbadge_conf_t) - 2)) {
-        // Good CRC on the persistent config's backup. Use it.
-        memcpy(&badge_conf, &badge_conf_persistent_backup, sizeof(cbadge_conf_t));
-        // Fix the primary copy:
-        write_conf();
-    } else {
-        // We have no good configs. Need to create a new mind-brain.
+    if (badge_conf_persistent.initialized != 1) {
+        // Need to generate a config.
         generate_config();
+    } else {
+        memcpy(&badge_conf, &badge_conf_persistent, sizeof(cbadge_conf_t));
+        if (!badge_conf.in_service && (badge_conf.badge_id != CBADGE_ID_MAX_UNASSIGNED || badge_conf.stats.qbadges_connected_count > 3)) {
+            // If we have a real ID, or we've plugged into a few qbadges,
+            //  we're going to go ahead and say this is the config that
+            //  we'll run with.
+            badge_conf.in_service = 1;
+            write_conf();
+        }
     }
 }
 
 void set_display_type(uint8_t dest_type) {
-    if (dest_type < 0x10) {
-        // Indefinite type
-        animation_type = dest_type;
-    } else {
-        // Temporary type
+    pwm_levels[0] = 0;
+    pwm_levels[1] = 0;
+    pwm_levels[2] = 0;
+    animation_step_curr_ms = 0;
+    animation_step_ms = 0; // a "non" animation
+    animation_ms_remaining=3000;
+
+    // If the destination is a temp animation, and the previous is not,
+    //  then save the previous one.
+    if (dest_type >= 0x10 && animation_type < 0x10) {
+        // Only store the previous animation type
+        //  if it's an indefinite animation.
         animation_type_prev = animation_type;
-        animation_type = dest_type;
     }
+    animation_type = dest_type;
+
+    switch(animation_type) {
+    case DISPLAY_OFF:
+        // Nothing to do.
+        break;
+    case DISPLAY_NEWPAIR_ACTIVATED:
+        animation_step_ms = 100;
+    case DISPLAY_ON:
+        pwm_levels[0] = PWM_LEVELS-1;
+        pwm_levels[1] = PWM_LEVELS-1;
+        pwm_levels[2] = PWM_LEVELS-1;
+        break;
+    case DISPLAY_ELEMENT:
+        animation_step_ms = 100;
+        break;
+    case DISPLAY_MINING:
+        animation_step_ms = 300;
+        break;
+    case DISPLAY_LEVELUP:
+        animation_step_ms=75;
+        break;
+    case DISPLAY_GOMISSION:
+        // Blink!
+        animation_step_ms=150;
+        break;
+    }
+
+    s_animation_step = 1;
+}
+
+/// Mark a badge as connected, returning 1 if this is the first time doing so.
+uint8_t set_badge_connected(uint16_t id) {
+    if (!is_qbadge(id)) {
+        return 0;
+    }
+
+    badge_conf.stats.qbadges_connected_count++;
+    // Save, and return 1 for new badge found.
+
+    write_conf();
+    set_display_type(DISPLAY_NEWPAIR_ACTIVATED);
+    return 1;
 }
 
 /// Perform basic initialization of the cbadge.
@@ -199,10 +256,10 @@ void init() {
     init_io();
     init_serial();
 
-    if (!badge_conf.initialized) {
+    if (!badge_conf.in_service) {
         set_display_type(DISPLAY_ON);
     } else if (badge_active) {
-        set_display_type(DISPLAY_ACTIVATED);
+        set_display_type(DISPLAY_MINING);
     } else {
         // Just plugged into a badge.
         set_display_type(DISPLAY_OFF);
@@ -215,18 +272,24 @@ void init() {
     __bis_SR_register(GIE);
 }
 
+// TODO: If active, on disconnect, go back to mining.
+// TODO: connect animation isn't working
+// TODO: test level-up
+// TODO: more PWM levels?
+// TODO: pressing button should re-select animation
+
 int main( void )
 {
     init();
 
-    uint8_t current_button = 0;
+    // TODO: Implement mining
 
+    uint8_t current_button = 0;
     uint8_t pwm_level_curr = 0;
-    uint8_t pwm_levels[3] = {0,0,0};
 
     while (1) {
         if (s_activated) {
-            set_display_type(DISPLAY_ACTIVATED);
+            set_display_type(DISPLAY_MINING);
             s_activated = 0;
         }
 
@@ -304,17 +367,14 @@ int main( void )
                 badge_conf.element_selected = ELEMENT_KEYS;
             }
         }
-        if (s_button & BUTTON_RELEASE_J1) {
-        }
-        if (s_button & BUTTON_RELEASE_J2) {
-        }
-        if (s_button & BUTTON_RELEASE_J3) {
-        }
 
         if (s_button) {
             if (serial_ll_state == SERIAL_LL_STATE_C_PAIRED) {
                 // Send our updated element.
                 serial_element_update();
+                set_display_type(DISPLAY_ELEMENT);
+            } else if (badge_active) {
+                set_display_type(DISPLAY_MINING);
             }
 
             s_button = 0;
@@ -339,6 +399,21 @@ int main( void )
                 }
             }
 
+            if (badge_active && badge_conf.element_selected != ELEMENT_COUNT_NONE) {
+                mining_ms++;
+                if (mining_ms >= 1000) {
+                    // Been a second, time to make progress.
+                    mining_progress[badge_conf.element_selected-3] += 1 + badge_conf.stats.cbadges_connected_count / 128;
+
+                    if (mining_progress[badge_conf.element_selected-3] > 100) {
+                        set_display_type(DISPLAY_LEVELUP);
+                        badge_conf.element_level[badge_conf.element_selected-3]++;
+                        mining_progress[badge_conf.element_selected-3] = 0;
+                    }
+                }
+                mining_ms = 0;
+            }
+
             f_ms = 0;
         }
 
@@ -347,22 +422,43 @@ int main( void )
         }
 
         if (s_animation_step) {
-            if (serial_ll_state == SERIAL_LL_STATE_C_PAIRED) {
-                uint8_t light_id = (uint8_t) ELEMENT_COUNT_NONE;
-                if (badge_conf.element_selected != ELEMENT_COUNT_NONE) {
-                    light_id = (uint8_t) badge_conf.element_selected - 3;
+            switch(animation_type) {
+            case DISPLAY_LEVELUP:
+            case DISPLAY_MINING:
+            case DISPLAY_ELEMENT:
+                if (badge_conf.element_selected - 3 > 2) {
+                    break;
                 }
-                for (uint8_t i=0; i<3; i++) {
-                    if (i == light_id) {
-                        pwm_levels[i]++;
-                        if (pwm_levels[i] > PWM_LEVELS) {
-                            pwm_levels[i] = 0;
-                        }
-                    } else {
-                        pwm_levels[i] = 0;
-                    }
+                pwm_levels[badge_conf.element_selected-3]++;
+                if (pwm_levels[badge_conf.element_selected-3] >= PWM_LEVELS+3) { // TODO: overflow?
+                    pwm_levels[badge_conf.element_selected-3] = 0;
+                }
+                break;
+            case DISPLAY_GOMISSION:
+                if (pwm_levels[0]) {
+                    pwm_levels[0] = PWM_LEVELS-1;
+                    pwm_levels[1] = PWM_LEVELS-1;
+                    pwm_levels[2] = PWM_LEVELS-1;
+                } else {
+                    pwm_levels[0] = 0;
+                    pwm_levels[1] = 0;
+                    pwm_levels[2] = 0;
+                }
+                break;
+            case DISPLAY_NEWPAIR_ACTIVATED:
+                pwm_levels[0] = pwm_levels[0] ? 0 : PWM_LEVELS - 1;
+                pwm_levels[1] = pwm_levels[0];
+                pwm_levels[2] = pwm_levels[0];
+                break;
+            }
+
+            if (animation_type >= 0x10) {
+                animation_ms_remaining--;
+                if (!animation_ms_remaining) {
+                    set_display_type(animation_type_prev);
                 }
             }
+
             s_animation_step = 0;
         }
 
@@ -374,15 +470,15 @@ int main( void )
             if (serial_phy_mode_ptx && is_qbadge(connected_badge_id)) {
                 // The PTX is the side that sends the pairing message
                 serial_pair();
+                set_display_type(DISPLAY_OFF);
+            } else {
+                // TODO: What's the idle animation when connected to a cbadge?
             }
-
-            // TODO: What do we do if we're connected to a cbadge?
 
             s_connected = 0;
         }
 
         if (s_paired) {
-            animation_step_ms = 100;
             badge_conf.element_selected = ELEMENT_COUNT_NONE;
 
             s_paired = 0;

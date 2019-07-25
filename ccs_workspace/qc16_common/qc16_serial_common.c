@@ -40,7 +40,7 @@ void crc16_header_apply(serial_header_t *header) {
     );
 }
 
-uint8_t validate_header(serial_header_t *header) {
+uint8_t validate_header_simple(serial_header_t *header) {
     if (crc16_buf((uint8_t *) header,
                     sizeof(serial_header_t)
                   - sizeof(header->crc16_header)) != header->crc16_header) {
@@ -57,6 +57,11 @@ uint8_t validate_header(serial_header_t *header) {
                     || header->opcode == SERIAL_OPCODE_SETTYPE)) {
         return 0;
     }
+    return 1;
+
+}
+
+uint8_t validate_header(serial_header_t *header) {
 
     switch(header->opcode) {
     // All these have zero length payloads:

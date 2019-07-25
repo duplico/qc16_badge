@@ -28,6 +28,7 @@ extern serial_header_t serial_header_out;
 extern uint8_t serial_phy_mode_ptx;
 extern uint8_t serial_ll_state;
 extern uint16_t connected_badge_id;
+extern uint8_t connected_badge_type;
 
 void serial_pair();
 void serial_element_update();

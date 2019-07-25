@@ -94,8 +94,7 @@ void serial_pair() {
     memcpy(pair_payload_out->handle, badge_conf.handle, QC16_BADGE_NAME_LEN);
     pair_payload_out->handle[QC16_BADGE_NAME_LEN] = 0x00;
     pair_payload_out->last_clock = 0;
-    pair_payload_out->element_selected = ELEMENT_COUNT_NONE;
-    badge_conf.element_selected = ELEMENT_COUNT_NONE;
+    pair_payload_out->element_selected = badge_conf.element_selected;
     // pair_payload_out.missions are DONTCARE
 
     serial_send_start(SERIAL_OPCODE_PAIR, sizeof(pair_payload_t));

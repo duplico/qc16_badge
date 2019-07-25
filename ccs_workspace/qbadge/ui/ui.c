@@ -94,23 +94,15 @@ UInt pop_events(UInt *events_ptr, UInt events_to_check) {
 void ui_draw_screensaver() {
     Graphics_clearDisplay(&ui_gr_context_portrait);
 
-    Graphics_setFont(&ui_gr_context_portrait, &UI_TEXT_FONT);
-    Graphics_drawString(
-            &ui_gr_context_portrait,
-            " - queercon 16 - ",
-            25,
-            0,
-            0,
-            0
-    );
+    qc16gr_drawImage(&ui_gr_context_portrait, &img_human_plate, 0, 0);
 
     Graphics_setFont(&ui_gr_context_portrait, &g_sFontCmtt28);
     Graphics_drawStringCentered(
             &ui_gr_context_portrait,
             "DUPLiCO",
-            7,
+            QC16_BADGE_NAME_LEN,
             64,
-            UI_IDLE_HUD_Y-28-5,
+            UI_IDLE_HUD_Y-19-5,
             0
     );
 

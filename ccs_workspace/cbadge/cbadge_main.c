@@ -464,13 +464,14 @@ int main( void )
 
         if (s_connected) {
             // We are now connected.
+            // This is the new idle animation:
+            set_display_type(DISPLAY_OFF);
 
             // Are we connected to a qbadge? (That's the one that we pair with)
             //  And, if so, do we happen to be configured as the PTX?
             if (serial_phy_mode_ptx && is_qbadge(connected_badge_id)) {
                 // The PTX is the side that sends the pairing message
                 serial_pair();
-                set_display_type(DISPLAY_OFF);
             } else {
                 // TODO: What's the idle animation when connected to a cbadge?
             }

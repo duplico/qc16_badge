@@ -45,7 +45,7 @@
 #define DISPLAY_ON 1
 #define DISPLAY_ELEMENT 2
 #define DISPLAY_MINING 3
-#define DISPLAY_LEVELUP 0x10 // TODO: When levelup is done, if we're connected, clear my current element.
+#define DISPLAY_LEVELUP 0x10
 #define DISPLAY_GOMISSION 0x11
 #define DISPLAY_NEWPAIR_ACTIVATED 0x12
 
@@ -57,9 +57,6 @@ extern uint8_t s_connected;
 extern uint8_t s_paired;
 extern uint8_t s_level_up;
 extern uint8_t badge_active;
-
-extern mission_t current_missions[3];
-extern uint8_t missions_assigned[3];
 
 void complete_mission(mission_t *mission);
 void write_conf();

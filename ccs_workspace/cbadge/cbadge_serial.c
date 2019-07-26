@@ -229,13 +229,6 @@ void serial_ll_handle_rx() {
             write_conf();
             set_display_type(DISPLAY_OFF);
             serial_send_start(SERIAL_OPCODE_ACK, 0);
-        } else if (serial_header_in.opcode == SERIAL_OPCODE_SETNAME) {
-            memcpy(&badge_conf.handle, (uint8_t *) serial_buffer_in, QC16_BADGE_NAME_LEN);
-            // Guarantee null term:
-            badge_conf.handle[QC16_BADGE_NAME_LEN] = 0x00;
-            write_conf();
-            serial_send_start(SERIAL_OPCODE_ACK, 0);
-
         } else if (serial_header_in.opcode == SERIAL_OPCODE_DUMPQ) {
             uint8_t pillar_id = serial_buffer_in[0];
             if (pillar_id > 3) {
@@ -274,18 +267,22 @@ void serial_ll_handle_rx() {
         if (serial_header_in.opcode == SERIAL_OPCODE_GOMISSION) {
             mission_t *mission = (mission_t *) &serial_buffer_in[1];
             complete_mission(mission);
-        } else if (serial_header_in.opcode == SERIAL_OPCODE_SETNAME) {
-            memcpy(&badge_conf.handle, (uint8_t *) serial_buffer_in, QC16_BADGE_NAME_LEN);
-            // Guarantee null term:
-            badge_conf.handle[QC16_BADGE_NAME_LEN] = 0x00;
-            write_conf();
-            // Don't ACK, but rather send a pairing update with our new handle:
-            serial_pair();
         } else if (serial_header_in.opcode == SERIAL_OPCODE_ELEMENT && serial_buffer_in[0] == 123) {
             set_badge_connected(connected_badge_id);
         }
         break;
     }
+
+    // General purpose ones:
+    if (serial_header_in.opcode == SERIAL_OPCODE_SETNAME) {
+        memcpy(&badge_conf.handle, (uint8_t *) serial_buffer_in, QC16_BADGE_NAME_LEN);
+        // Guarantee null term:
+        badge_conf.handle[QC16_BADGE_NAME_LEN] = 0x00;
+        write_conf();
+        // Don't ACK, but rather send a pairing update with our new handle:
+        serial_pair();
+    }
+
 }
 
 void serial_phy_handle_rx() {
@@ -319,7 +316,6 @@ void init_serial() {
             badge_conf.activated = 1;
             // This badge was just turned on under its own power for the first time!
             s_activated = 1;
-            write_conf();
         }
         badge_active = 24;
     }

@@ -305,7 +305,6 @@ def main():
         print(Stats._make(struct.unpack(STATA_FMT, payload)))
         send_message(ser, SERIAL_OPCODE_STAT2Q)
         header, payload = await_serial(ser, SERIAL_OPCODE_PAIR)
-        print(len(payload))
         print(Pair._make(struct.unpack(PAIR_FMT, payload)))
 
     if args.command == 'promote':
@@ -325,7 +324,8 @@ def main():
         handle = args.new_handle.encode('utf-8')
         handle += b'\x00'
         send_message(ser, SERIAL_OPCODE_SETNAME, handle)
-        await_ack(ser)
+        header, payload = await_serial(ser, SERIAL_OPCODE_PAIR)
+        print(Pair._make(struct.unpack(PAIR_FMT, payload)))
 
 
     disconnect(ser)

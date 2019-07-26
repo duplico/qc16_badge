@@ -276,6 +276,7 @@ int main( void )
             set_display_type(DISPLAY_MINING);
             set_display_type(DISPLAY_NEWPAIR_ACTIVATED);
             s_activated = 0;
+            write_conf();
         }
 
         if (f_pwm_loop) {
@@ -467,10 +468,10 @@ int main( void )
                 serial_pair();
             } else if (is_cbadge(connected_badge_id)) {
                 badge_conf.stats.cbadges_connected_count++;
-                set_display_type(DISPLAY_NEWPAIR_ACTIVATED);
                 // When plugging into a powered cbadge, we're temporarily
                 //  also active, and therefore capable of mining!
                 badge_active++;
+                s_activated = 1;
             }
 
             s_connected = 0;
@@ -482,10 +483,9 @@ int main( void )
             if (is_cbadge(connected_badge_id)) {
                 badge_active--;
             }
+            set_display_type(DISPLAY_OFF);
             if (badge_active) {
                 set_display_type(DISPLAY_MINING);
-            } else {
-                set_display_type(DISPLAY_OFF);
             }
             s_disconnected = 0;
         }

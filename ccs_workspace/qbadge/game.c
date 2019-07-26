@@ -273,7 +273,7 @@ uint8_t mission_element_id_remote_fills(mission_t *mission) {
     }
     return mission_element_id_fulfilled_by(
         mission,
-        paired_badge.element_level,
+        &paired_badge.element_level[3],
         paired_badge.element_selected,
         paired_badge.badge_id,
         badge_conf.element_level,

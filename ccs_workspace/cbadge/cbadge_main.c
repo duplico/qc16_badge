@@ -479,7 +479,6 @@ int main( void )
 
         if (s_disconnected) {
             // We're now disconnected.
-            badge_conf.element_selected = ELEMENT_COUNT_NONE;
             if (is_cbadge(connected_badge_id)) {
                 badge_active--;
             }

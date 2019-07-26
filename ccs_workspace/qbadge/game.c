@@ -98,7 +98,6 @@ mission_t generate_mission() {
     } else {
         // vhandler mission.
         badge_conf.vhandler_return_time = Seconds_get() + VHANDLER_COOLDOWN_MIN_SECONDS + rand() % (VHANDLER_COOLDOWN_MAX_SECONDS - VHANDLER_COOLDOWN_MIN_SECONDS);
-        badge_conf.vhandler_return_time = Seconds_get() + 1; // TODO: remove
         badge_conf.vhandler_present = 0;
         // The vhandler always hands out a primary element of qtype.
         new_mission.element_types[0] = (element_type) (rand() % 3);
@@ -196,7 +195,7 @@ uint8_t mission_remote_qualified_for_element_id(mission_t *mission, uint8_t elem
         return 0;
     }
 
-    return mission_levels_qualify_for_element_id(mission, element_position, badge_conf.element_level, paired_badge.element_selected, is_cbadge(paired_badge.badge_id));
+    return mission_levels_qualify_for_element_id(mission, element_position, &paired_badge.element_level[3], paired_badge.element_selected, is_cbadge(paired_badge.badge_id));
 }
 
 /// In the provided mission, which element ID do we fulfill?
@@ -208,7 +207,7 @@ uint8_t mission_remote_qualified_for_element_id(mission_t *mission, uint8_t elem
  */
 uint8_t mission_element_id_fulfilled_by(mission_t *mission, uint8_t *this_element_level, element_type this_element_selected, uint16_t this_id,
                                         uint8_t *other_element_level, element_type other_element_selected, uint16_t other_id, uint8_t paired) {
-    // If this is a 1-element mission, obviously it's the only one we can do.
+    // If this is a 1-element mission, obviously #0 is the only one we can do.
     if (mission->element_types[1] == ELEMENT_COUNT_NONE) {
         return 0;
     }

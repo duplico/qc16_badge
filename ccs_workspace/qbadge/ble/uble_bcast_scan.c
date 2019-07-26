@@ -77,7 +77,7 @@ uint8 ubsTaskStack[UBS_TASK_STACK_SIZE];
 static bool UBLEBcastScan_initObserver(void);
 
 // GAP - Advertisement data (31 byte max)
-uint8 advertData[30] =
+uint8 advertData[31] =
 {
  // Flags; this sets the device to use limited discoverable
  // mode (advertises for 30 seconds at a time) instead of general
@@ -116,7 +116,6 @@ uint8 advertData[30] =
    0x00, // Badge ID LSB //.26
    0x00, // TYPE FLAG (BIT7=UBER; BIT6=HANDLER; BIT5-3=unused BIT2-0=ELEMENT)
    0x00, // SPARE
-   0x00, // SPARE
    0x00, // CHECK // .30
    0x00, // CHECK // .31
 };
@@ -125,8 +124,6 @@ typedef struct {
     uint16_t badge_id;
     __packed uint8_t badge_type;
     __packed uint8_t spare1;
-    __packed uint8_t spare2;
-    __packed uint8_t spare3;
     uint16_t crc16;
 } qc16_ble_t;
 
@@ -342,8 +339,6 @@ static void UBLEBcastScan_bcast_advPrepareCB(void) {
     badge_frame->badge_id = badge_conf.badge_id;
     badge_frame->badge_type = badge_conf.badge_type;
     badge_frame->spare1 = 0;
-    badge_frame->spare2 = 0;
-    badge_frame->spare3 = 0;
     badge_frame->crc16 = crc16_buf((uint8_t *) badge_frame, sizeof(qc16_ble_t)-2);
 
     uble_setParameter(UBLE_PARAM_ADVDATA, sizeof(advertData), advertData);

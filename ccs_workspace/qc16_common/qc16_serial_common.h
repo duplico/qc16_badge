@@ -50,7 +50,7 @@ typedef struct {
     __packed uint8_t payload_len;
     uint16_t from_id;
     __packed uint8_t badge_type;
-    __packed uint8_t spare;
+    __packed uint8_t new_conn;
     uint16_t crc16_payload;
     uint16_t crc16_header;
 } serial_header_t;

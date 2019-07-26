@@ -47,6 +47,8 @@ Clock_Handle serial_timeout_clock_h;
 
 spiffs_file serial_fd;
 
+uint8_t serial_new_cbadge = 0;
+
 const PIN_Config serial_gpio_prx[] = {
     QC16_PIN_SERIAL_DIO1_PTX | PIN_INPUT_EN | PIN_PULLDOWN,
     QC16_PIN_SERIAL_DIO2_PRX | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH,
@@ -66,6 +68,13 @@ void serial_send(uint8_t opcode, uint8_t *payload, uint8_t payload_len) {
     header_out.badge_type = badge_conf.badge_type;
     header_out.from_id = badge_conf.badge_id;
     header_out.payload_len = payload_len;
+    if (serial_new_cbadge) {
+        header_out.new_conn = 1;
+        serial_new_cbadge = 0;
+    } else {
+        header_out.new_conn = 0;
+    }
+
     if (payload_len) {
         header_out.crc16_payload = crc16_buf(payload, payload_len);
     }
@@ -198,6 +207,8 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             // If this is a badge we should pair with, go ahead and do that:
             if (is_cbadge(header->from_id) || is_qbadge(header->from_id)) {
                 serial_ll_state = SERIAL_LL_STATE_C_PAIRING;
+                // TODO: Not this:
+                serial_new_cbadge = 1;
                 serial_pair();
             }
 
@@ -245,6 +256,8 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
             memcpy(&paired_badge, payload, sizeof(pair_payload_t));
             badge_paired = 1;
+            // TODO: Not this:
+            serial_new_cbadge = 1;
             serial_pair();
             Event_post(ui_event_h, UI_EVENT_PAIRED);
 

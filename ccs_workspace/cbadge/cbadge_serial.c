@@ -98,6 +98,11 @@ void serial_pair() {
     pair_payload_out->element_selected = badge_conf.element_selected;
     // pair_payload_out.missions are DONTCARE
 
+    // NB: This only comes in on a "pair" message...
+    if (serial_header_in.new_conn) {
+        set_badge_connected(serial_header_in.from_id);
+    }
+
     serial_send_start(SERIAL_OPCODE_PAIR, sizeof(pair_payload_t));
 }
 
@@ -267,8 +272,6 @@ void serial_ll_handle_rx() {
         if (serial_header_in.opcode == SERIAL_OPCODE_GOMISSION) {
             mission_t *mission = (mission_t *) &serial_buffer_in[1];
             complete_mission(mission);
-        } else if (serial_header_in.opcode == SERIAL_OPCODE_ELEMENT && serial_buffer_in[0] == 123) {
-            set_badge_connected(connected_badge_id);
         }
         break;
     }
@@ -282,7 +285,6 @@ void serial_ll_handle_rx() {
         // Don't ACK, but rather send a pairing update with our new handle:
         serial_pair();
     }
-
 }
 
 void serial_phy_handle_rx() {

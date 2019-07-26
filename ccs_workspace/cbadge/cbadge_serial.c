@@ -104,8 +104,8 @@ void serial_pair() {
 void serial_send_stats() {
     // Guard against clobbering anything:
     while (serial_phy_state != SERIAL_PHY_STATE_IDLE);
+    memset((void *)serial_buffer_out, 0x00, sizeof(qbadge_stats_t));
     memcpy((void *)serial_buffer_out, &badge_conf.stats, sizeof(cbadge_stats_t));
-    memset((void *)serial_buffer_out, 0x00, sizeof(qbadge_stats_t)-sizeof(cbadge_stats_t));
     serial_send_start(SERIAL_OPCODE_STATA, sizeof(qbadge_stats_t));
 }
 

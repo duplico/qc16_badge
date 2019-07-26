@@ -456,7 +456,6 @@ int main( void )
 
         if (s_connected) {
             // We are now connected.
-            // This is the new idle animation:
 
             // Are we connected to a qbadge? (That's the one that we pair with)
             //  And, if so, do we happen to be configured as the PTX?

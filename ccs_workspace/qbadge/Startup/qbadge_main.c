@@ -31,8 +31,13 @@
 
 int main()
 {
+    // Do the basic initialization of peripherals.
     Power_init();
     if (PIN_init(qc16_pin_init_table) != PIN_SUCCESS) {
+        // If this fails, our EPD connection will be broken.
+        //  We have to have it functioning for the badge to work,
+        //  really, and there won't be a way to indicate an error,
+        //  so I'm OK with just spinning forever.
         while (1);
     }
     SPI_init();
@@ -51,13 +56,19 @@ int main()
     VIMSModeSet(VIMS_BASE, VIMS_MODE_ENABLED);
 #endif //CACHE_AS_RAM
 
-    // Create the BLE task:
-    UBLEBcastScan_createTask();
-    // Create the UI tasks:
-    ui_init();
-    serial_init();
-    led_init();
+    // Open the SPI connection, and initialize the EPD data structures.
     epd_phy_init();
+
+    // All threads and other SYS/BIOS kernel initialization happens below here.
+
+    // Create the events:
+    led_event_h = Event_create(NULL, NULL);
+    uble_event_h = Event_create(NULL, NULL);
+    ui_event_h = Event_create(NULL, NULL);
+
+    // Create and start the UI task; this thread bootstraps the badge by
+    //  initializing all the other tasks.
+    ui_init();
 
     BIOS_start();     /* enable interrupts and start SYS/BIOS */
 

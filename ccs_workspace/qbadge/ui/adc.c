@@ -85,12 +85,13 @@ void adc_trigger_light() {
 void adc_timer_fn(UArg a0)
 {
     if (curr_channel == ADCBUF_CH_LIGHT) {
+        curr_channel = ADCBUF_CH_VBAT;
+
         next_conversion.arg = NULL;
         next_conversion.sampleBufferTwo = NULL;
         next_conversion.adcChannel = ADCBUF_CH_LIGHT;
         next_conversion.sampleBuffer = &brightness_raw;
         next_conversion.samplesRequestedCount = 1;
-        curr_channel = ADCBUF_CH_VBAT;
         ADCBuf_convert(adc_buf_h, &next_conversion, 1);
     } else {
         adc_trigger_light();

@@ -50,6 +50,8 @@ extern "C"
 {
 #endif
 
+#include <hal_assert.h>
+
 /*********************************************************************
  * @fn      UBLEBcastScan_doTxPower
  *

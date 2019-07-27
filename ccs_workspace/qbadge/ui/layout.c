@@ -34,6 +34,7 @@
 
 uint8_t byte_rank(uint8_t v);
 
+/// Draw an element somewhere. NB: The element MUST be a valid element, and MUST NOT be ELEMENT_COUNT_NONE.
 void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capacity, uint32_t number, uint16_t x, uint16_t y) {
     // NB: We don't do much bounds checking, because none of the parameters
     //     meaningfully address anything.
@@ -42,6 +43,8 @@ void ui_draw_element(element_type element, uint8_t bar_level, uint8_t bar_capaci
 
     if (element >= ELEMENT_COUNT_NONE) {
         // invalid call, trap (because something terrible may have happened)
+        // There's likely been a buffer overflow somewhere. Halt execution to
+        // protect from further damage.
         while (1);
     }
 
@@ -109,8 +112,6 @@ void ui_draw_top_bar_remote_element_icons() {
 
 void ui_draw_battery_at(Graphics_Context *gr, uint16_t x, uint16_t y) {
     Graphics_Rectangle rect;
-
-    // TODO: Hey, just make this work::::::::::::::::::::::::::::::::
 
     for (uint8_t battery=0; battery<2; battery++) {
         // Draw the battery body:
@@ -227,7 +228,6 @@ void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint1
 
     x += img_hud_radar.xSize + 4;
 
-    // TODO: numbers:
     ui_draw_battery_at(gr, x, y+2);
 }
 

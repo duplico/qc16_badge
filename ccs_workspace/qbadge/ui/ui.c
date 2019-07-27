@@ -276,6 +276,7 @@ void ui_task_fn(UArg a0, UArg a1) {
     } while (!vbat_out_uvolts);
 
     storage_init();
+
     if (post_status_spiffs == 1) {
         // Don't do our config unless SPIFFS is working.
         config_init();
@@ -311,6 +312,9 @@ void ui_task_fn(UArg a0, UArg a1) {
         }
     }
 
+    // Create and start the LED task; start the tail animation clock.
+    led_init();
+
     // Now, let's look at the POST results.
     if (post_errors) {
         Graphics_clearDisplay(&ui_gr_context_landscape);
@@ -344,8 +348,6 @@ void ui_task_fn(UArg a0, UArg a1) {
     UBLEBcastScan_createTask();
     // Create and start the serial task.
     serial_init();
-    // Create and start the LED task; start the tail animation clock.
-    led_init();
 
     load_anim(".current");
 

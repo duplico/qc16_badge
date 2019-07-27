@@ -263,6 +263,15 @@ void ui_task_fn(UArg a0, UArg a1) {
     storage_init();
     config_init();
 
+    // Create and start the BLE task:
+    UBLEBcastScan_createTask();
+    // Create and start the serial task.
+    serial_init();
+    // Create and start the LED task; start the tail animation clock.
+    led_init();
+
+    load_anim(".current");
+
     ui_transition(UI_SCREEN_MAINMENU);
 
     uint8_t refreshed;

@@ -62,15 +62,9 @@ int main()
     uble_event_h = Event_create(NULL, NULL);
     ui_event_h = Event_create(NULL, NULL);
 
-    // Create and start the BLE task:
-    UBLEBcastScan_createTask();
     // Create and start the UI task; this thread bootstraps the badge by
     //  initializing all the other tasks.
     ui_init();
-    // Create and start the serial task.
-    serial_init();
-    // Create and start the LED task; start the tail animation clock.
-    led_init();
 
     BIOS_start();     /* enable interrupts and start SYS/BIOS */
 

@@ -59,7 +59,6 @@ uint8_t conf_file_exists() {
 
 void load_conf() {
     storage_read_file("/qbadge/conf", (uint8_t *) (&badge_conf), sizeof(badge_conf));
-    load_anim(".current");
     // Turn on the LED for my current light:
     Event_post(led_event_h, LED_EVENT_FN_LIGHT);
     Seconds_set(badge_conf.last_clock);

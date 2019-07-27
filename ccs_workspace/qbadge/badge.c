@@ -15,6 +15,7 @@
 
 #include <qc16.h>
 #include <qbadge.h>
+#include <post.h>
 
 #include "queercon_drivers/storage.h"
 #include <ui/graphics.h>
@@ -48,18 +49,14 @@ uint8_t conf_file_exists() {
     volatile int32_t status;
     spiffs_stat stat;
     status = SPIFFS_stat(&fs, "/qbadge/conf", &stat);
-    if (status == SPIFFS_OK && stat.size == sizeof(badge_conf)) {
+    if (status == SPIFFS_OK) {
         return 1;
-    } else if (status == SPIFFS_OK) {
-        // wrong size:
-        status = SPIFFS_remove(&fs, "/qbadge/conf");
     }
     return 0;
 }
 
 void load_conf() {
     storage_read_file("/qbadge/conf", (uint8_t *) (&badge_conf), sizeof(badge_conf));
-    load_anim(".current");
     // Turn on the LED for my current light:
     Event_post(led_event_h, LED_EVENT_FN_LIGHT);
     Seconds_set(badge_conf.last_clock);
@@ -142,26 +139,32 @@ void generate_config() {
 }
 
 uint8_t config_is_valid() {
-    // TODO: Implement
-    return 1;
+    volatile int32_t status;
+    spiffs_stat stat;
+    status = SPIFFS_stat(&fs, "/qbadge/conf", &stat);
+    if (status == SPIFFS_OK && stat.size == sizeof(badge_conf)) {
+        return 1;
+    }
+    return 0;
 }
 
 /// Validate, load, and/or generate this badge's configuration as appropriate.
 void config_init() {
-    if (conf_file_exists()) {
-        load_conf();
-    }
-    // Check the stored config:
-    // TODO
-    if (!config_is_valid()) {
-
-        // If we're still here, the config source was invalid, and
-        //  we must generate a new one.
+    if (!conf_file_exists()) {
+        // If no config exists, generate it.
         generate_config();
 
         // Now that we've created and saved a config, we're going to load it.
         // This way we guarantee that all the proper start-up occurs.
         load_conf();
+    } else if (config_is_valid()) {
+        // The file exists, but is it valid?
+        // If it looks valid, load it.
+        load_conf();
+    } else {
+        // The file exists but appears to be invalid.
+        post_status_config = -1;
+        post_errors++;
     }
 
     radar_init();

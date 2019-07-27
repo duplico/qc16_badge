@@ -463,14 +463,6 @@ void serial_init() {
     uart_params.parityType = UART_PAR_NONE;
     uart_params.stopBits = UART_STOP_ONE;
 
-//    Clock_Params clockParams;
-//    Error_Block eb;
-//    Error_init(&eb);
-//    Clock_Params_init(&clockParams);
-//    clockParams.period = PRX_TIME_MS*100;
-//    clockParams.startFlag = FALSE;
-//    serial_timeout_clock_h = Clock_create(serial_clock_swi, 2, &clockParams, &eb);
-
     Task_Params taskParams;
     Task_Params_init(&taskParams);
     taskParams.stack = serial_task_stack;

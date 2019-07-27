@@ -19,7 +19,9 @@
 #include <board.h>
 #include <qbadge.h>
 #include <badge.h>
+#include <post.h>
 
+#include <ble/uble_bcast_scan.h>
 #include <queercon_drivers/epd.h>
 #include <queercon_drivers/ht16d35b.h>
 #include <queercon_drivers/storage.h>
@@ -33,6 +35,8 @@
 #include <ui/ui.h>
 #include <ui/keypad.h>
 #include <ui/layout.h>
+
+extern const tFont g_sFontfixed10x20;
 
 Event_Handle ui_event_h;
 Graphics_Context ui_gr_context_landscape;
@@ -259,8 +263,91 @@ void ui_scan_do(UInt events) {
 void ui_task_fn(UArg a0, UArg a1) {
     UInt events;
 
+    // Read the battery.
+    //  (that clock is already running.)
+    //  (as is the keyboard clock)
+    do {
+        Task_sleep(100);
+        if (vbat_out_uvolts && vbat_out_uvolts < 50000) { // 50 mV
+            // We're on external power.
+        } else if (vbat_out_uvolts < 1900000) { // TODO: define for this.
+            // Batteries are below cut-off voltage
+        }
+    } while (!vbat_out_uvolts);
+
     storage_init();
-    config_init();
+    if (post_status_spiffs == 1) {
+        // Don't do our config unless SPIFFS is working.
+        config_init();
+        if (post_status_config == -1) {
+
+            Graphics_clearDisplay(&ui_gr_context_landscape);
+            Graphics_setFont(&ui_gr_context_landscape, &g_sFontfixed10x20);
+            uint8_t y = 10;
+
+            Graphics_drawString(&ui_gr_context_landscape, "WARNING!!!", 99, 5, y, 1);
+            y += 21;
+
+            Graphics_drawString(&ui_gr_context_landscape, "Stored config seems invalid.", 99, 5, y, 1);
+            y += 21;
+
+            Graphics_drawString(&ui_gr_context_landscape, "Press any key to regenerate.", 99, 5, y, 1);
+            y += 21;
+
+            Graphics_drawString(&ui_gr_context_landscape, "This CLEARS ALL PROGRESS!", 99, 5, y, 1);
+            y += 21;
+
+            Graphics_flushBuffer(&ui_gr_context_landscape);
+            Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS, BIOS_WAIT_FOREVER);
+
+            // Invalid config.
+            generate_config();
+
+            // Now that we've created and saved a config, we're going to load it.
+            // This way we guarantee that all the proper start-up occurs.
+            load_conf();
+            post_errors--;
+            post_status_config = 1;
+        }
+    }
+
+    // Now, let's look at the POST results.
+    if (post_errors) {
+        Graphics_clearDisplay(&ui_gr_context_landscape);
+        Graphics_setFont(&ui_gr_context_landscape, &g_sFontfixed10x20);
+        uint8_t y = 10;
+        char disp_text[33] = {0x00,};
+
+        sprintf(disp_text, "POST error count: %d", post_errors);
+        Graphics_drawString(&ui_gr_context_landscape, disp_text, 99, 5, y, 1);
+        y += 21;
+
+        if (post_status_leds) {
+            sprintf(disp_text, "  LED error: %d", post_status_leds);
+            Graphics_drawString(&ui_gr_context_landscape, disp_text, 99, 5, y, 1);
+            y += 21;
+        }
+
+        if (post_status_leds) {
+            sprintf(disp_text, "  SPIFFS error: %d", post_status_spiffs);
+            Graphics_drawString(&ui_gr_context_landscape, disp_text, 99, 5, y, 1);
+            y += 21;
+        }
+
+        Graphics_drawString(&ui_gr_context_landscape, "Press a key to continue.", 99, 5, y, 1);
+
+        Graphics_flushBuffer(&ui_gr_context_landscape);
+        Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS, BIOS_WAIT_FOREVER);
+    }
+
+    // Create and start the BLE task:
+    UBLEBcastScan_createTask();
+    // Create and start the serial task.
+    serial_init();
+    // Create and start the LED task; start the tail animation clock.
+    led_init();
+
+    load_anim(".current");
 
     ui_transition(UI_SCREEN_MAINMENU);
 
@@ -474,6 +561,4 @@ void ui_init() {
     Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
     Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
     Graphics_clearDisplay(&ui_gr_context_portrait);
-
-    ui_event_h = Event_create(NULL, NULL);
 }

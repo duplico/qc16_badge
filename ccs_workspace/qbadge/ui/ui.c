@@ -263,279 +263,39 @@ void ui_scan_do(UInt events) {
 void ui_task_fn(UArg a0, UArg a1) {
     UInt events;
 
-    // Read the battery.
-    //  (that clock is already running.)
-    //  (as is the keyboard clock)
-    do {
-        Task_sleep(100);
-        if (vbat_out_uvolts && vbat_out_uvolts < 50000) { // 50 mV
-            // We're on external power.
-        } else if (vbat_out_uvolts < 1900000) { // TODO: define for this.
-            // Batteries are below cut-off voltage
-        }
-    } while (!vbat_out_uvolts);
-
     storage_init();
-
-    if (post_status_spiffs == 1) {
-        // Don't do our config unless SPIFFS is working.
-        config_init();
-        if (post_status_config == -1) {
-
-            Graphics_clearDisplay(&ui_gr_context_landscape);
-            Graphics_setFont(&ui_gr_context_landscape, &g_sFontfixed10x20);
-            uint8_t y = 10;
-
-            Graphics_drawString(&ui_gr_context_landscape, "WARNING!!!", 99, 5, y, 1);
-            y += 21;
-
-            Graphics_drawString(&ui_gr_context_landscape, "Stored config seems invalid.", 99, 5, y, 1);
-            y += 21;
-
-            Graphics_drawString(&ui_gr_context_landscape, "Press any key to regenerate.", 99, 5, y, 1);
-            y += 21;
-
-            Graphics_drawString(&ui_gr_context_landscape, "This CLEARS ALL PROGRESS!", 99, 5, y, 1);
-            y += 21;
-
-            Graphics_flushBuffer(&ui_gr_context_landscape);
-            Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS, BIOS_WAIT_FOREVER);
-
-            // Invalid config.
-            generate_config();
-
-            // Now that we've created and saved a config, we're going to load it.
-            // This way we guarantee that all the proper start-up occurs.
-            load_conf();
-            post_errors--;
-            post_status_config = 1;
-        }
-    }
 
     // Create and start the LED task; start the tail animation clock.
     led_init();
 
     // Now, let's look at the POST results.
-    if (post_errors) {
-        Graphics_clearDisplay(&ui_gr_context_landscape);
-        Graphics_setFont(&ui_gr_context_landscape, &g_sFontfixed10x20);
-        uint8_t y = 10;
-        char disp_text[33] = {0x00,};
+    Graphics_clearDisplay(&ui_gr_context_landscape);
+    Graphics_setFont(&ui_gr_context_landscape, &g_sFontfixed10x20);
+    uint8_t y = 10;
+    char disp_text[33] = {0x00,};
 
-        sprintf(disp_text, "POST error count: %d", post_errors);
+    sprintf(disp_text, "POST error count: %d", post_errors);
+    Graphics_drawString(&ui_gr_context_landscape, disp_text, 99, 5, y, 1);
+    y += 21;
+
+    if (post_status_leds) {
+        sprintf(disp_text, "  LED error: %d", post_status_leds);
         Graphics_drawString(&ui_gr_context_landscape, disp_text, 99, 5, y, 1);
         y += 21;
-
-        if (post_status_leds) {
-            sprintf(disp_text, "  LED error: %d", post_status_leds);
-            Graphics_drawString(&ui_gr_context_landscape, disp_text, 99, 5, y, 1);
-            y += 21;
-        }
-
-        if (post_status_leds) {
-            sprintf(disp_text, "  SPIFFS error: %d", post_status_spiffs);
-            Graphics_drawString(&ui_gr_context_landscape, disp_text, 99, 5, y, 1);
-            y += 21;
-        }
-
-        Graphics_drawString(&ui_gr_context_landscape, "Press a key to continue.", 99, 5, y, 1);
-
-        Graphics_flushBuffer(&ui_gr_context_landscape);
-        Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS, BIOS_WAIT_FOREVER);
     }
 
-    // Create and start the BLE task:
-    UBLEBcastScan_createTask();
-    // Create and start the serial task.
-    serial_init();
+    if (post_status_leds) {
+        sprintf(disp_text, "  SPIFFS error: %d", post_status_spiffs);
+        Graphics_drawString(&ui_gr_context_landscape, disp_text, 99, 5, y, 1);
+        y += 21;
+    }
 
-    load_anim(".current");
+    Graphics_flushBuffer(&ui_gr_context_landscape);
 
-    ui_transition(UI_SCREEN_MAINMENU);
-
-    uint8_t refreshed;
+    ht16d_all_one_color(50, 50, 50);
 
     while (1) {
-        events = Event_pend(ui_event_h, Event_Id_NONE, ~Event_Id_NONE,  UI_AUTOREFRESH_TIMEOUT);
-
-        if (events & UI_EVENT_REFRESH) {
-            refreshed = 1;
-            process_seconds();
-            // Pop any HUD updates we get, because we're already refreshing.
-            Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_HUD_UPDATE, BIOS_NO_WAIT);
-            pop_events(&events, UI_EVENT_HUD_UPDATE);
-        }
-
-        // Timeouts only happen in the normal menu system & overlays:
-        if (!events && ui_current < UI_SCREEN_PAIR_MENU) {
-            // This is a timeout.
-            if (ui_colorpicking) {
-                ui_colorpicking_unload();
-            } else if (ui_textentry) {
-                ui_textentry_unload(0);
-            } else if (ui_textbox) {
-                // TODO: Should this stay up?
-                ui_textbox_unload(0);
-            } else if (ui_current == UI_SCREEN_IDLE) {
-            } else {
-                ui_transition(UI_SCREEN_IDLE);
-            }
-            // If we're doing a timeout, it's because nobody is paying
-            //  attention. Therefore, it's likely safe to do a full refresh.
-            epd_do_partial = 0;
-            continue;
-        }
-
-        if (pop_events(&events, UI_EVENT_DO_SAVE)) {
-            // TODO: Consider locking this out in low-power mode?
-            write_conf();
-        }
-
-        if (events & UI_EVENT_PAIRED) {
-            // Unload everything, go to main pairing menu.
-            if (ui_colorpicking) {
-                ui_colorpicking_unload();
-            }
-            if (ui_textentry) {
-                ui_textentry_unload(0);
-            }
-            if (ui_textbox) {
-                ui_textbox_unload(0);
-            }
-            ui_transition(UI_SCREEN_PAIR_MENU);
-            Event_post(led_event_h, LED_EVENT_FN_LIGHT);
-            continue;
-        }
-
-        if (events & UI_EVENT_UNPAIRED) {
-            // Unload everything, go to main menu.
-            if (ui_colorpicking) {
-                ui_colorpicking_unload();
-            }
-            if (ui_textentry) {
-                ui_textentry_unload(0);
-            }
-            ui_transition(UI_SCREEN_MAINMENU);
-            continue;
-        }
-
-        // NB: This order is very important:
-        //     (colorpicking is not allowed during textentry)
-        if (!ui_textentry && kb_active_key_masked == KB_F4_PICKER
-                && pop_events(&events, UI_EVENT_KB_PRESS)) {
-            if (ui_colorpicking) {
-                ui_colorpicking_unload();
-            } else {
-                ui_colorpicking_load();
-            }
-        }
-
-        if (kb_active_key_masked == KB_ROT
-                && ui_is_landscape()
-                && pop_events(&events, UI_EVENT_KB_PRESS)) {
-            // The rotate button is pressed, and we're NOT in one of the
-            //  portrait modes:
-            epd_flip();
-            Graphics_flushBuffer(&ui_gr_context_landscape);
-        } else if (kb_active_key_masked == KB_ROT) {
-        }
-
-        // NB: We only process element changes if the agent is present,
-        //     because if the agent is absent we're set in that element
-        //     on a mission!
-        if (events & UI_EVENT_KB_PRESS && badge_conf.agent_present
-                && (   kb_active_key_masked == KB_F1_LOCK
-                    || kb_active_key_masked == KB_F2_COIN
-                    || kb_active_key_masked == KB_F3_CAMERA)) {
-            // NB: Below we are intentionally NOT writing the config.
-            //     This isn't a super important configuration option,
-            //     so we're not going to waste cycles (CPU and flash)
-            //     on saving our whole config every time the user hits
-            //     a button. Instead, we'll rely on the periodic save
-            //     that writes the current clock to the config.
-
-            // Convert from a button ID to an element enum.
-            element_type next_element;
-            switch(kb_active_key_masked) {
-            case KB_F1_LOCK:
-                next_element = ELEMENT_LOCKS;
-                break;
-            case KB_F2_COIN:
-                next_element = ELEMENT_COINS;
-                break;
-            case KB_F3_CAMERA:
-                next_element = ELEMENT_CAMERAS;
-                break;
-            }
-
-            // Allow elements to be deselected so the LED can turn off.
-            if (badge_conf.element_selected == next_element) {
-                badge_conf.element_selected = ELEMENT_COUNT_NONE;
-            } else {
-                badge_conf.element_selected = next_element;
-            }
-
-            // We need to refresh the screen if we're looking at missions,
-            //  because there are UI elements there that depend on the
-            //  selected element button.
-            if (ui_current == UI_SCREEN_MISSIONS || ui_current == UI_SCREEN_PAIR_MENU) {
-                epd_do_partial = 1;
-                Event_post(ui_event_h, UI_EVENT_REFRESH);
-            }
-            Event_post(led_event_h, LED_EVENT_FN_LIGHT);
-
-            // This correctly does nothing if we're not paired:
-            serial_update_element();
-        }
-
-        if (ui_colorpicking) {
-            ui_colorpicking_do(events);
-        } else if (ui_textentry) {
-            ui_textentry_do(events);
-        } else if (ui_textbox) {
-            ui_textbox_do(events);
-        } else {
-            // If neither of our "overlay" options are in use, then we follow
-            //  a normal state flow:
-            if (ui_current == UI_SCREEN_IDLE) {
-                if ((events & UI_EVENT_KB_PRESS) && kb_active_key_masked == KB_OK) {
-                    ui_transition(UI_SCREEN_MAINMENU);
-                }
-                ui_screensaver_do(events);
-            } else if (ui_current >= UI_SCREEN_MAINMENU && ui_current <= UI_SCREEN_MENUSYSTEM_END) {
-                if (ui_menusystem_do(events)) {
-                    continue;
-                }
-                switch(ui_current) {
-                case UI_SCREEN_MAINMENU:
-                    ui_mainmenu_do(events);
-                    break;
-                case UI_SCREEN_INFO:
-                    ui_info_do(events);
-                    break;
-                case UI_SCREEN_MISSIONS:
-                    ui_missions_do(events);
-                    break;
-                case UI_SCREEN_SCAN:
-                    ui_scan_do(events);
-                    break;
-                case UI_SCREEN_FILES:
-                    ui_files_do(events);
-                    break;
-
-                case UI_SCREEN_PAIR_MENU:
-                    ui_pair_menu_do(events);
-                    break;
-                }
-            }
-        }
-
-        if (refreshed) {
-            // If we just finished refreshing the screen, pop any keyboard
-            //  events off, to avoid spurious double-presses.
-            Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS,  BIOS_NO_WAIT);
-        }
-
+        Task_yield();
     }
 }
 
@@ -545,7 +305,6 @@ uint8_t post() {
 
 void ui_init() {
     kb_init();
-    adc_init();
 
     Task_Params taskParams;
     Task_Params_init(&taskParams);

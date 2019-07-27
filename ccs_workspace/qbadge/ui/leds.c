@@ -320,8 +320,6 @@ void led_task_fn(UArg a0, UArg a1) {
 }
 
 void led_init() {
-    led_event_h = Event_create(NULL, NULL);
-
     Task_Params taskParams;
     Task_Params_init(&taskParams);
     taskParams.stack = led_task_stack;

@@ -20,6 +20,7 @@
 #include <qbadge.h>
 #include <badge.h>
 
+#include <ble/uble_bcast_scan.h>
 #include <queercon_drivers/epd.h>
 #include <queercon_drivers/ht16d35b.h>
 #include <queercon_drivers/storage.h>
@@ -474,6 +475,4 @@ void ui_init() {
     Graphics_setBackgroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_WHITE);
     Graphics_setForegroundColor(&ui_gr_context_portrait, GRAPHICS_COLOR_BLACK);
     Graphics_clearDisplay(&ui_gr_context_portrait);
-
-    ui_event_h = Event_create(NULL, NULL);
 }

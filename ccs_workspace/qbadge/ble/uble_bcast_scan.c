@@ -195,10 +195,6 @@ void UBLEBcastScan_createTask(void)
  */
 static void UBLEBcastScan_init(void)
 {
-
-    // Create an RTOS event used to wake up this application to process events.
-    uble_event_h = Event_create(NULL, NULL);
-
     // Create an RTOS queue for message from profile to be sent to app.
     appMsgQueue = Util_constructQueue(&appMsg);
 

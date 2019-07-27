@@ -50,31 +50,36 @@ void storage_init() {
         post_errors++;
         return;
     }
+
     status = SPIFFS_mount(&fs, &fsConfig, spiffsWorkBuffer,
         spiffsFileDescriptorCache, sizeof(spiffsFileDescriptorCache),
         spiffsReadWriteCache, sizeof(spiffsReadWriteCache), NULL);
 
-    if (status == SPIFFS_ERR_NOT_A_FS) {
-        // Needs to be formatted before mounting.
-        status = SPIFFS_format(&fs);
+    if (status != SPIFFS_ERR_NOT_A_FS) {
+        // we actually mounted it, oops.
+        //  so we need to unmount before we can format.
+        SPIFFS_unmount(&fs);
+    }
 
-        if (status != SPIFFSNVS_STATUS_SUCCESS) {
-            post_status_spiffs = status;
-            post_errors++;
-            return;
-        }
 
-        status = SPIFFS_mount(&fs, &fsConfig, spiffsWorkBuffer,
-            spiffsFileDescriptorCache, sizeof(spiffsFileDescriptorCache),
-            spiffsReadWriteCache, sizeof(spiffsReadWriteCache), NULL);
+    // Needs to be formatted before mounting.
+    status = SPIFFS_format(&fs);
 
-        if (status != SPIFFSNVS_STATUS_SUCCESS) {
-            post_status_spiffs = status;
-            post_errors++;
-            return;
-        }
+    if (status != SPIFFSNVS_STATUS_SUCCESS) {
+        post_status_spiffs = status;
+        post_errors++;
+        return;
+    }
+
+    status = SPIFFS_mount(&fs, &fsConfig, spiffsWorkBuffer,
+                          spiffsFileDescriptorCache, sizeof(spiffsFileDescriptorCache),
+                          spiffsReadWriteCache, sizeof(spiffsReadWriteCache), NULL);
+
+    if (status != SPIFFSNVS_STATUS_SUCCESS) {
+        post_status_spiffs = status;
+        post_errors++;
+        return;
     }
 
     post_status_spiffs = 1;
-    SPIFFS_check(&fs);
 }

@@ -16,6 +16,7 @@
 #include <qc16.h>
 #include <badge.h>
 #include <qbadge.h>
+#include <post.h>
 #include "queercon_drivers/ht16d35b.h"
 #include <ui/leds.h>
 #include <ui/adc.h>
@@ -273,6 +274,13 @@ void led_task_fn(UArg a0, UArg a1) {
 
     ht16d_init();
     ht16d_all_one_color(0,0,0);
+
+    if (post_status_leds < 0) {
+        while (1) {
+            // If the LEDs are broken, don't actually use them.
+            Task_yield();
+        }
+    }
 
     while (1) {
         events = Event_pend(led_event_h, Event_Id_NONE, ~Event_Id_NONE,  BIOS_WAIT_FOREVER);

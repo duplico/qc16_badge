@@ -34,6 +34,10 @@ int main()
     // Do the basic initialization of peripherals.
     Power_init();
     if (PIN_init(qc16_pin_init_table) != PIN_SUCCESS) {
+        // If this fails, our EPD connection will be broken.
+        //  We have to have it functioning for the badge to work,
+        //  really, and there won't be a way to indicate an error,
+        //  so I'm OK with just spinning forever.
         while (1);
     }
     SPI_init();

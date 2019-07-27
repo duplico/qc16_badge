@@ -15,8 +15,8 @@
 #include <ti/drivers/I2C.h>
 
 #include <board.h>
-
 #include <queercon_drivers/ht16d35b.h>
+#include <post.h>
 
 // Configuration:
 
@@ -102,7 +102,8 @@ void ht16d_send_array(uint8_t txdat[], uint8_t len) {
 
     status = I2C_transfer(ht16d_i2c_h, &transaction);
     if (!status) {
-        // TODO: Store and flag
+        post_errors++;
+        post_status_leds = -3;
     }
 }
 
@@ -136,7 +137,8 @@ void ht16d_read_reg(uint8_t reg[]) {
 
     status = I2C_transfer(ht16d_i2c_h, &transaction);
     if (!status) {
-        // TODO: Store and flag
+        post_errors++;
+        post_status_leds = -2;
     }
 }
 
@@ -172,7 +174,11 @@ void ht16d_init() {
 
     ht16d_i2c_h = I2C_open(QC16_I2C0, NULL);
     if (ht16d_i2c_h == NULL) {
-        while (1);
+        post_errors++;
+        post_status_leds = -1;
+        return;
+    } else {
+        post_status_leds = 1;
     }
 
     // SW Reset (HTCMD_SW_RESET)

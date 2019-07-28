@@ -1,0 +1,1 @@
+.\dslite.bat -r 0 -c user_files/configs/cc2640r2f.ccxml -l user_files/settings/generated.ufsettings -s VerifyAfterProgramLoad="No verification" -e -f -v "user_files/images/qbadge.hex"

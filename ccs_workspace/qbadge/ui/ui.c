@@ -100,15 +100,15 @@ void ui_draw_screensaver() {
 
     qc16gr_drawImage(&ui_gr_context_portrait, &img_human_plate, 0, 0);
 
-    Graphics_setFont(&ui_gr_context_portrait, &g_sFontCmtt28);
-    Graphics_drawStringCentered(
-            &ui_gr_context_portrait,
-            "DUPLiCO",
-            QC16_BADGE_NAME_LEN,
-            64,
-            UI_IDLE_HUD_Y-19-5,
-            0
-    );
+//    Graphics_setFont(&ui_gr_context_portrait, &g_sFontCmtt28);
+//    Graphics_drawStringCentered(
+//            &ui_gr_context_portrait,
+//            "DUPLiCO",
+//            QC16_BADGE_NAME_LEN,
+//            64,
+//            UI_IDLE_HUD_Y-19-5,
+//            0
+//    );
 
     ui_draw_hud(&ui_gr_context_portrait, 1, 0, UI_IDLE_HUD_Y);
 

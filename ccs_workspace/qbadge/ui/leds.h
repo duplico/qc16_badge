@@ -68,7 +68,7 @@ extern rgbcolor_t led_rainbow_colors[6];
 extern rgbcolor_t led_off;
 extern rgbcolor_t led_white;
 extern const uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT];
-extern const uint16_t BRIGHTNESS_STEPS[LED_NUM_BRIGHTNESS_STEPS][2];
+extern const uint16_t BRIGHTNESS_STEPS[LED_NUM_BRIGHTNESS_STEPS][3];
 
 void led_show_curr_colors();
 void led_tail_start_anim();

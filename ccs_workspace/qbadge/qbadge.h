@@ -17,9 +17,11 @@
 // App-level configuration elements:
 #define UI_AUTOREFRESH_TIMEOUT 5500000
 #define UI_CLOCK_MS 15
-#define ADC_INTERVAL 125000
+#define ADC_INTERVAL_MS 500
+#define ADC_INTERVAL (ADC_INTERVAL_MS*100)
 #define UI_TEXT_FONT g_sFontCmss16
-#define BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH 1
+#define BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH_DOWN 30
+#define BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH_UP 40
 #define TEXTENTRY_MAX_LEN 40
 
 // NB: Should be longer than the UI autorefresh timeout

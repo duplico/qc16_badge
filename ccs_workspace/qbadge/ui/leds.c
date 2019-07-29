@@ -47,15 +47,6 @@ const uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT] = {
     1,  //    LED_TAIL_ANIM_TYPE_FIRE,
 };
 
-const uint16_t BRIGHTNESS_STEPS[LED_NUM_BRIGHTNESS_STEPS][3] = {
-    {20, 24, 50}, // 40
-    {50, 40, 40}, // 24
-    {55, 45, 30}, // 19
-    {60, 50, 10}, // 14
-    {65, 55, 0},
-    {70, 63, 0}, // "full brightness" (w/ bezel)
-};
-
 rgbcolor_t led_tail_src[6];
 /// Current colors of the LED dustbuster
 rgbcolor_t led_tail_curr[6];
@@ -75,6 +66,8 @@ uint8_t led_task_stack[LED_STACKSIZE];
 Event_Handle led_event_h;
 
 Clock_Handle led_tail_clock_h;
+
+uint8_t led_sidelight_state = 0;
 
 rgbcolor_t led_rainbow_colors[6] = {
     {63, 0, 0},  // Red
@@ -266,12 +259,24 @@ void led_adjust_brightness() {
 //        // Bright enough that we want to turn off the sidelights.
 //        led_sidelight_deactivate();
 //    }
-    rgbcolor_t sidelight_color;
-    sidelight_color.r = BRIGHTNESS_STEPS[brightness][2];
-    sidelight_color.g = sidelight_color.r;
-    sidelight_color.b = sidelight_color.r;
-    led_sidelight_set_color(&sidelight_color);
-    ht16d_set_global_brightness(BRIGHTNESS_STEPS[brightness][1]);
+
+    // brightness is between 1 and 63
+
+    if ((led_sidelight_state && brightness < BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH_UP)
+            || brightness < BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH_DOWN)
+    {
+        // Lights should be on.
+        rgbcolor_t sidelight_color;
+        sidelight_color.r = 64-brightness;
+        sidelight_color.g = sidelight_color.r;
+        sidelight_color.b = sidelight_color.r;
+        led_sidelight_set_color(&sidelight_color);
+    } else {
+        // Lights should be off.
+        led_sidelight_set_color(&led_off);
+    }
+
+    ht16d_set_global_brightness(brightness);
 }
 
 void led_task_fn(UArg a0, UArg a1) {
@@ -279,7 +284,7 @@ void led_task_fn(UArg a0, UArg a1) {
 
     ht16d_init();
     ht16d_all_one_color(0,0,0);
-    brightness = 4;
+    brightness = (BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH_UP + BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH_DOWN)/2;
     Event_post(led_event_h, LED_EVENT_BRIGHTNESS);
 
     if (post_status_leds < 0) {
@@ -316,19 +321,6 @@ void led_task_fn(UArg a0, UArg a1) {
 
         if (events & LED_EVENT_BRIGHTNESS) {
             led_adjust_brightness();
-        }
-
-        if (events & LED_EVENT_SIDE_ON) {
-            ht16d_display_on();
-        }
-
-        if (events & LED_EVENT_SIDE_OFF) {
-            led_sidelight_deactivate();
-        }
-
-        if (events & LED_EVENT_SIDE_OFF_AND_TRIGGER_ADC) {
-            ht16d_display_off();
-            adc_trigger_light();
         }
     }
 }

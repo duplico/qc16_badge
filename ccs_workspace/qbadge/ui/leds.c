@@ -25,12 +25,12 @@ led_tail_anim_t led_tail_anim_current = {
     .type=LED_TAIL_ANIM_TYPE_CYCLE,
     .modifier = LED_TAIL_ANIM_MOD_NORMAL,
     .colors= {
-              {255<<7, 0, 0},  // Red
-              {255<<7, 20<<7, 0}, // Orange
-              {255<<7, 60<<7, 0}, // Yellow
-              {0, 64<<7, 0},   // Green
-              {0, 0, 144<<7},  // Blue
-              {128<<7, 0, 96<<7}, // Purple
+              {63, 0, 0},  // Red
+              {63, 5, 0}, // Orange
+              {63, 15, 0}, // Yellow
+              {0, 15, 0},   // Green
+              {0, 0, 36},  // Blue
+              {32, 0, 24}, // Purple
     }
 };
 
@@ -56,11 +56,11 @@ const uint16_t BRIGHTNESS_STEPS[LED_NUM_BRIGHTNESS_STEPS][2] = {
     {70, 63}, // "full brightness" (w/ bezel)
 };
 
-rgbcolor16_t led_tail_src[6];
+rgbcolor_t led_tail_src[6];
 /// Current colors of the LED dustbuster
-rgbcolor16_t led_tail_curr[6];
+rgbcolor_t led_tail_curr[6];
 /// Destination colors of the dustbuster
-rgbcolor16_t led_tail_dest[6];
+rgbcolor_t led_tail_dest[6];
 /// Step values of the dustbuster
 rgbdelta_t led_tail_step[6];
 uint16_t led_tail_steps_per_frame;
@@ -76,24 +76,24 @@ Event_Handle led_event_h;
 
 Clock_Handle led_tail_clock_h;
 
-rgbcolor16_t led_rainbow_colors[6] = {
-    {255<<7, 0, 0},  // Red
-    {255<<7, 20<<7, 0}, // Orange
-    {255<<7, 60<<7, 0}, // Yellow
-    {0, 64<<7, 0},   // Green
-    {0, 0, 144<<7},  // Blue
-    {128<<7, 0, 96<<7}, // Purple
+rgbcolor_t led_rainbow_colors[6] = {
+    {63, 0, 0},  // Red
+    {63, 5, 0}, // Orange
+    {63, 15, 0}, // Yellow
+    {0, 16, 0},   // Green
+    {0, 0, 36},  // Blue
+    {32, 0, 24}, // Purple
 };
 
-rgbcolor16_t led_fn_colors[3] = {
-    {0xff00, 0x0000, 0xb000}, // pink (locks)
-    {0xd500, 0x0000, 0x6900}, // other pink (coins)
-    {0x1B00, 0xCE00, 0xFA00}, // blue (cameras)
+rgbcolor_t led_fn_colors[3] = {
+    {0xff, 0x00, 0xb0}, // pink (locks)
+    {0xd5, 0x00, 0x69}, // other pink (coins)
+    {0x1B, 0xCE, 0xFA}, // blue (cameras)
 };
 
-rgbcolor16_t led_off = {0, 0, 0};
-rgbcolor16_t led_white = {0xfff, 0xfff, 0xfff};
-rgbcolor16_t led_white_full = {0xffff, 0xffff, 0xffff};
+rgbcolor_t led_off = {0, 0, 0};
+rgbcolor_t led_white = {0xf, 0xf, 0xf};
+rgbcolor_t led_white_full = {0xff, 0xff, 0xff};
 
 uint8_t led_tail_anim_type_is_valid(led_tail_anim_type t) {
     return t < 3;
@@ -159,7 +159,7 @@ void led_tail_frame_setup() {
         break;
     }
 
-    memcpy(led_tail_curr, led_tail_src, sizeof(rgbcolor16_t)*6);
+    memcpy(led_tail_curr, led_tail_src, sizeof(rgbcolor_t)*6);
 
     ht16d_put_colors(0, 6, led_tail_curr);
     Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
@@ -182,9 +182,9 @@ void led_tail_timestep() {
             led_tail_step[i].g = ((int32_t)led_tail_dest[i].g - led_tail_src[i].g) / led_tail_steps_per_frame;
             led_tail_step[i].b = ((int32_t)led_tail_dest[i].b - led_tail_src[i].b) / led_tail_steps_per_frame;
 
-            led_tail_curr[i].r = led_tail_src[i].r + (led_tail_step_curr * led_tail_step[i].r);
-            led_tail_curr[i].g = led_tail_src[i].g + (led_tail_step_curr * led_tail_step[i].g);
-            led_tail_curr[i].b = led_tail_src[i].b + (led_tail_step_curr * led_tail_step[i].b);
+            led_tail_curr[i].r = led_tail_src[i].r + (led_tail_step_curr * ((int32_t)led_tail_dest[i].r - led_tail_src[i].r)) / led_tail_steps_per_frame;
+            led_tail_curr[i].g = led_tail_src[i].g + (led_tail_step_curr * ((int32_t)led_tail_dest[i].g - led_tail_src[i].g)) / led_tail_steps_per_frame;
+            led_tail_curr[i].b = led_tail_src[i].b + (led_tail_step_curr * ((int32_t)led_tail_dest[i].b - led_tail_src[i].b)) / led_tail_steps_per_frame;
         }
 
         ht16d_put_colors(0, 6, led_tail_curr);
@@ -197,9 +197,9 @@ void led_tail_timestep() {
 
 void led_tail_start_anim() {
     Clock_stop(led_tail_clock_h);
-    memset(led_tail_src, 0x00, sizeof(rgbcolor16_t)*6);
-    memset(led_tail_dest, 0x00, sizeof(rgbcolor16_t)*6);
-    memset(led_tail_src, 0x00, sizeof(rgbcolor16_t)*6);
+    memset(led_tail_src, 0x00, sizeof(rgbcolor_t)*6);
+    memset(led_tail_dest, 0x00, sizeof(rgbcolor_t)*6);
+    memset(led_tail_src, 0x00, sizeof(rgbcolor_t)*6);
     memset(led_tail_step, 0x00, sizeof(rgbdelta_t)*6);
     led_tail_frame_curr = 0;
     led_tail_step_curr = 0;
@@ -231,7 +231,7 @@ void led_tail_step_swi(UArg a0) {
     Event_post(led_event_h, LED_EVENT_TAIL_STEP);
 }
 
-void led_sidelight_set_color(rgbcolor16_t *color) {
+void led_sidelight_set_color(rgbcolor_t *color) {
     ht16d_put_color(12, 12, color);
     ht16d_send_gray();
 //    Event_post(led_event_h, LED_EVENT_FLUSH);

@@ -22,20 +22,14 @@ typedef struct {
     uint8_t b;
 } rgbcolor_t;
 
-typedef struct {
-    uint16_t r;
-    uint16_t g;
-    uint16_t b;
-} rgbcolor16_t;
-
 void ht16d_init_io();
 void ht16d_init();
 uint8_t ht16d_post();
 void ht16d_send_gray();
 void ht16d_all_one_color(uint8_t r, uint8_t g, uint8_t b);
-void ht16d_put_colors(uint8_t id_start, uint8_t id_len, rgbcolor16_t* colors);
-void ht16d_put_color(uint8_t id_start, uint8_t id_len, rgbcolor16_t* color);
-void ht16d_set_colors(uint8_t id_start, uint8_t id_end, rgbcolor16_t* colors);
+void ht16d_put_colors(uint8_t id_start, uint8_t id_len, rgbcolor_t* colors);
+void ht16d_put_color(uint8_t id_start, uint8_t id_len, rgbcolor_t* color);
+void ht16d_set_colors(uint8_t id_start, uint8_t id_end, rgbcolor_t* colors);
 void ht16d_set_global_brightness(uint8_t brightness);
 
 void ht16d_standby();

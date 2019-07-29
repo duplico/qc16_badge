@@ -271,9 +271,11 @@ void led_adjust_brightness() {
         sidelight_color.g = sidelight_color.r;
         sidelight_color.b = sidelight_color.r;
         led_sidelight_set_color(&sidelight_color);
+        led_sidelight_state = 1;
     } else {
         // Lights should be off.
         led_sidelight_set_color(&led_off);
+        led_sidelight_state = 0;
     }
 
     ht16d_set_global_brightness(brightness);

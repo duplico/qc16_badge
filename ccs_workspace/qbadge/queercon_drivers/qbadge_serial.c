@@ -129,36 +129,48 @@ void serial_enter_c_idle() {
     serial_ll_next_timeout = Clock_getTicks() + (SERIAL_C_DIO_POLL_MS * 100);
 }
 
-/// Send the pairing payload from this badge.
-void serial_pair() {
-    // TODO: Check coverage here:
+void serial_send_pair_msg() {
     pair_payload_t *pair_payload_out = malloc(sizeof(pair_payload_t));
     memset(pair_payload_out, 0, sizeof(pair_payload_t));
-    pair_payload_out->agent_present = badge_conf.agent_present;
+
+    pair_payload_out->badge_id = badge_conf.badge_id;
     pair_payload_out->badge_type = badge_conf.badge_type;
-    pair_payload_out->clock_is_set = badge_conf.clock_is_set;
-    memcpy(pair_payload_out->element_level, badge_conf.element_level, 3*sizeof(element_type));
-    memcpy(pair_payload_out->element_level_max, badge_conf.element_level_max, 3*sizeof(element_type));
+
+    memcpy(pair_payload_out->element_level, badge_conf.element_level, 3);
+    memcpy(pair_payload_out->element_level_max, badge_conf.element_level_max, 3);
     memcpy(pair_payload_out->element_level_progress, badge_conf.element_level_progress, 3);
     memcpy(pair_payload_out->element_qty, badge_conf.element_qty, sizeof(badge_conf.element_qty[0])*3);
+
+    pair_payload_out->last_clock = Seconds_get();
+    pair_payload_out->clock_is_set = badge_conf.clock_is_set;
+
+    pair_payload_out->agent_present = badge_conf.agent_present;
+    pair_payload_out->element_selected = badge_conf.element_selected;
+
+    memcpy(pair_payload_out->missions, badge_conf.missions, sizeof(mission_t)*3);
     for (uint8_t i=0; i<3; i++) {
         pair_payload_out->mission_assigned[i] = badge_conf.mission_assigned[i];
     }
-    memcpy(pair_payload_out->missions, badge_conf.missions, sizeof(mission_t)*3);
+
     memcpy(pair_payload_out->handle, badge_conf.handle, QC16_BADGE_NAME_LEN);
     pair_payload_out->handle[QC16_BADGE_NAME_LEN] = 0x00;
-    pair_payload_out->last_clock = Seconds_get();
-    pair_payload_out->element_selected = ELEMENT_COUNT_NONE;
 
+    serial_send(SERIAL_OPCODE_PAIR, (uint8_t *) pair_payload_out, sizeof(pair_payload_t));
+
+    free(pair_payload_out);
+}
+
+/// Send the pairing payload from this badge.
+void serial_pair(uint16_t from_id) {
     if (badge_conf.agent_present) {
         // If we're not in the middle of a mission, go ahead and clear our
         //  selected element to match with what we're sending here.
         badge_conf.element_selected = ELEMENT_COUNT_NONE;
     }
 
-    serial_send(SERIAL_OPCODE_PAIR, (uint8_t *) pair_payload_out, sizeof(pair_payload_t));
+    serial_new_cbadge = is_cbadge(from_id) && badge_connected(from_id);
 
-    free(pair_payload_out);
+    serial_send_pair_msg();
 }
 
 /// If we're paired, update our selected element.
@@ -207,9 +219,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             // If this is a badge we should pair with, go ahead and do that:
             if (is_cbadge(header->from_id) || is_qbadge(header->from_id)) {
                 serial_ll_state = SERIAL_LL_STATE_C_PAIRING;
-                // TODO: Not this:
-                serial_new_cbadge = 1;
-                serial_pair();
+                serial_pair(header->from_id);
             }
 
         }
@@ -256,9 +266,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
             memcpy(&paired_badge, payload, sizeof(pair_payload_t));
             badge_paired = 1;
-            // TODO: Not this:
-            serial_new_cbadge = 1;
-            serial_pair();
+            serial_pair(header->from_id);
             Event_post(ui_event_h, UI_EVENT_PAIRED);
 
         }
@@ -333,7 +341,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         }
 
         if (header->opcode == SERIAL_OPCODE_PAIR) {
-            // This is a data update for our pair partner.
+            // This is a data update from our pair partner.
             memcpy(&paired_badge, payload, sizeof(pair_payload_t));
             Event_post(ui_event_h, UI_EVENT_REFRESH);
         }

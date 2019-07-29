@@ -43,7 +43,7 @@ void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     switch(completedChannel) {
     case ADCBUF_CH_LIGHT:
         // This is a light.
-        target_brightness_level = 0;
+        target_brightness_level = brightness;
 
         // The ADC seems to be giving us a *waveform* at the rate it's
         //  sampling. So we'll look for a peak, and use that.
@@ -53,24 +53,17 @@ void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
             }
         }
 
-        while (target_brightness_level < (LED_NUM_BRIGHTNESS_STEPS-1) &&
-                brightness_raw > BRIGHTNESS_STEPS[target_brightness_level][0]) {
-            target_brightness_level++;
+        if (brightness < brightness_raw && brightness < 62) {
+            target_brightness_level = brightness + 1;
+        } else if (brightness > brightness_raw && brightness_raw > 1) {
+            target_brightness_level = brightness - 1;
         }
 
         if (brightness != target_brightness_level) {
-            if (target_brightness_level>brightness)
-                brightness++;
-            else
-                brightness--;
-
-            if (brightness_raw > 3000) {
-                // TODO: unlock something for it being very bright.
-            }
-
+            brightness = target_brightness_level;
             Event_post(led_event_h, LED_EVENT_BRIGHTNESS);
         }
-        Event_post(led_event_h, LED_EVENT_SIDE_ON);
+
         break;
     case ADCBUF_CH_VBAT:
         ADCBuf_convertAdjustedToMicroVolts(handle, completedChannel, completedADCBuffer, &vbat_out_uvolts, conversion->samplesRequestedCount);

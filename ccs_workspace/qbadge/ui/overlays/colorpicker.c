@@ -151,12 +151,12 @@ void ui_colorpicking_colorbutton() {
         break;
     }
 
-    if (memcmp(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[color_index], sizeof(rgbcolor16_t)) == 0) {
-        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_off, sizeof(rgbcolor16_t));
-    } else if (memcmp(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_off, sizeof(rgbcolor16_t)) == 0) {
-        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_white, sizeof(rgbcolor16_t));
+    if (memcmp(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[color_index], sizeof(rgbcolor_t)) == 0) {
+        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_off, sizeof(rgbcolor_t));
+    } else if (memcmp(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_off, sizeof(rgbcolor_t)) == 0) {
+        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_white, sizeof(rgbcolor_t));
     } else {
-        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[color_index], sizeof(rgbcolor16_t));
+        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[color_index], sizeof(rgbcolor_t));
     }
 
     Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);

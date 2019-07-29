@@ -50,7 +50,7 @@ typedef enum {
 
 typedef struct {
     led_tail_anim_type type;
-    rgbcolor16_t colors[6];
+    rgbcolor_t colors[6];
     led_tail_anim_mod modifier;
 } led_tail_anim_t;
 
@@ -64,9 +64,9 @@ typedef struct {
 
 extern Event_Handle led_event_h;
 extern led_tail_anim_t led_tail_anim_current;
-extern rgbcolor16_t led_rainbow_colors[6];
-extern rgbcolor16_t led_off;
-extern rgbcolor16_t led_white;
+extern rgbcolor_t led_rainbow_colors[6];
+extern rgbcolor_t led_off;
+extern rgbcolor_t led_white;
 extern const uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT];
 extern const uint16_t BRIGHTNESS_STEPS[LED_NUM_BRIGHTNESS_STEPS][2];
 
@@ -76,7 +76,7 @@ void led_tail_anim_type_next();
 void led_tail_anim_type_prev();
 
 void led_sidelight_set_level(uint8_t level);
-void led_sidelight_set_color(rgbcolor16_t *color);
+void led_sidelight_set_color(rgbcolor_t *color);
 
 void led_init();
 

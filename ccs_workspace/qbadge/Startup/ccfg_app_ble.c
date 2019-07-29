@@ -71,6 +71,13 @@
   #define SET_CCFG_SIZE_AND_DIS_FLAGS_DIS_GPRAM  0x0 /* Enable GPRAM */
 #endif //CACHE_AS_RAM
 
+#ifndef SET_CCFG_MODE_CONF_SCLK_LF_OPTION
+// #define SET_CCFG_MODE_CONF_SCLK_LF_OPTION            0x0        // LF clock derived from High Frequency XOSC
+// #define SET_CCFG_MODE_CONF_SCLK_LF_OPTION            0x1        // External LF clock
+// #define SET_CCFG_MODE_CONF_SCLK_LF_OPTION            0x2        // LF XOSC
+ #define SET_CCFG_MODE_CONF_SCLK_LF_OPTION            0x3        // LF RCOSC
+#endif
+
 #ifdef USE_RCOSC
     #define SET_CCFG_MODE_CONF_SCLK_LF_OPTION            0x3 // LF RCOSC
     #define SET_CCFG_MODE_CONF_VDDR_TRIM_SLEEP_TC        0x0 // Enable

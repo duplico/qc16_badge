@@ -28,6 +28,8 @@ extern const Graphics_Image img_pair_mission;
 extern const Graphics_Image img_pair_files;
 
 extern const Graphics_Image img_human_plate;
+extern const Graphics_Image img_handler_plate;
+extern const Graphics_Image img_uber_plate;
 
 extern const Graphics_Image img_remote_icon_separator;
 

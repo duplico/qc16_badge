@@ -330,7 +330,7 @@ static void UBLEBcastScan_bcast_stateChangeCB(ugapBcastState_t newState)
  */
 static void UBLEBcastScan_bcast_advPrepareCB(void) {
     char *name = (char *) &advertData[9];
-    qc16_ble_t *badge_frame = (qc16_ble_t *) &advertData[22];
+    qc16_ble_t *badge_frame = (qc16_ble_t *) &advertData[25];
     memcpy(name, badge_conf.handle, QC16_BADGE_NAME_LEN);
     badge_frame->badge_id = badge_conf.badge_id;
     badge_frame->badge_type = badge_conf.badge_type;

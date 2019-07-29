@@ -98,17 +98,13 @@ UInt pop_events(UInt *events_ptr, UInt events_to_check) {
 void ui_draw_screensaver() {
     Graphics_clearDisplay(&ui_gr_context_portrait);
 
-    qc16gr_drawImage(&ui_gr_context_portrait, &img_human_plate, 0, 0);
-
-//    Graphics_setFont(&ui_gr_context_portrait, &g_sFontCmtt28);
-//    Graphics_drawStringCentered(
-//            &ui_gr_context_portrait,
-//            "DUPLiCO",
-//            QC16_BADGE_NAME_LEN,
-//            64,
-//            UI_IDLE_HUD_Y-19-5,
-//            0
-//    );
+    if (badge_conf.badge_type & BADGE_TYPE_UBER_MASK) {
+        qc16gr_drawImage(&ui_gr_context_portrait, &img_uber_plate, 0, 0);
+    } else if (badge_conf.badge_type & BADGE_TYPE_HANDLER_MASK) {
+        qc16gr_drawImage(&ui_gr_context_portrait, &img_handler_plate, 0, 0);
+    } else {
+        qc16gr_drawImage(&ui_gr_context_portrait, &img_human_plate, 0, 0);
+    }
 
     ui_draw_hud(&ui_gr_context_portrait, 1, 0, UI_IDLE_HUD_Y);
 

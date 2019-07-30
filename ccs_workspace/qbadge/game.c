@@ -28,7 +28,6 @@
 #include "badge.h"
 
 char handler_name_missionpicking[QC16_BADGE_NAME_LEN+1] = {0,};
-char handler_name[QC16_BADGE_NAME_LEN+1] = {0,};
 
 uint8_t mission_avail_levels[6] = {0,};
 
@@ -92,7 +91,7 @@ mission_t generate_mission() {
             new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
         }
 
-        strncpy(handler_name_missionpicking, handler_name, QC16_BADGE_NAME_LEN);
+        strncpy(handler_name_missionpicking, handler_near_handle, QC16_BADGE_NAME_LEN);
         handler_name_missionpicking[QC16_BADGE_NAME_LEN] = 0x00;
 
     } else {

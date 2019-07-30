@@ -23,6 +23,11 @@ extern uint8_t qbadges_near[BITFIELD_BYTES_QBADGE];
 extern uint8_t qbadges_near_curr[BITFIELD_BYTES_QBADGE];
 extern uint16_t qbadges_near_count;
 
+extern uint16_t handler_near_id;
+extern uint8_t handler_near_rssi;
+extern element_type handler_near_element;
+extern char handler_near_handle[QC16_BADGE_NAME_LEN+1];
+
 extern uint8_t mission_accepted[3];
 extern mission_t missions[3];
 

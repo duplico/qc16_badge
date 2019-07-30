@@ -590,6 +590,10 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
             uint8_t section_len = advData[i];
             switch(advData[i+1]) {
             case GAP_ADTYPE_LOCAL_NAME_COMPLETE:
+                if (section_len != QC16_BADGE_NAME_LEN+1) {
+                    // Assert that the length is correct.
+                    break;
+                }
                 strncpy(badge_name, (char *) &advData[i+2], QC16_BADGE_NAME_LEN);
                 seems_queercon |= 0xf0;
                 break;

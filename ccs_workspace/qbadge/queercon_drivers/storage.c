@@ -75,6 +75,19 @@ void storage_init() {
         }
     }
 
+    SPIFFS_check(&fs);
+
+    uint32_t total;
+    uint32_t used;
+    status = SPIFFS_info(&fs, &total, &used);
+    if ((used*100) / total > 95) {
+        post_status_spiffs = -100;
+        post_errors++;
+        return;
+    }
+
+
+
     post_status_spiffs = 1;
     SPIFFS_check(&fs);
 }

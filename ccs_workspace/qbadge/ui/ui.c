@@ -328,10 +328,13 @@ void ui_task_fn(UArg a0, UArg a1) {
             y += 21;
         }
 
-        if (post_status_leds) {
+        if (post_status_spiffs) {
             sprintf(disp_text, "  SPIFFS error: %d", post_status_spiffs);
             Graphics_drawString(&ui_gr_context_landscape, disp_text, 99, 5, y, 1);
             y += 21;
+            if (post_status_spiffs == -100) {
+                Graphics_drawString(&ui_gr_context_landscape, "Almost full, delete files.", 99, 5, y, 1);
+            }
         }
 
         Graphics_drawString(&ui_gr_context_landscape, "Press a key to continue.", 99, 5, y, 1);

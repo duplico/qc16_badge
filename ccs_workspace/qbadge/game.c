@@ -79,6 +79,9 @@ mission_t generate_mission() {
         // We use the one with the highest RSSI
         // Mostly, it assigns missions that are on-brand for that handler.
 
+        badge_conf.handler_cooldown_time = Seconds_get() + HANDLER_COOLDOWN_SECONDS;
+        badge_conf.handler_allowed = 0;
+
         // TODO:
 
         new_mission.element_types[0] = (element_type) (rand() % 3);

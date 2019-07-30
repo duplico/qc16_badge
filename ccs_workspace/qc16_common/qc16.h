@@ -93,6 +93,8 @@ typedef struct {
     uint32_t agent_return_time;
     uint8_t vhandler_present;
     uint32_t vhandler_return_time;
+    uint8_t handler_allowed;
+    uint32_t handler_cooldown_time;
     uint8_t mission_assigned[4];
     mission_t missions[4];
     char current_photo[QC16_PHOTO_NAME_LEN+1];

@@ -14,6 +14,7 @@ void storage_init();
 void storage_read_file(char *fname, uint8_t *dest, uint16_t size);
 void storage_overwrite_file(char *fname, uint8_t *src, uint16_t size);
 void storage_bad_file(char *fname);
+uint8_t storage_file_exists(char *fname);
 
 extern spiffs fs;
 

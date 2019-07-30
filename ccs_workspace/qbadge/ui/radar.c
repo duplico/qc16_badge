@@ -6,6 +6,7 @@
  */
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <xdc/runtime/Error.h>
 #include <ti/sysbios/knl/Clock.h>
@@ -50,14 +51,28 @@ void reset_scan_cycle(UArg a0) {
 }
 
 uint8_t badge_seen(uint16_t id) {
-    // TODO: SPIFFS instead
-//    if (is_qbadge(id) && check_id_buf(id, (uint8_t *) qbadges_seen))
-//        return 1;
-    return 0;
+    char fname[14] = {0,};
+    sprintf(fname, "/badges/%d", id);
+
+    return storage_file_exists(fname);
 }
 
 uint8_t badge_connected(uint16_t id) {
-    // TODO: SPIFFS instead
+    badge_file_t badge_file = {0,};
+
+    // file name is /badges/###
+
+    char fname[14] = {0,};
+    sprintf(fname, "/badges/%d", id);
+
+    if (storage_file_exists(fname)) {
+        // We've seen it before.
+        storage_read_file(fname, (uint8_t *) &badge_file, sizeof(badge_file_t));
+        if (badge_file.times_connected) {
+            return 1;
+        }
+    }
+
     return 0;
 }
 
@@ -73,8 +88,8 @@ uint8_t badge_near_curr(uint16_t id) {
     return 0;
 }
 
-// TODO: Also pass the payload:
-void set_badge_seen(uint16_t id, char *name) {
+// TODO: name is not guaranteed to be null-termed.
+void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8_t rssi) {
     if (!is_qbadge(id) || id == QBADGE_ID_MAX_UNASSIGNED)
         return;
 
@@ -85,28 +100,86 @@ void set_badge_seen(uint16_t id, char *name) {
         return;
     }
 
-    // Mark this badge as "nearby"
-    if (!badge_near(id) && id != badge_conf.badge_id) {
-        set_id_buf(id, (uint8_t *) qbadges_near);
+    // If this badge is not currently recorded as nearby, and it's not ourself,
+    //  then go ahead and count it as nearby.
+    // TODO: Make sure the use of badge_near and badge_near_curr is correct:
+    if (!badge_near_curr(id) && id != badge_conf.badge_id) {
+        set_id_buf(id, (uint8_t *) qbadges_near_curr);
         qbadges_near_count_running++;
         if (qbadges_near_count_running > qbadges_near_count) {
             qbadges_near_count = qbadges_near_count_running;
             Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
         }
-    }
-
-    // Let's update its details/name in our records.
-
-    if (id == QBADGE_ID_MAX_UNASSIGNED || id == CBADGE_ID_MAX_UNASSIGNED)
-            return;
-    if (badge_seen(id)) {
+    } else {
+        // Already marked. We can leave...
         return;
     }
 
-//    set_id_buf(id, (uint8_t *)qbadges_seen);
-//    badge_conf.stats.qbadges_seen_count++;
+    // If we're here, it's the first time we've seen this badge this cycle.
+    //  Check whether we should update its file.
 
-    Event_post(ui_event_h, UI_EVENT_DO_SAVE);
+    badge_file_t badge_file = {0,};
+
+    // Let's update its details/name in our records.
+    // file name is /qbadges/###
+
+    char fname[14] = {0,};
+    sprintf(fname, "/badges/%d", id);
+
+    uint8_t write_file = 0;
+
+    if (storage_file_exists(fname)) {
+        // We've seen it before.
+        storage_read_file(fname, (uint8_t *) &badge_file, sizeof(badge_file_t));
+    } else {
+        // We've never seen it before.
+        badge_conf.stats.qbadges_seen_count++;
+        if (id > badge_conf.stats.qbadges_in_system) {
+            badge_conf.stats.qbadges_in_system = id+1;
+        }
+        write_file = 1;
+        Event_post(ui_event_h, UI_EVENT_DO_SAVE);
+    }
+
+    // TODO: Check whether it's uber or handler now, and didn't used to be.
+    // TODO: How's the performance on this?
+
+
+    if (badge_file.badge_type != type) {
+        write_file = 1;
+        badge_file.badge_type = type;
+        if (type & BADGE_TYPE_HANDLER_MASK) {
+            badge_conf.stats.qbadges_handler_seen_count++;
+            if (badge_conf.stats.qbadges_handler_seen_count > badge_conf.stats.qbadge_handlers_in_system) {
+                badge_conf.stats.qbadge_handlers_in_system++;
+                Event_post(ui_event_h, UI_EVENT_DO_SAVE);
+            }
+        }
+        if (type & BADGE_TYPE_UBER_MASK) {
+            badge_conf.stats.qbadges_uber_seen_count++;
+            if (badge_conf.stats.qbadges_uber_seen_count > badge_conf.stats.qbadge_ubers_in_system) {
+                badge_conf.stats.qbadge_ubers_in_system++;
+                Event_post(ui_event_h, UI_EVENT_DO_SAVE);
+            }
+        }
+    }
+
+    badge_file.badge_id = id;
+    if (badge_file.levels != levels) {
+        write_file = 1;
+        badge_file.levels = levels;
+    }
+
+    if (strncmp(badge_file.handle, name, QC16_BADGE_NAME_LEN)) {
+        write_file = 1;
+        strncpy(badge_file.handle, name, QC16_BADGE_NAME_LEN);
+        badge_file.handle[QC16_BADGE_NAME_LEN] = 0x00;
+    }
+
+    if (write_file) {
+        storage_overwrite_file(fname, (uint8_t *) &badge_file, sizeof(badge_file_t));
+    }
+
     return;
 }
 

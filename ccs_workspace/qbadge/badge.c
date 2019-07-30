@@ -46,13 +46,7 @@ void process_seconds() {
 
 /// Check whether the badge_conf exists, which isn't the same as validating.
 uint8_t conf_file_exists() {
-    volatile int32_t status;
-    spiffs_stat stat;
-    status = SPIFFS_stat(&fs, "/qbadge/conf", &stat);
-    if (status == SPIFFS_OK) {
-        return 1;
-    }
-    return 0;
+    return storage_file_exists("/qbadge/conf");
 }
 
 void load_conf() {
@@ -110,6 +104,8 @@ void generate_config() {
     // The struct is no good. Zero it out.
     memset(&badge_conf, 0x00, sizeof(qbadge_conf_t));
 
+    // TODO: Confirm initialization coverage.
+
     badge_conf.badge_id = startup_id;
 
     badge_conf.last_clock = 0;
@@ -125,11 +121,21 @@ void generate_config() {
     badge_conf.vhandler_present=1;
 
     // NB: These both will save the badge_conf:
-    set_badge_seen(badge_conf.badge_id, "");
+    set_badge_seen(badge_conf.badge_id, BADGE_TYPE_NORMAL, 0000, "", 0);
     set_badge_connected(badge_conf.badge_id, "");
     srand(badge_conf.badge_id);
 
     badge_conf.element_selected = ELEMENT_COUNT_NONE;
+
+    // TODO: Confirm initialization coverage:
+    // TODO: Extract constants
+    // TODO: Finalize these numbers:
+    badge_conf.stats.cbadge_handlers_in_system = 10;
+    badge_conf.stats.cbadge_ubers_in_system = 10;
+    badge_conf.stats.cbadges_in_system = CBADGE_COUNT_INITIAL;
+    badge_conf.stats.qbadge_handlers_in_system = 7;
+    badge_conf.stats.qbadge_ubers_in_system = 14;
+    badge_conf.stats.qbadges_in_system = QBADGE_COUNT_INITIAL;
 
     // Initialize the first photo:
     save_photo(&img_city, "Tower");

@@ -616,7 +616,7 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
             // this looks like a badge.
 
             badge_frame->crc16 == crc16_buf((uint8_t *) badge_frame, sizeof(qc16_ble_t)-2);
-            set_badge_seen(badge_frame->badge_id, name);
+            set_badge_seen(badge_frame->badge_id, badge_frame->badge_type, badge_frame->spare1, name, rssi);
         }
     }
 }

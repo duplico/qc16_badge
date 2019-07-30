@@ -50,6 +50,14 @@ extern Event_Handle uble_event_h;
 #define SPIFFS_LOGICAL_PAGE_SIZE     (256)
 #define SPIFFS_FILE_DESCRIPTOR_SIZE  (44)
 
+typedef struct {
+    uint8_t badge_id;
+    uint8_t badge_type;
+    uint8_t levels;
+    uint16_t times_connected;
+    char handle[QC16_BADGE_NAME_LEN+1];
+} badge_file_t;
+
 extern uint_fast16_t vbat_out_uvolts;
 
 #endif /* QBADGE_H_ */

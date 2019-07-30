@@ -26,6 +26,17 @@ void storage_bad_file(char *fname) {
     // TODO: delete it or something?
 }
 
+uint8_t storage_file_exists(char *fname) {
+    // TODO: should this be volatile?
+    volatile int32_t status;
+    spiffs_stat stat;
+    status = SPIFFS_stat(&fs, fname, &stat);
+    if (status == SPIFFS_OK) {
+        return 1;
+    }
+    return 0;
+}
+
 void storage_read_file(char *fname, uint8_t *dest, uint16_t size) {
     spiffs_file fd;
     fd = SPIFFS_open(&fs, fname, SPIFFS_O_RDONLY, 0);
@@ -89,5 +100,4 @@ void storage_init() {
 
 
     post_status_spiffs = 1;
-    SPIFFS_check(&fs);
 }

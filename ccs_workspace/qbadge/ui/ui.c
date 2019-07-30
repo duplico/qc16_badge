@@ -264,9 +264,9 @@ void ui_task_fn(UArg a0, UArg a1) {
     //  (as is the keyboard clock)
     do {
         Task_sleep(100);
-        if (vbat_out_uvolts && vbat_out_uvolts < 50000) { // 50 mV
+        if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_EXTPOWER) { // 50 mV
             // We're on external power.
-        } else if (vbat_out_uvolts < 1900000) { // TODO: define for this.
+        } else if (vbat_out_uvolts < UVOLTS_CUTOFF) {
             // Batteries are below cut-off voltage
         }
     } while (!vbat_out_uvolts);
@@ -358,13 +358,10 @@ void ui_task_fn(UArg a0, UArg a1) {
 
     ui_transition(UI_SCREEN_MAINMENU);
 
-    uint8_t refreshed;
-
     while (1) {
         events = Event_pend(ui_event_h, Event_Id_NONE, ~Event_Id_NONE,  UI_AUTOREFRESH_TIMEOUT);
 
         if (events & UI_EVENT_REFRESH) {
-            refreshed = 1;
             process_seconds();
             // Pop any HUD updates we get, because we're already refreshing.
             Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_HUD_UPDATE, BIOS_NO_WAIT);
@@ -379,7 +376,6 @@ void ui_task_fn(UArg a0, UArg a1) {
             } else if (ui_textentry) {
                 ui_textentry_unload(0);
             } else if (ui_textbox) {
-                // TODO: Should this stay up?
                 ui_textbox_unload(0);
             } else if (ui_current == UI_SCREEN_IDLE) {
             } else {
@@ -392,11 +388,13 @@ void ui_task_fn(UArg a0, UArg a1) {
         }
 
         if (pop_events(&events, UI_EVENT_DO_SAVE)) {
-            // TODO: Consider locking this out in low-power mode?
             write_conf();
         }
 
         if (events & UI_EVENT_PAIRED) {
+            uint8_t remote_levels = 0;
+            uint8_t starting_element = 0;
+
             // Unload everything, go to main pairing menu.
             if (ui_colorpicking) {
                 ui_colorpicking_unload();
@@ -408,8 +406,15 @@ void ui_task_fn(UArg a0, UArg a1) {
                 ui_textbox_unload(0);
             }
             ui_transition(UI_SCREEN_PAIR_MENU);
-            // TODO: Levels:
-            set_badge_connected(paired_badge.badge_id, paired_badge.badge_type, 0000, paired_badge.handle);
+            if (is_cbadge(paired_badge.badge_id)) {
+                starting_element = 3;
+            }
+
+            // This is base 6 because of course it is.
+            remote_levels = paired_badge.element_level[starting_element];
+            remote_levels += paired_badge.element_level[starting_element+1]*6;
+            remote_levels += paired_badge.element_level[starting_element+2]*36;
+            set_badge_connected(paired_badge.badge_id, paired_badge.badge_type, remote_levels, paired_badge.handle);
             Event_post(led_event_h, LED_EVENT_FN_LIGHT);
             continue;
         }
@@ -536,13 +541,6 @@ void ui_task_fn(UArg a0, UArg a1) {
                 }
             }
         }
-
-        if (refreshed) {
-            // If we just finished refreshing the screen, pop any keyboard
-            //  events off, to avoid spurious double-presses.
-            Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS,  BIOS_NO_WAIT);
-        }
-
     }
 }
 

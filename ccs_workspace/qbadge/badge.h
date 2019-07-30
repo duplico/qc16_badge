@@ -39,6 +39,7 @@ uint8_t handler_nearby();
 mission_t generate_mission();
 void mission_begin_by_id(uint8_t mission_id);
 uint8_t mission_begin();
+void game_process_new_cbadge();
 void complete_mission(mission_t *mission);
 void complete_mission_id(uint8_t mission_id);
 uint8_t mission_possible(mission_t *mission);

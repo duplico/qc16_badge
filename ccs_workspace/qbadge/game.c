@@ -80,6 +80,8 @@ mission_t generate_mission() {
         // We use the one with the highest RSSI
         // Mostly, it assigns missions that are on-brand for that handler.
 
+        // TODO:
+
         new_mission.element_types[0] = (element_type) (rand() % 3);
 
         new_mission.element_levels[0] = rand() % 6;

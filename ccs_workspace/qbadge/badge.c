@@ -122,7 +122,7 @@ void generate_config() {
 
     // NB: These both will save the badge_conf:
     set_badge_seen(badge_conf.badge_id, BADGE_TYPE_NORMAL, 0000, "", 0);
-    set_badge_connected(badge_conf.badge_id, "");
+    set_badge_connected(badge_conf.badge_id, BADGE_TYPE_NORMAL, 0000, "");
     srand(badge_conf.badge_id);
 
     badge_conf.element_selected = ELEMENT_COUNT_NONE;

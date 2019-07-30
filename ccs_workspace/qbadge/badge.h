@@ -51,7 +51,7 @@ void config_init();
 uint8_t badge_seen(uint16_t id);
 uint8_t badge_connected(uint16_t id);
 void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8_t rssi);
-uint8_t set_badge_connected(uint16_t id, char *handle);
+uint8_t set_badge_connected(uint16_t id, uint8_t type, uint8_t levels, char *name);
 void write_anim_curr();
 void save_anim(char *name);
 void load_anim_abs(char *pathname);

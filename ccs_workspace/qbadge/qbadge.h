@@ -51,7 +51,7 @@ extern Event_Handle uble_event_h;
 #define SPIFFS_FILE_DESCRIPTOR_SIZE  (44)
 
 typedef struct {
-    uint8_t badge_id;
+    uint16_t badge_id;
     uint8_t badge_type;
     uint8_t levels;
     uint16_t times_connected;

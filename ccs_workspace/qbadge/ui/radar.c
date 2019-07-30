@@ -146,6 +146,7 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
 
 
     if (badge_file.badge_type != type) {
+        // TODO: What if it's changed, and we've already connected to it?
         write_file = 1;
         badge_file.badge_type = type;
         if (type & BADGE_TYPE_HANDLER_MASK) {
@@ -183,28 +184,88 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
     return;
 }
 
-uint8_t set_badge_connected(uint16_t id, char *handle) {
+uint8_t set_badge_connected(uint16_t id, uint8_t type, uint8_t levels, char *name) {
     if (!is_qbadge(id) && !is_cbadge(id))
         return 0;
-
     if (id == QBADGE_ID_MAX_UNASSIGNED || id == CBADGE_ID_MAX_UNASSIGNED)
         return 0;
 
-    if (badge_connected(id)) {
-        return 0;
+    badge_file_t badge_file = {0,};
+    char fname[14] = {0,};
+    sprintf(fname, "/badges/%d", id);
+    uint8_t ret = 0;
+
+    if (storage_file_exists(fname)) {
+        // We've seen it before. Maybe we've even connected.
+        storage_read_file(fname, (uint8_t *) &badge_file, sizeof(badge_file_t));
+    } else {
+        // We've never seen or connected to it before.
+        if (is_cbadge(id)) {
+            if (id - CBADGE_ID_START > badge_conf.stats.cbadges_in_system) {
+                badge_conf.stats.cbadges_in_system = id - CBADGE_ID_START + 1;
+            }
+        } else {
+            if (id - QBADGE_ID_START > badge_conf.stats.qbadges_in_system) {
+                badge_conf.stats.qbadges_in_system = id - QBADGE_ID_START +1;
+            }
+        }
     }
 
-    // TODO: This is the wrong way:
-//    if (is_qbadge(id)) {
-//        set_id_buf(id, (uint8_t *)qbadges_connected);
-//        badge_conf.stats.qbadges_connected_count++;
-//    } else if (is_cbadge(id)) {
-//        set_id_buf(id, (uint8_t *)cbadges_connected);
-//        badge_conf.stats.cbadges_connected_count++;
-//    }
+    if (!badge_file.times_connected) {
+        // never connected before.
+        ret = 1;
+        if (is_cbadge(id)) {
+            badge_conf.stats.cbadges_connected_count++;
+            // TODO: check whether we should increase our level capacity.
+        } else {
+            badge_conf.stats.qbadges_connected_count++;
+        }
+    }
+    badge_file.times_connected++;
+
+    if (badge_file.badge_type != type) {
+        badge_file.badge_type = type;
+
+        if (type & BADGE_TYPE_HANDLER_MASK) {
+            if (is_cbadge(id)) {
+                badge_conf.stats.cbadges_handler_connected_count++;
+                if (badge_conf.stats.cbadges_handler_connected_count > badge_conf.stats.cbadge_handlers_in_system) {
+                    badge_conf.stats.cbadge_handlers_in_system++;
+                }
+            } else {
+                badge_conf.stats.cbadges_handler_connected_count++;
+                if (badge_conf.stats.cbadges_handler_connected_count > badge_conf.stats.cbadge_handlers_in_system) {
+                    badge_conf.stats.cbadge_handlers_in_system++;
+                }
+            }
+        }
+
+        if (type & BADGE_TYPE_UBER_MASK) {
+            if (is_cbadge(id)) {
+                badge_conf.stats.cbadges_uber_connected_count++;
+                if (badge_conf.stats.cbadges_uber_connected_count > badge_conf.stats.cbadge_ubers_in_system) {
+                    badge_conf.stats.cbadge_ubers_in_system++;
+                }
+            } else {
+                badge_conf.stats.qbadges_uber_connected_count++;
+                if (badge_conf.stats.qbadges_uber_connected_count > badge_conf.stats.qbadge_ubers_in_system) {
+                    badge_conf.stats.qbadge_ubers_in_system++;
+                }
+            }
+        }
+
+        Event_post(ui_event_h, UI_EVENT_DO_SAVE);
+    }
+
+    badge_file.badge_id = id;
+    badge_file.levels = levels;
+    strncpy(badge_file.handle, name, QC16_BADGE_NAME_LEN);
+    badge_file.handle[QC16_BADGE_NAME_LEN] = 0x00;
+
+    storage_overwrite_file(fname, (uint8_t *) &badge_file, sizeof(badge_file_t));
 
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
-    return 1;
+    return ret;
 }
 
 void radar_init() {

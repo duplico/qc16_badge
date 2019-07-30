@@ -200,6 +200,9 @@ uint8_t set_badge_connected(uint16_t id, uint8_t type, uint8_t levels, char *nam
         storage_read_file(fname, (uint8_t *) &badge_file, sizeof(badge_file_t));
     } else {
         // We've never seen or connected to it before.
+        // We should set it as seen, first:
+        set_badge_seen(id, type, levels, name, 0);
+
         if (is_cbadge(id)) {
             if (id - CBADGE_ID_START > badge_conf.stats.cbadges_in_system) {
                 badge_conf.stats.cbadges_in_system = id - CBADGE_ID_START + 1;

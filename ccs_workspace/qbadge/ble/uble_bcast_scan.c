@@ -102,11 +102,11 @@ uint8 advertData[29] =
  'i',
  'C',
  'O',
- ' ',
- ' ',
- ' ',
- ' ',
- ' ', // index 20
+ 0x00,
+ 0x00,
+ 0x00,
+ 0x00,
+ 0x00, // index 20
  // Queercon data: ID, current icon, etc
    7, // length of this data including the data type byte
    GAP_ADTYPE_MANUFACTURER_SPECIFIC, // manufacturer specific adv data type // 0xff

@@ -18,6 +18,8 @@
 #define LED_EVENT_TAIL_STEP     Event_Id_04
 #define LED_EVENT_FN_LIGHT      Event_Id_05
 #define LED_EVENT_FN_STEP       Event_Id_06
+#define LED_EVENT_SIDELIGHT_EN  Event_Id_07
+#define LED_EVENT_SIDELIGHT_DIS Event_Id_08
 
 typedef enum {
     LED_TAIL_ANIM_TYPE_OFF = 0,

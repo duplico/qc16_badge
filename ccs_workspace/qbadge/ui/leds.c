@@ -67,6 +67,8 @@ Event_Handle led_event_h;
 
 Clock_Handle led_tail_clock_h;
 
+uint8_t led_sidelight_animating = 0;
+uint8_t led_sidelight_in_use = 1;
 uint8_t led_sidelight_state = 0;
 
 rgbcolor_t led_rainbow_colors[6] = {
@@ -231,11 +233,13 @@ void led_sidelight_set_color(rgbcolor_t *color) {
 }
 
 void led_sidelight_activate() {
-    led_sidelight_set_color(&led_white_full);
+    led_sidelight_in_use = 1;
+    Event_post(led_event_h, LED_EVENT_BRIGHTNESS);
 }
 
 void led_sidelight_deactivate() {
-    led_sidelight_set_color(&led_off);
+    led_sidelight_in_use = 0;
+    Event_post(led_event_h, LED_EVENT_BRIGHTNESS);
 }
 
 void led_element_light() {
@@ -262,20 +266,32 @@ void led_adjust_brightness() {
 
     // brightness is between 1 and 63
 
+    rgbcolor_t sidelight_color = {0,};
+
     if ((led_sidelight_state && brightness < BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH_UP)
             || brightness < BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH_DOWN)
     {
         // Lights should be on.
-        rgbcolor_t sidelight_color;
         sidelight_color.r = 64-brightness;
         sidelight_color.g = sidelight_color.r;
         sidelight_color.b = sidelight_color.r;
-        led_sidelight_set_color(&sidelight_color);
         led_sidelight_state = 1;
     } else {
         // Lights should be off.
-        led_sidelight_set_color(&led_off);
         led_sidelight_state = 0;
+    }
+
+    // if sidelights are not in use, and are also not animating, then the
+    //  correct color is "off".
+    if (!led_sidelight_in_use) {
+        sidelight_color.r = 0;
+        sidelight_color.g = sidelight_color.r;
+        sidelight_color.b = sidelight_color.r;
+    }
+
+    // If the sidelights are in use, as sidelights, send the right color:
+    if (!led_sidelight_animating) {
+        led_sidelight_set_color(&sidelight_color);
     }
 
     ht16d_set_global_brightness(brightness);
@@ -323,6 +339,14 @@ void led_task_fn(UArg a0, UArg a1) {
 
         if (events & LED_EVENT_BRIGHTNESS) {
             led_adjust_brightness();
+        }
+
+        if (events & LED_EVENT_SIDELIGHT_DIS) {
+            led_sidelight_deactivate();
+        }
+
+        if (events & LED_EVENT_SIDELIGHT_EN) {
+            led_sidelight_activate();
         }
     }
 }

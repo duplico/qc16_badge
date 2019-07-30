@@ -77,7 +77,7 @@ uint8 ubsTaskStack[UBS_TASK_STACK_SIZE];
 static bool UBLEBcastScan_initObserver(void);
 
 // GAP - Advertisement data (31 byte max)
-uint8 advertData[31] =
+uint8 advertData[29] =
 {
  // Flags; this sets the device to use limited discoverable
  // mode (advertises for 30 seconds at a time) instead of general
@@ -116,15 +116,12 @@ uint8 advertData[31] =
    0x00, // Badge ID LSB //.26
    0x00, // TYPE FLAG (BIT7=UBER; BIT6=HANDLER; BIT5-3=unused BIT2-0=ELEMENT)
    0x00, // SPARE
-   0x00, // CHECK // .30
-   0x00, // CHECK // .31
 };
 
 typedef struct {
     uint16_t badge_id;
     __packed uint8_t badge_type;
-    __packed uint8_t spare1;
-    uint16_t crc16;
+    __packed uint8_t badge_levels;
 } qc16_ble_t;
 
 /*********************************************************************
@@ -334,8 +331,7 @@ static void UBLEBcastScan_bcast_advPrepareCB(void) {
     memcpy(name, badge_conf.handle, QC16_BADGE_NAME_LEN);
     badge_frame->badge_id = badge_conf.badge_id;
     badge_frame->badge_type = badge_conf.badge_type;
-    badge_frame->spare1 = 0;
-    badge_frame->crc16 = crc16_buf((uint8_t *) badge_frame, sizeof(qc16_ble_t)-2);
+    badge_frame->badge_levels = 0;
 
     uble_setParameter(UBLE_PARAM_ADVDATA, sizeof(advertData), advertData);
 }
@@ -615,9 +611,7 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
 
         if (seems_queercon == 0xFF) {
             // this looks like a badge.
-
-            badge_frame->crc16 == crc16_buf((uint8_t *) badge_frame, sizeof(qc16_ble_t)-2);
-            set_badge_seen(badge_frame->badge_id, badge_frame->badge_type, badge_frame->spare1, name, rssi);
+            set_badge_seen(badge_frame->badge_id, badge_frame->badge_type, badge_frame->badge_levels, name, rssi);
         }
     }
 }

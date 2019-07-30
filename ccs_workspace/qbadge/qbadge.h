@@ -17,7 +17,7 @@
 
 // App-level configuration elements:
 #define UI_AUTOREFRESH_TIMEOUT 5500000
-#define UI_CLOCK_MS 15
+#define UI_CLOCK_MS 1
 #define ADC_INTERVAL_MS 250
 #define ADC_INTERVAL (ADC_INTERVAL_MS*100)
 #define UI_TEXT_FONT g_sFontCmss16

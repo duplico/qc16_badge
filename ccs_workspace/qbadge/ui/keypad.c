@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 
+#include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Clock.h>
 #include <ti/sysbios/knl/Event.h>
 #include <ti/drivers/PIN.h>
@@ -35,6 +36,8 @@ PIN_Config KB_row_scan[] = {
 };
 
 uint8_t kb_active_key = KB_NONE;
+
+uint8_t kb_typematic_count = 0;
 
 void kb_clock_swi(UArg a0) {
     static uint8_t button_press = KB_NONE;
@@ -106,9 +109,17 @@ void kb_clock_swi(UArg a0) {
     if ((kb_active_key & KB_PRESSED)
             && (kb_mashed || (!button_press && !button_press_prev))) {
         kb_active_key &= ~KB_PRESSED;
-        Event_post(ui_event_h, UI_EVENT_KB_RELEASE);
     } else if (!(kb_active_key & KB_PRESSED) && button_press && button_press == button_press_prev) {
         // A button is pressed.
+
+        // Is it the same as the most recently pressed key?
+        // TODO: this is fucking broken.
+        if (kb_active_key_masked == button_press) {
+            kb_typematic_count++;
+        } else {
+            kb_typematic_count = 1;
+        }
+
         kb_active_key = button_press;
         if (!ui_is_landscape()) {
             switch(button_press) {

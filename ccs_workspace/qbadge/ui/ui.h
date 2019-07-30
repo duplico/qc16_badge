@@ -38,7 +38,6 @@
 // let's start KB events from the top
 #define UI_EVENT_KB_FLIP Event_Id_31
 #define UI_EVENT_KB_PRESS Event_Id_30
-#define UI_EVENT_KB_RELEASE Event_Id_29
 // and the rest from the bottom:
 #define UI_EVENT_BATTERY_LOW Event_Id_11
 #define UI_EVENT_TEXTBOX_OK Event_Id_10
@@ -81,6 +80,7 @@ extern uint8_t ui_textentry;
 extern uint8_t ui_textbox;
 
 extern uint8_t kb_active_key;
+extern uint8_t kb_typematic_count;
 extern Event_Handle ui_event_h;
 extern Graphics_Context ui_gr_context_landscape;
 extern Graphics_Context ui_gr_context_portrait;

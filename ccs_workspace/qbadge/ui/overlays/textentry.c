@@ -134,45 +134,49 @@ void ui_textentry_do(UInt events) {
             }
             break;
         case KB_DOWN:
-            if (textbox_buf[textentry_cursor] < '0') {
-                // Start with A
-                textbox_buf[textentry_cursor] = 'A';
-            } else if (textbox_buf[textentry_cursor] < '9') {
-                // It's a number, so next number:
-                textbox_buf[textentry_cursor]++;
-            } else if (textbox_buf[textentry_cursor] == '9') {
-                // It's number 9, now use the null term:
-                textbox_buf[textentry_cursor] = 0x00;
-            } else if (textbox_buf[textentry_cursor] < 'Z') {
-                // Capitals:
-                textbox_buf[textentry_cursor]++;
-            } else if (textbox_buf[textentry_cursor] == 'Z') {
-                // It's a Z, so go to a:
-                textbox_buf[textentry_cursor] = 'a';
-            } else if (textbox_buf[textentry_cursor] == 'z') {
-                textbox_buf[textentry_cursor] = '0';
-            } else {
-                textbox_buf[textentry_cursor] = 0x00;
+            while (kb_typematic_count--) {
+                if (textbox_buf[textentry_cursor] < '0') {
+                    // Start with A
+                    textbox_buf[textentry_cursor] = 'A';
+                } else if (textbox_buf[textentry_cursor] < '9') {
+                    // It's a number, so next number:
+                    textbox_buf[textentry_cursor]++;
+                } else if (textbox_buf[textentry_cursor] == '9') {
+                    // It's number 9, now use the null term:
+                    textbox_buf[textentry_cursor] = 0x00;
+                } else if (textbox_buf[textentry_cursor] < 'Z') {
+                    // Capitals:
+                    textbox_buf[textentry_cursor]++;
+                } else if (textbox_buf[textentry_cursor] == 'Z') {
+                    // It's a Z, so go to a:
+                    textbox_buf[textentry_cursor] = 'a';
+                } else if (textbox_buf[textentry_cursor] == 'z') {
+                    textbox_buf[textentry_cursor] = '0';
+                } else {
+                    textbox_buf[textentry_cursor] = 0x00;
+                }
             }
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             break;
         case KB_UP:
-            if (textbox_buf[textentry_cursor] < '0') {
-                textbox_buf[textentry_cursor] = '9';
-            } else if (textbox_buf[textentry_cursor] > 'a') {
-                textbox_buf[textentry_cursor]--;
-            } else if (textbox_buf[textentry_cursor] == 'a') {
-                textbox_buf[textentry_cursor] = 'Z';
-            } else if (textbox_buf[textentry_cursor] > 'A') {
-                textbox_buf[textentry_cursor]--;
-            } else if (textbox_buf[textentry_cursor] == 'A') {
-                textbox_buf[textentry_cursor] = 0x00;
-            } else if (textbox_buf[textentry_cursor] > '0') {
-                textbox_buf[textentry_cursor]--;
-            } else if (textbox_buf[textentry_cursor] == '0') {
-                textbox_buf[textentry_cursor] = 'z';
-            } else {
-                textbox_buf[textentry_cursor] = 0x00;
+            while (kb_typematic_count--) {
+                if (textbox_buf[textentry_cursor] < '0') {
+                    textbox_buf[textentry_cursor] = '9';
+                } else if (textbox_buf[textentry_cursor] > 'a') {
+                    textbox_buf[textentry_cursor]--;
+                } else if (textbox_buf[textentry_cursor] == 'a') {
+                    textbox_buf[textentry_cursor] = 'Z';
+                } else if (textbox_buf[textentry_cursor] > 'A') {
+                    textbox_buf[textentry_cursor]--;
+                } else if (textbox_buf[textentry_cursor] == 'A') {
+                    textbox_buf[textentry_cursor] = 0x00;
+                } else if (textbox_buf[textentry_cursor] > '0') {
+                    textbox_buf[textentry_cursor]--;
+                } else if (textbox_buf[textentry_cursor] == '0') {
+                    textbox_buf[textentry_cursor] = 'z';
+                } else {
+                    textbox_buf[textentry_cursor] = 0x00;
+                }
             }
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             break;

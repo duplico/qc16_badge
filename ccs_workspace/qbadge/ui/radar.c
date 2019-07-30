@@ -44,7 +44,7 @@ char handler_near_handle_curr[QC16_BADGE_NAME_LEN+1] = {0,};
 Clock_Handle radar_clock_h;
 
 uint8_t handler_nearby() {
-    return 0;
+    return handler_near_id != QBADGE_ID_MAX_UNASSIGNED;
 }
 
 void reset_scan_cycle(UArg a0) {

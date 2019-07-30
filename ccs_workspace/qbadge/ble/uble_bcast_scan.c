@@ -576,8 +576,9 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
         //     0xD3
         //     0x04
         //    followed by our beacon struct, whatever that is.
+        // Guarantee null term:
+        char badge_name[QC16_BADGE_NAME_LEN+1] = {0,};
         uint8_t rssi = *(uint8_t *)(pPayload + len - 6);
-        char *name;
         qc16_ble_t *badge_frame;
         // the MAC address is 6 bytes at pPayload[2]
         // the data begins at pPayload[8]
@@ -589,7 +590,7 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
             uint8_t section_len = advData[i];
             switch(advData[i+1]) {
             case GAP_ADTYPE_LOCAL_NAME_COMPLETE:
-                name = (char *) &advData[i+2];
+                strncpy(badge_name, (char *) &advData[i+2], QC16_BADGE_NAME_LEN);
                 seems_queercon |= 0xf0;
                 break;
             case GAP_ADTYPE_MANUFACTURER_SPECIFIC:
@@ -611,7 +612,7 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
 
         if (seems_queercon == 0xFF) {
             // this looks like a badge.
-            set_badge_seen(badge_frame->badge_id, badge_frame->badge_type, badge_frame->badge_levels, name, rssi);
+            set_badge_seen(badge_frame->badge_id, badge_frame->badge_type, badge_frame->badge_levels, badge_name, rssi);
         }
     }
 }

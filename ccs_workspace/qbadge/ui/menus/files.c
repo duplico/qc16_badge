@@ -126,14 +126,20 @@ void put_all_filenames(char *curr_fname) {
         // This is any other file:
 
         switch(ui_x_cursor) {
+        case FILE_RENAME:
+            if (curr_file_name[8] == '.' || curr_file_name[8] == '!') {
+                // Can't rename protected or superprotected files.
+                ui_x_cursor = FILE_LOAD;
+                // Fall through.
+            } else {
+                put_filecursor(&ui_gr_context_landscape, "rename:", y);
+                break;
+            }
         case FILE_LOAD:
             put_filecursor(&ui_gr_context_landscape, "  load:", y);
             break;
         case FILE_DELETE:
             put_filecursor(&ui_gr_context_landscape, "delete:", y);
-            break;
-        case FILE_RENAME:
-            put_filecursor(&ui_gr_context_landscape, "rename:", y);
             break;
         }
     }
@@ -212,14 +218,20 @@ void ui_files_do(UInt events) {
                     Event_post(ui_event_h, UI_EVENT_REFRESH);
                     break;
                 case FILE_RENAME:
-                    // Allocate space for the entire path, but only expose
-                    //  the file name part to textentry.
-                    // NB: SPIFFS_OBJ_NAME_LEN includes the null term.
-                    text = malloc(SPIFFS_OBJ_NAME_LEN);
-                    strncpy(text, curr_file_name, SPIFFS_OBJ_NAME_LEN);
-                    text_use = FILES_TEXT_USE_RENAME;
-                    ui_textentry_load(&text[8], QC16_PHOTO_NAME_LEN);
-                    Event_post(ui_event_h, UI_EVENT_REFRESH);
+                    if (curr_file_name[8] == '.' || curr_file_name[8] == '!') {
+                        // Can't rename protected or superprotected files.
+                        // This shouldn't be reachable, but let's protect it
+                        //  just in case.
+                    } else {
+                        // Allocate space for the entire path, but only expose
+                        //  the file name part to textentry.
+                        // NB: SPIFFS_OBJ_NAME_LEN includes the null term.
+                        text = malloc(SPIFFS_OBJ_NAME_LEN);
+                        strncpy(text, curr_file_name, SPIFFS_OBJ_NAME_LEN);
+                        text_use = FILES_TEXT_USE_RENAME;
+                        ui_textentry_load(&text[8], QC16_PHOTO_NAME_LEN);
+                        Event_post(ui_event_h, UI_EVENT_REFRESH);
+                    }
                     break;
                 case FILE_LOAD:
                     // Load this animation:

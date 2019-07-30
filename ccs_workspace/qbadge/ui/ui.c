@@ -123,6 +123,11 @@ void ui_transition(uint8_t destination) {
     if (ui_current == destination) {
         return; // Nothing to do.
     }
+
+    if (ui_current == UI_SCREEN_IDLE) {
+        Event_post(led_event_h, LED_EVENT_SIDELIGHT_EN);
+    }
+
     ui_x_cursor = 0;
     ui_y_cursor = 0;
 
@@ -378,6 +383,7 @@ void ui_task_fn(UArg a0, UArg a1) {
             } else if (ui_textbox) {
                 ui_textbox_unload(0);
             } else if (ui_current == UI_SCREEN_IDLE) {
+                Event_post(led_event_h, LED_EVENT_SIDELIGHT_DIS);
             } else {
                 ui_transition(UI_SCREEN_IDLE);
             }
@@ -389,6 +395,9 @@ void ui_task_fn(UArg a0, UArg a1) {
 
         if (pop_events(&events, UI_EVENT_DO_SAVE)) {
             write_conf();
+            if (!events) {
+                continue;
+            }
         }
 
         if (events & UI_EVENT_PAIRED) {

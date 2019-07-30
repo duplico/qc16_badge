@@ -114,6 +114,7 @@ void ui_colorpicking_load() {
     // This will draw everything else:
     Event_post(ui_event_h, UI_EVENT_REFRESH);
     Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
+    Event_post(led_event_h, LED_EVENT_SIDELIGHT_EN);
 
     ui_colorpicker_cursor_pos = 0;
 }

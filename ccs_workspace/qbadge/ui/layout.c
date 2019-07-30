@@ -190,6 +190,7 @@ void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint1
             qc16gr_drawImage(gr, &img_hud_handler_sideways, x, y+1);
             if (handler_nearby()) {
                 // Use the handler's name
+                strncpy(str, handler_near_handle, QC16_BADGE_NAME_LEN);
             } else {
                 // vhandler
                 sprintf(str, "vhandler");

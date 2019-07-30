@@ -402,6 +402,8 @@ void ui_task_fn(UArg a0, UArg a1) {
                 ui_textbox_unload(0);
             }
             ui_transition(UI_SCREEN_PAIR_MENU);
+            // TODO: Levels:
+            set_badge_connected(paired_badge.badge_id, paired_badge.badge_type, 0000, paired_badge.handle);
             Event_post(led_event_h, LED_EVENT_FN_LIGHT);
             continue;
         }

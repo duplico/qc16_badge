@@ -42,6 +42,11 @@ void process_seconds() {
         badge_conf.vhandler_present = 1;
         Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
     }
+
+    if (!badge_conf.handler_allowed && Seconds_get() > badge_conf.handler_cooldown_time) {
+        badge_conf.handler_allowed = 1;
+        Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
+    }
 }
 
 /// Check whether the badge_conf exists, which isn't the same as validating.
@@ -110,15 +115,18 @@ void generate_config() {
 
     badge_conf.last_clock = 0;
     badge_conf.agent_present = 1;
+    // TODO:
     badge_conf.element_level_max[0] = 2;
     badge_conf.element_level_max[1] = 2;
     badge_conf.element_level_max[2] = 2;
 
+    // TODO:
     badge_conf.element_qty[0] = 5;
     badge_conf.element_qty[1] = 700;
     badge_conf.element_qty[2] = 123456789;
 
-    badge_conf.vhandler_present=1;
+    badge_conf.vhandler_present = 1;
+    badge_conf.handler_allowed = 1;
 
     // NB: These both will save the badge_conf:
     set_badge_seen(badge_conf.badge_id, BADGE_TYPE_NORMAL, 0000, "", 0);

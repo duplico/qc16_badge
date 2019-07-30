@@ -78,17 +78,51 @@ mission_t generate_mission() {
         // Human handler.
         // We use the one with the highest RSSI
         // Mostly, it assigns missions that are on-brand for that handler.
+        badge_conf.handler_cooldown_time = Seconds_get() + HANDLER_COOLDOWN_SECONDS;
+        badge_conf.handler_allowed = 0;
 
-        // TODO:
+        // There's a chance the mission will be off-brand.
+        if (!(rand() % HANDLER_OFFBRAND_ELEMENT_ONE_IN)) {
+            // And, indeed, we are assigning an off-brand element.
+            // The primary element is a qbadge element.
+            new_mission.element_types[0] = (element_type) (rand() % 3);
+        } else {
+            // Assign the primary element on-brand.
+            new_mission.element_types[0] = (element_type) ((uint8_t)handler_near_element % 3);
+        }
 
-        new_mission.element_types[0] = (element_type) (rand() % 3);
+        // There's a chance that the handler will automatically assign the
+        //  maximum available level for this mission.
+        if (!(rand() % HANDLER_MAXLEVEL_ELEMENT_ONE_IN)) {
+            new_mission.element_levels[0] = badge_conf.element_level[new_mission.element_types[0]];
+            // Assign a level to the second mission element,
+            //  even if it won't be used:
+            new_mission.element_levels[1] = new_mission.element_levels[0];
+        } else {
+            new_mission.element_levels[0] = rand() % badge_conf.element_level[new_mission.element_types[0]]+1;
+            // Assign a level to the second mission element,
+            //  even if it won't be used:
+            new_mission.element_levels[1] = rand() % new_mission.element_levels[0]+1;
+        }
 
-        new_mission.element_levels[0] = rand() % 6;
 
-        if (!(rand() % 3)) {
-            // A second element is needed.
+        // Decide whether we're going to do a second element.
+        //  This is based on the primary element's level. A second element
+        //  is required much more often for higher level missions.
+        if (new_mission.element_levels[0] && (rand() % new_mission.element_levels[0]+1)) {
+            // Level 0 will always be solo.
+            // Level 1 will be 50/50 pair vs solo
+            // Level 3 will be 67/33 pair vs solo
+            // Level 4 will be 75/25 pair vs solo
+            // Level 5 will be 80/20 pair vs solo
+
+            // This is a pair mission. Decide which element.
+            // TODO: Should it always just be random like this?
             new_mission.element_types[1] = (element_type) (rand() % 6);
             new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
+        } else {
+            // Solo mission.
+            new_mission.element_types[1] = ELEMENT_COUNT_NONE;
         }
 
         strncpy(handler_name_missionpicking, handler_near_handle, QC16_BADGE_NAME_LEN);
@@ -102,28 +136,31 @@ mission_t generate_mission() {
         new_mission.element_types[0] = (element_type) (rand() % 3);
 
         // The vhandler has a max level it can assign:
-        new_mission.element_levels[0] = rand() % (VHANDLER_MAX_LEVEL-1);
+        new_mission.element_levels[0] = rand() % (VHANDLER_MAX_LEVEL+1);
 
-        if (1 || !(rand() % VHANDLER_SECOND_ELEMENT_ONE_IN)) { // TODO
-            // There's a chance to assign a second element.
+        // There's a chance to assign a second element:
+        if (!(rand() % VHANDLER_SECOND_ELEMENT_ONE_IN)) {
             // A second element is needed.
-            new_mission.element_levels[1] = rand() % (VHANDLER_MAX_LEVEL-1);
-            if (rand() % 3) {
-                new_mission.element_types[1] = (element_type) ((uint8_t)new_mission.element_types[0]+3);
-            } else {
+            new_mission.element_levels[1] = rand() % (VHANDLER_MAX_LEVEL+1);
+            // By default, the second element will be the cbadge complement to
+            //  the first element, but there's a chance it will be random
+            //  instead:
+            if (rand() % VHANDLER_SECOND_ELEMENT_UNRELATED_ONE_IN) {
+                // It is indeed random, instead:
                 new_mission.element_types[1] = (element_type) (rand() % 6);
+            } else {
+                // It's the cbadge complement to the first element:
+                new_mission.element_types[1] = (element_type) ((uint8_t)new_mission.element_types[0]+3);
             }
         }
         strncpy(handler_name_missionpicking, "vhandler", QC16_BADGE_NAME_LEN);
         handler_name_missionpicking[QC16_BADGE_NAME_LEN] = 0x00;
     }
 
-    // TODO: cap the secondary element at mine+1??? or something???
-
     // Is the mission too high-level for us? If so, reduce it:
     if (new_mission.element_levels[0] > badge_conf.element_level[new_mission.element_types[0]]) {
         new_mission.element_levels[0] = badge_conf.element_level[new_mission.element_types[0]];
-        new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
+        // But, we'll leave the second element untouched.
     }
 
     // Now, calculate each element's rewards based on its level:
@@ -337,6 +374,33 @@ void mission_begin_by_id(uint8_t mission_id) {
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
 }
 
+void game_process_new_cbadge() {
+    // What a silly way to do this...
+
+    switch(badge_conf.stats.cbadges_connected_count) {
+    case CBADGE_QTY_PLUS1:
+        break;
+    case CBADGE_QTY_PLUS2:
+        break;
+    case CBADGE_QTY_PLUS3:
+        break;
+    case CBADGE_QTY_PLUS4:
+        break;
+    default:
+        return;
+    }
+
+    // TODO: Animation???
+
+    for (uint8_t i=0; i<3; i++) {
+        if (badge_conf.element_level_max[i] < 5) {
+            badge_conf.element_level_max[i]++;
+        }
+    }
+
+    // The calling function has already asked for a save.
+}
+
 /// Attempt to start a mission, returning 1 for success and 0 for failure.
 uint8_t mission_begin() {
     // NB: For now, we ACCEPT the RACE CONDITION that the following could
@@ -382,46 +446,45 @@ uint8_t mission_begin() {
 
 /// Complete and receive rewards from a mission.
 void complete_mission(mission_t *mission) {
+    uint8_t element_position = 0;
+    uint8_t element_position_other = 0;
+    element_type element;
+
     badge_conf.agent_present = 1;
     Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
 
-    uint8_t element_position = 0;
-    // NB: the primary element is always better, so if that's us then we want it:
-    if (mission->element_types[0] == badge_conf.element_selected && mission->element_levels[0] <= badge_conf.element_level[badge_conf.element_selected]) {
-        element_position = 0;
-    } else if (mission->element_types[1] < 3) {
-        element_position = 1;
-    } else {
-        // oops
-        return;
+    // You get both rewards for a double-Q mission,
+    //  but you only level up in the part that you did.
+
+    element_position = mission_element_id_we_fill(mission);
+    element_position_other = (element_position == 1) ? 0 : 1;
+
+    if (mission->element_types[element_position_other] < 3) {
+        // It's also a qbadge element, so we get its rewards too.
+        badge_conf.element_qty[mission->element_types[element_position_other]] += mission->element_rewards[element_position_other];
     }
 
+    element = mission->element_types[element_position];
+
     // Ok! WE DID IT.
-    // We definitely get all the resources we earned.
-    // NB: We're not worrying about a rollover, because it's 32 bits,
-    //     and that would be LOLtastic if that happened.
-    //     (also, it would take running almost 4.3 million
-    //      level 5 missions.)
-    badge_conf.element_qty[badge_conf.element_selected] += mission->element_rewards[element_position];
+    badge_conf.element_qty[element] += mission->element_rewards[element_position];
 
     // Now, let's look at progress.
     // First, we'll add the level-up amount.
-    // NB: This is constructed in a way that means a byte won't be able to
-    //     overflow. So, it's OK to blindly add the progress reward,
-    //     and then check what happened.
-    badge_conf.element_level_progress[badge_conf.element_selected] += mission->element_progress[element_position];
+    if (badge_conf.element_level[element] < 5) {
+        badge_conf.element_level_progress[element] += mission->element_progress[element_position];
 
-    // First, we need to constrain our progress by our level cap.
-    // NB: This depends DESPERATELY on a level cap never being 0.
-    if (badge_conf.element_level_progress[badge_conf.element_selected] > exp_required_per_level[badge_conf.element_level_max[badge_conf.element_selected]-1]) {
-        badge_conf.element_level_progress[badge_conf.element_selected] = exp_required_per_level[badge_conf.element_level_max[badge_conf.element_selected]-1];
-    }
+        // First, we need to constrain our progress by our level cap.
+        // NB: This depends DESPERATELY on a level cap never being 0.
+        if (badge_conf.element_level_progress[element] > exp_required_per_level[badge_conf.element_level_max[element]-1]) {
+            badge_conf.element_level_progress[element] = exp_required_per_level[badge_conf.element_level_max[element]-1];
+        }
 
-    // Now, we can determine if this was enough to increase a level.
-    if (badge_conf.element_level_progress[badge_conf.element_selected] >= exp_required_per_level[badge_conf.element_level[badge_conf.element_selected]]) {
-        badge_conf.element_level[badge_conf.element_selected]++;
-        if (badge_conf.element_level[badge_conf.element_selected] > 5)
-            badge_conf.element_level[badge_conf.element_selected] = 5;
+        // Now, we can determine if this was enough to increase a level.
+        if (badge_conf.element_level_progress[element] >= exp_required_per_level[badge_conf.element_level[element]]) {
+            // We already guarded against being over 5, so let's just add:
+            badge_conf.element_level[element]++;
+        }
     }
 
     // We already posted the agent-present event, so we should be good to go.

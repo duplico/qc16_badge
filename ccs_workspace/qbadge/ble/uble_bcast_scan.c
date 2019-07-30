@@ -89,8 +89,8 @@ uint8 advertData[29] =
  // Appearance: This is a #badgelife header.
  3,    // Length of this data
  GAP_ADTYPE_APPEARANCE, // Data type: "Appearance" // 0x19
- 0xDC, // DC
- 0x19, // 19 #badgelife
+ 0x27, // 0xDC27, Little-Endian
+ 0xDC,
 
  // complete name
  QC16_BADGE_NAME_LEN+1, // index 7   // length of this data
@@ -108,7 +108,7 @@ uint8 advertData[29] =
  ' ',
  ' ', // index 20
  // Queercon data: ID, current icon, etc
-   9, // length of this data including the data type byte
+   7, // length of this data including the data type byte
    GAP_ADTYPE_MANUFACTURER_SPECIFIC, // manufacturer specific adv data type // 0xff
    0xD3, // Company ID - Fixed (queercon)
    0x04, // Company ID - Fixed (queercon)
@@ -256,7 +256,7 @@ static void UBLEBcastScan_taskFxn(UArg a0, UArg a1)
         }
 
         if (events & UBLE_EVENT_UPDATE_ADV) {
-            UBLEBcastScan_bcast_advPrepareCB();
+//            UBLEBcastScan_bcast_advPrepareCB();
         }
     }
 }
@@ -326,12 +326,12 @@ static void UBLEBcastScan_bcast_stateChangeCB(ugapBcastState_t newState)
  * @return  None.
  */
 static void UBLEBcastScan_bcast_advPrepareCB(void) {
-    char *name = (char *) &advertData[9];
-    qc16_ble_t *badge_frame = (qc16_ble_t *) &advertData[25];
-    memcpy(name, badge_conf.handle, QC16_BADGE_NAME_LEN);
-    badge_frame->badge_id = badge_conf.badge_id;
-    badge_frame->badge_type = badge_conf.badge_type;
-    badge_frame->badge_levels = 0;
+//    char *name = (char *) &advertData[9];
+//    qc16_ble_t *badge_frame = (qc16_ble_t *) &advertData[25];
+//    memcpy(name, badge_conf.handle, QC16_BADGE_NAME_LEN);
+//    badge_frame->badge_id = badge_conf.badge_id;
+//    badge_frame->badge_type = badge_conf.badge_type;
+//    badge_frame->badge_levels = 0;
 
     uble_setParameter(UBLE_PARAM_ADVDATA, sizeof(advertData), advertData);
 }

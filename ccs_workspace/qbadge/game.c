@@ -78,20 +78,51 @@ mission_t generate_mission() {
         // Human handler.
         // We use the one with the highest RSSI
         // Mostly, it assigns missions that are on-brand for that handler.
-
         badge_conf.handler_cooldown_time = Seconds_get() + HANDLER_COOLDOWN_SECONDS;
         badge_conf.handler_allowed = 0;
 
-        // TODO:
+        // There's a chance the mission will be off-brand.
+        if (!(rand() % HANDLER_OFFBRAND_ELEMENT_ONE_IN)) {
+            // And, indeed, we are assigning an off-brand element.
+            // The primary element is a qbadge element.
+            new_mission.element_types[0] = (element_type) (rand() % 3);
+        } else {
+            // Assign the primary element on-brand.
+            new_mission.element_types[0] = (element_type) ((uint8_t)handler_near_element % 3);
+        }
 
-        new_mission.element_types[0] = (element_type) (rand() % 3);
+        // There's a chance that the handler will automatically assign the
+        //  maximum available level for this mission.
+        if (!(rand() % HANDLER_MAXLEVEL_ELEMENT_ONE_IN)) {
+            new_mission.element_levels[0] = badge_conf.element_level[new_mission.element_types[0]];
+            // Assign a level to the second mission element,
+            //  even if it won't be used:
+            new_mission.element_levels[1] = new_mission.element_levels[0];
+        } else {
+            new_mission.element_levels[0] = rand() % badge_conf.element_level[new_mission.element_types[0]]+1;
+            // Assign a level to the second mission element,
+            //  even if it won't be used:
+            new_mission.element_levels[1] = rand() % new_mission.element_levels[0]+1;
+        }
 
-        new_mission.element_levels[0] = rand() % 6;
 
-        if (!(rand() % 3)) {
-            // A second element is needed.
+        // Decide whether we're going to do a second element.
+        //  This is based on the primary element's level. A second element
+        //  is required much more often for higher level missions.
+        if (new_mission.element_levels[0] && (rand() % new_mission.element_levels[0]+1)) {
+            // Level 0 will always be solo.
+            // Level 1 will be 50/50 pair vs solo
+            // Level 3 will be 67/33 pair vs solo
+            // Level 4 will be 75/25 pair vs solo
+            // Level 5 will be 80/20 pair vs solo
+
+            // This is a pair mission. Decide which element.
+            // TODO: Should it always just be random like this?
             new_mission.element_types[1] = (element_type) (rand() % 6);
             new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
+        } else {
+            // Solo mission.
+            new_mission.element_types[1] = ELEMENT_COUNT_NONE;
         }
 
         strncpy(handler_name_missionpicking, handler_near_handle, QC16_BADGE_NAME_LEN);
@@ -105,28 +136,31 @@ mission_t generate_mission() {
         new_mission.element_types[0] = (element_type) (rand() % 3);
 
         // The vhandler has a max level it can assign:
-        new_mission.element_levels[0] = rand() % (VHANDLER_MAX_LEVEL-1);
+        new_mission.element_levels[0] = rand() % (VHANDLER_MAX_LEVEL+1);
 
-        if (1 || !(rand() % VHANDLER_SECOND_ELEMENT_ONE_IN)) { // TODO
-            // There's a chance to assign a second element.
+        // There's a chance to assign a second element:
+        if (!(rand() % VHANDLER_SECOND_ELEMENT_ONE_IN)) {
             // A second element is needed.
-            new_mission.element_levels[1] = rand() % (VHANDLER_MAX_LEVEL-1);
-            if (rand() % 3) {
-                new_mission.element_types[1] = (element_type) ((uint8_t)new_mission.element_types[0]+3);
-            } else {
+            new_mission.element_levels[1] = rand() % (VHANDLER_MAX_LEVEL+1);
+            // By default, the second element will be the cbadge complement to
+            //  the first element, but there's a chance it will be random
+            //  instead:
+            if (rand() % VHANDLER_SECOND_ELEMENT_UNRELATED_ONE_IN) {
+                // It is indeed random, instead:
                 new_mission.element_types[1] = (element_type) (rand() % 6);
+            } else {
+                // It's the cbadge complement to the first element:
+                new_mission.element_types[1] = (element_type) ((uint8_t)new_mission.element_types[0]+3);
             }
         }
         strncpy(handler_name_missionpicking, "vhandler", QC16_BADGE_NAME_LEN);
         handler_name_missionpicking[QC16_BADGE_NAME_LEN] = 0x00;
     }
 
-    // TODO: cap the secondary element at mine+1??? or something???
-
     // Is the mission too high-level for us? If so, reduce it:
     if (new_mission.element_levels[0] > badge_conf.element_level[new_mission.element_types[0]]) {
         new_mission.element_levels[0] = badge_conf.element_level[new_mission.element_types[0]];
-        new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
+        // But, we'll leave the second element untouched.
     }
 
     // Now, calculate each element's rewards based on its level:
@@ -363,8 +397,6 @@ void game_process_new_cbadge() {
             badge_conf.element_level_max[i]++;
         }
     }
-
-    // TODO: I think the HUD will be updated after this finishes, automatically
 
     // The calling function has already asked for a save.
 }

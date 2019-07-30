@@ -55,7 +55,6 @@ void ui_textbox_load(char *text) {
 void ui_textbox_unload(uint8_t ok) {
     free(textbox_buf);
     ui_textbox = 0;
-    epd_do_partial = 1;
     if (ok) {
         Event_post(ui_event_h, UI_EVENT_TEXTBOX_OK);
     } else {

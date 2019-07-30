@@ -298,6 +298,8 @@ void ui_task_fn(UArg a0, UArg a1) {
             Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS, BIOS_WAIT_FOREVER);
 
             // Invalid config.
+            // TODO: do what we do for photos here:
+            SPIFFS_rename(&fs, "/qbadge/conf", "/qbadge/conf.bak");
             generate_config();
 
             // Now that we've created and saved a config, we're going to load it.

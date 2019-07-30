@@ -145,9 +145,6 @@ void ui_textentry_do(UInt events) {
             } else {
                 textbox_buf[textentry_cursor]++;
             }
-//            while (kb_typematic_count--) {
-
-//            }
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             break;
         case KB_UP:
@@ -162,8 +159,6 @@ void ui_textentry_do(UInt events) {
             } else {
                 textbox_buf[textentry_cursor]--;
             }
-//            while (kb_typematic_count--) {
-//            }
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             break;
         case KB_BACK:

@@ -90,7 +90,7 @@ uint8 advertData[29] =
  3,    // Length of this data
  GAP_ADTYPE_APPEARANCE, // Data type: "Appearance" // 0x19
  0xDC, // DC
- 0x19, // 19 #badgelife
+ 0x27, // 27
 
  // complete name
  QC16_BADGE_NAME_LEN+1, // index 7   // length of this data

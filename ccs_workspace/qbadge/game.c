@@ -27,8 +27,6 @@
 #include <qc16_serial_common.h>
 #include "badge.h"
 
-uint8_t handler_near_type=0;
-uint16_t handler_near_rssi=0;
 char handler_name_missionpicking[QC16_BADGE_NAME_LEN+1] = {0,};
 char handler_name[QC16_BADGE_NAME_LEN+1] = {0,};
 

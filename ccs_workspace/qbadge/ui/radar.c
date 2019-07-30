@@ -31,6 +31,16 @@ uint8_t qbadges_near_curr[BITFIELD_BYTES_QBADGE] = {0, };
 uint16_t qbadges_near_count=0;
 uint16_t qbadges_near_count_running=0;
 
+uint16_t handler_near_id = QBADGE_ID_MAX_UNASSIGNED;
+uint8_t handler_near_rssi = 0;
+element_type handler_near_element = ELEMENT_COUNT_NONE;
+char handler_near_handle[QC16_BADGE_NAME_LEN+1] = {0,};
+
+uint16_t handler_near_id_curr = QBADGE_ID_MAX_UNASSIGNED;
+uint8_t handler_near_rssi_curr = 0;
+element_type handler_near_element_curr = ELEMENT_COUNT_NONE;
+char handler_near_handle_curr[QC16_BADGE_NAME_LEN+1] = {0,};
+
 Clock_Handle radar_clock_h;
 
 uint8_t handler_nearby() {
@@ -45,6 +55,19 @@ void reset_scan_cycle(UArg a0) {
     qbadges_near_count_running = 0;
     memcpy(qbadges_near, qbadges_near_curr, BITFIELD_BYTES_QBADGE);
     memset((void *) qbadges_near_curr, 0x00, BITFIELD_BYTES_QBADGE);
+
+    if (handler_near_id_curr != handler_near_id) {
+        Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
+    }
+
+    handler_near_id = handler_near_id_curr;
+    handler_near_rssi = handler_near_rssi_curr;
+    handler_near_element = handler_near_element_curr;
+    strncpy(handler_near_handle, handler_near_handle_curr, QC16_BADGE_NAME_LEN);
+    handler_near_handle[QC16_BADGE_NAME_LEN] = 0x00;
+
+    handler_near_id_curr = QBADGE_ID_MAX_UNASSIGNED;
+    handler_near_element_curr = ELEMENT_COUNT_NONE;
 
     process_seconds();
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
@@ -94,6 +117,23 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
         return;
 
     // If we're here, it's a qbadge.
+
+    if (type & BADGE_TYPE_HANDLER_MASK && rssi > handler_near_rssi_curr) {
+        handler_near_rssi_curr = rssi;
+        handler_near_id_curr = id;
+        handler_near_element_curr = (element_type) (type & BADGE_TYPE_ELEMENT_MASK);
+        strncpy(handler_near_handle_curr, name, QC16_BADGE_NAME_LEN);
+        handler_near_handle_curr[QC16_BADGE_NAME_LEN] = 0x00;
+
+        if (handler_near_rssi_curr > handler_near_rssi) {
+            handler_near_rssi = rssi;
+            handler_near_id = id;
+            handler_near_element = (element_type) (type & BADGE_TYPE_ELEMENT_MASK);
+            strncpy(handler_near_handle, name, QC16_BADGE_NAME_LEN);
+            handler_near_handle[QC16_BADGE_NAME_LEN] = 0x00;
+            Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
+        }
+    }
 
     if (badge_near_curr(id)) {
         // Already marked this cycle.

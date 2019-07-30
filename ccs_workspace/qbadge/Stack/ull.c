@@ -63,7 +63,8 @@
 #include <ti/drivers/rf/RF.h>
 #include <ll_common.h>
 #include <bcomdef.h>
-#include <ble/util.h>
+#include <util.h>
+
 #include <port.h>
 #include <uble.h>
 #include <urfi.h>
@@ -293,11 +294,17 @@ dataEntryQ_t *ull_setupMonitorDataEntryQueue( void )
     ull_monitorDataEntry[i].entry.status     = 0;
     ull_monitorDataEntry[i].entry.config     = 0;
     ull_monitorDataEntry[i].entry.length     = ULL_BLE_ALIGNED_BUFFER_SIZE;
-    ull_monitorDataEntry[i].entry.pNextEntry = &ull_monitorDataEntry[i+1].entry;
-  }
 
-  /* adjust last entry to wrap */
-  ull_monitorDataEntry[ULL_NUM_RX_MONITOR_ENTRIES-1].entry.pNextEntry = &ull_monitorDataEntry[0].entry;
+    if (i != ULL_NUM_RX_MONITOR_ENTRIES - 1)
+    {
+      ull_monitorDataEntry[i].entry.pNextEntry = &ull_monitorDataEntry[i+1].entry;
+    }
+    else
+    {
+      /* adjust last entry to wrap */
+      ull_monitorDataEntry[ULL_NUM_RX_MONITOR_ENTRIES-1].entry.pNextEntry = &ull_monitorDataEntry[0].entry;
+    }
+  }
 
   /* init data queue */
   ull_monitorDataQueue.dataEntryQ.pCurEntry  = &ull_monitorDataEntry[0].entry;
@@ -409,8 +416,10 @@ void ull_flushAllDataEntry( dataEntryQ_t *pDataEntryQ )
 {
   dataQ_t         *pDataQueue;
   port_key_t key;
+  port_key_t key_s;
 
   key = port_enterCS_HW();
+  key_s = port_enterCS_SW();
 
   /* point to data queue */
   pDataQueue = (dataQ_t *)pDataEntryQ;
@@ -425,6 +434,7 @@ void ull_flushAllDataEntry( dataEntryQ_t *pDataEntryQ )
     pDataQueue->pNextDataEntry = pDataQueue->pNextDataEntry->pNextEntry;
   }
 
+  port_exitCS_SW(key_s);
   port_exitCS_HW(key);
 }
 
@@ -1272,16 +1282,21 @@ void ull_rxEntryDoneCback(void)
 {
   uint8 dataLen = 0;
   port_key_t key;
+  port_key_t key_s;
 
+  key = port_enterCS_HW();
+  key_s = port_enterCS_SW();
+
+  dataEntry_t *pDataEntry = ull_getNextDataEntry( (dataEntryQ_t *)urfiScanCmd.pParams->pRxQ );
+
+  /* get pointer to packet */
+  if ( (pDataEntry == NULL) || (pDataEntry->status != DATA_ENTRY_FINISHED) )
   {
-    dataEntry_t *pDataEntry = ull_getNextDataEntry( (dataEntryQ_t *)urfiScanCmd.pParams->pRxQ );
+    port_exitCS_SW(key_s);
+    port_exitCS_HW(key);
 
-    /* get pointer to packet */
-    if ( (pDataEntry == NULL) || (pDataEntry->status != DATA_ENTRY_FINISHED) )
-    {
-      /* nothing to do here */
-      return;
-    }
+    /* nothing to do here */
+    return;
   }
 
   /* The callback will be called only if the previous adv packet is
@@ -1291,8 +1306,6 @@ void ull_rxEntryDoneCback(void)
   {
     Ull_advPktInuse = true;
 
-    key = port_enterCS_HW();
-
     /* process RX FIFO data */
     ull_getAdvChanPDU( &dataLen, advPkt );
 
@@ -1301,8 +1314,6 @@ void ull_rxEntryDoneCback(void)
      *       lost, and the queue entry is marked free for radio use.
      */
     ull_nextDataEntryDone( (dataEntryQ_t *)urfiScanCmd.pParams->pRxQ );
-
-    port_exitCS_HW(key);
   }
 
   /* TBD: handle filtering and white list */
@@ -1339,6 +1350,10 @@ void ull_rxEntryDoneCback(void)
    * the postfix length.
    *
    */
+
+  port_exitCS_SW(key_s);
+  port_exitCS_HW(key);
+
   if (dataLen != 0)
   {
     ull_notifyScanIndication( SUCCESS, dataLen, advPkt );
@@ -1375,6 +1390,12 @@ bStatus_t ull_monitorSchedule(uint8 mode)
 
   /* Note: cannot do wildcard access address */
   urfiGenericRxParams.accessAddress = ubleParams.accessAddr;
+
+  /* Note: for crc check and rssi readings to work we must set a valid crcInit value */
+  urfiGenericRxParams.crcInit0 = (ubleParams.crcInit >> 0) & 0xFF;
+  urfiGenericRxParams.crcInit1 = (ubleParams.crcInit >> 8) & 0xFF;
+  urfiGenericRxParams.crcInit2 = (ubleParams.crcInit >> 16) & 0xFF;
+
 
 #if defined(RF_MULTIMODE)
   bmEvent = (RF_EventInternalError | RF_EventLastCmdDone | RF_EventRxEntryDone);
@@ -1517,7 +1538,9 @@ bStatus_t ull_monitorStart(uint8_t channel)
 void ull_monitorStop(void)
 {
   port_key_t key;
+  port_key_t key_h;
 
+  key_h = port_enterCS_HW();
   key = port_enterCS_SW();
 
   if (ulState == ULL_STATE_MONITORING)
@@ -1527,12 +1550,18 @@ void ull_monitorStop(void)
     /* Cancel or stop generic Rx command */
     if (urfiGenericRxHandle > 0)
     {
-      RF_cancelCmd(urfiHandle, urfiGenericRxHandle, 0);
+      /* flush RF commands */
+      RF_flushCmd(urfiHandle, urfiGenericRxHandle, 0);
+
+      /* flush RX queue data entries */
+      ull_flushAllDataEntry( (dataEntryQ_t *)urfiGenericRxCmd.pParams->pRxQ);
+
       urfiGenericRxHandle = URFI_CMD_HANDLE_INVALID;
     }
   }
 
   port_exitCS_SW(key);
+  port_exitCS_HW(key_h);
 }
 
 /*******************************************************************************
@@ -1594,19 +1623,22 @@ void ull_rxEntryDoneCback(void)
 {
   uint8 dataLen;
   port_key_t key;
-
-  {
-    dataEntry_t *pDataEntry = ull_getNextDataEntry( (dataEntryQ_t *)urfiGenericRxCmd.pParams->pRxQ );
-
-    /* get pointer to packet */
-    if ( (pDataEntry == NULL) || (pDataEntry->status != DATA_ENTRY_FINISHED) )
-    {
-      /* nothing to do here */
-      return;
-    }
-  }
+  port_key_t key_s;
 
   key = port_enterCS_HW();
+  key_s = port_enterCS_SW();
+
+  dataEntry_t *pDataEntry = ull_getNextDataEntry( (dataEntryQ_t *)urfiGenericRxCmd.pParams->pRxQ );
+
+  /* get pointer to packet */
+  if ( (pDataEntry == NULL) || (pDataEntry->status != DATA_ENTRY_FINISHED) )
+  {
+    port_exitCS_HW(key);
+    port_exitCS_SW(key_s);
+
+    /* nothing to do here */
+    return;
+  }
 
   /* process RX FIFO data */
   ull_getPDU( &dataLen, monitorPkt );
@@ -1618,6 +1650,7 @@ void ull_rxEntryDoneCback(void)
   ull_nextDataEntryDone( (dataEntryQ_t *)urfiGenericRxCmd.pParams->pRxQ );
 
   port_exitCS_HW(key);
+  port_exitCS_SW(key_s);
 
   /* TBD: monitorPkt can be dynamically allocated and application freed */
 

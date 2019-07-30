@@ -508,6 +508,7 @@ bStatus_t ugap_monitorStop(void);
  *                     the application. A zero indicates a continuous 
  *                     scan. Unit in 0.625 ms; range from 2.5 ms to 
  *                     40.959375 s.
+ * @param   crcInit - crcInit value for this connection
  *
  * @return  @ref SUCCESS
  * @return  @ref INVALIDPARAMETER
@@ -515,7 +516,8 @@ bStatus_t ugap_monitorStop(void);
 bStatus_t ugap_monitorRequest(uint8_t channel, 
                               uint32_t accessAddr,
                               uint32_t startTime,
-                              uint16_t duration);
+                              uint16_t duration,
+                              uint32_t crcInit);
 
 #endif /* FEATURE_MONITOR */
 

@@ -241,7 +241,7 @@ rfc_bleGenericRxPar_t urfiGenericRxParams =
 {
   .pRxQ = 0,
   .rxConfig.bAutoFlushIgnored = 0, // Should never turn on for generic Rx cmd
-  .rxConfig.bAutoFlushCrcErr = 0, // TBD: receiving with CRC error for now
+  .rxConfig.bAutoFlushCrcErr = 0, // Don't flush. Even if the packet is corrupt we still get a timestamp from it
   .rxConfig.bAutoFlushEmpty = 1,
   .rxConfig.bIncludeLenByte = 1,
   .rxConfig.bIncludeCrc = 0,
@@ -251,7 +251,7 @@ rfc_bleGenericRxPar_t urfiGenericRxParams =
   .bRepeat = 1,
   .__dummy0 = 0,
   .accessAddress = 0,
-  .crcInit0 = 0x55, // TBD: Adv packets for now
+  .crcInit0 = 0x55,
   .crcInit1 = 0x55,
   .crcInit2 = 0x55,
   .endTrigger.triggerType = TRIG_NEVER,
@@ -300,29 +300,11 @@ rfc_CMD_SET_RAT_OUTPUT_t RF_cmdSetRatOutput =
 };
 
 // CMD_SCH_IMM
-rfc_CMD_SCH_IMM_t RF_cmdSchImm3 =
-{
-    .commandNo = CMD_SCH_IMM,
-    .status = 0x0000,
-    .pNextOp = (rfc_radioOp_t *)&urfiGenericRxCmd, //RF_cmdBleScanner,
-    .startTime = 0x00000000,
-    .startTrigger.triggerType = 0x0,
-    .startTrigger.bEnaCmd = 0x0,
-    .startTrigger.triggerNo = 0x0,
-    .startTrigger.pastTrig = 0x0,
-    .condition.rule = 0x0, // Always run next command
-    .condition.nSkip = 0x0,
-    .__dummy0 = 0,
-    .cmdrVal = (uint32_t)&RF_cmdWriteFwParRx,
-    .cmdstaVal = 0x0000,
-};
-
-// CMD_SCH_IMM
 rfc_CMD_SCH_IMM_t RF_cmdSchImm2 =
 {
     .commandNo = CMD_SCH_IMM,
     .status = 0x0000,
-    .pNextOp = (rfc_radioOp_t *)&RF_cmdSchImm3,
+    .pNextOp = (rfc_radioOp_t *)&urfiGenericRxCmd,
     .startTime = 0x00000000,
     .startTrigger.triggerType = 0x0,
     .startTrigger.bEnaCmd = 0x0,

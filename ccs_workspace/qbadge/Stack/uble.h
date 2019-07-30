@@ -401,6 +401,7 @@ extern "C"
 #define UBLE_PARAM_DFLT_MONITOR_DURATION  320             //!< Monitor duration 200 ms
 #define UBLE_PARAM_DFLT_MONITOR_START_TIME  6400          //!< Monitor start time 4 s
 #define UBLE_PARAM_DFLT_MONITOR_ACCESS_ADDR 0x8E89BED6    //!< Adv address
+#define UBLE_PARAM_DFLT_MONITOR_CRCINIT     0x555555      //!< crcInit value
 
 
 /**
@@ -523,6 +524,7 @@ PACKED_TYPEDEF_STRUCT {
   uint16 monitorDuration;         //!< Monitor duration. 0.625 ms unit. Range: 0x0004 to 0x4000
   uint32 startTime;               //!< Monitor start time in RAT ticks
   uint32 accessAddr;              //!< Monitor access address
+  uint32 crcInit;                 //!< Monitor crcInit
 #endif /* FEATURE_MONITOR */
 } ubleParams_t;
 

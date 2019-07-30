@@ -45,7 +45,7 @@ void put_filename(Graphics_Context *gr, int8_t *name, uint16_t y) {
 }
 
 void put_filecursor(Graphics_Context *gr, int8_t *text, uint16_t y) {
-    Graphics_drawString(gr, text, 7, FILES_LEFT_X-44, y, 1);
+    Graphics_drawString(gr, text, 7, FILES_LEFT_X-UI_FIXED_FONT_WIDTH*7-3, y, 1);
 }
 
 void put_all_filenames(char *curr_fname) {
@@ -57,7 +57,7 @@ void put_all_filenames(char *curr_fname) {
     if (first_file < 0) {
         first_file = 0;
     }
-    last_file = first_file + 9;
+    last_file = first_file + 6;
 
     char dirs[][9] = {
                       "/colors/",
@@ -66,14 +66,14 @@ void put_all_filenames(char *curr_fname) {
 
     uint8_t y=TOPBAR_HEIGHT + 6;
 
-    Graphics_setFont(&ui_gr_context_landscape, &g_sFontFixed6x8);
+    Graphics_setFont(&ui_gr_context_landscape, &UI_FIXED_FONT);
 
     for (uint8_t i=0; i<2; i++) {
         file_num++;
         if (file_num < first_file || file_num > last_file) {
         } else {
             put_filename(&ui_gr_context_landscape, (int8_t *) dirs[i], y);
-            y+=9;
+            y+=UI_FIXED_FONT_HEIGHT;
             if (first_file + ui_y_cursor == file_num) {
                 // This is the selected file.
                 strncpy(curr_fname, dirs[i], SPIFFS_OBJ_NAME_LEN);
@@ -102,14 +102,14 @@ void put_all_filenames(char *curr_fname) {
                 put_filename(&ui_gr_context_landscape, "SEL", y);
             }
             put_filename(&ui_gr_context_landscape, (int8_t *) pe->name, y);
-            y+=9;
+            y+=UI_FIXED_FONT_HEIGHT;
         }
         SPIFFS_closedir(&d);
     }
 
     ui_y_max = file_num;
 
-    y = TOPBAR_HEIGHT + 6 + 9*(ui_y_cursor - first_file);
+    y = TOPBAR_HEIGHT + 6 + UI_FIXED_FONT_HEIGHT*(ui_y_cursor - first_file);
 
     if (!strncmp("/colors/", curr_fname, SPIFFS_OBJ_NAME_LEN)) {
         // If this is a "directory heading":

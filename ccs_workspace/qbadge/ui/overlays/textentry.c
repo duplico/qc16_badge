@@ -95,7 +95,7 @@ void ui_textentry_draw() {
     Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);
 
     // Draw the text itself:
-    Graphics_setFont(&ui_gr_context_landscape, &g_sFontfixed10x20);
+    Graphics_setFont(&ui_gr_context_landscape, &UI_FIXED_FONT);
     Graphics_drawString(&ui_gr_context_landscape, (int8_t *)textbox_buf, textbox_len, txt_left, txt_top, 1);
 
     // Now invert and draw the current character:

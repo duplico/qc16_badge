@@ -81,9 +81,9 @@ rgbcolor_t led_rainbow_colors[6] = {
 };
 
 rgbcolor_t led_fn_colors[3] = {
-    {0xff, 0x00, 0xb0}, // pink (locks)
-    {0xd5, 0x00, 0x69}, // other pink (coins)
-    {0x1B, 0xCE, 0xFA}, // blue (cameras)
+    {7, 0x00, 1}, // pink (locks)
+    {5, 1, 2}, // pink (coins)
+    {0, 3, 6}, // blue (cameras)
 };
 
 rgbcolor_t led_off = {0, 0, 0};

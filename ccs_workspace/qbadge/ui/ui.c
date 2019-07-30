@@ -279,7 +279,7 @@ void ui_task_fn(UArg a0, UArg a1) {
         if (post_status_config == -1) {
 
             Graphics_clearDisplay(&ui_gr_context_landscape);
-            Graphics_setFont(&ui_gr_context_landscape, &g_sFontfixed10x20);
+            Graphics_setFont(&ui_gr_context_landscape, &UI_FIXED_FONT);
             uint8_t y = 10;
 
             Graphics_drawString(&ui_gr_context_landscape, "WARNING!!!", 99, 5, y, 1);
@@ -318,7 +318,7 @@ void ui_task_fn(UArg a0, UArg a1) {
     // Now, let's look at the POST results.
     if (post_errors) {
         Graphics_clearDisplay(&ui_gr_context_landscape);
-        Graphics_setFont(&ui_gr_context_landscape, &g_sFontfixed10x20);
+        Graphics_setFont(&ui_gr_context_landscape, &UI_FIXED_FONT);
         uint8_t y = 10;
         char disp_text[33] = {0x00,};
 

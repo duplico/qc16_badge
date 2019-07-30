@@ -10,6 +10,7 @@
 
 #define FILES_TEXT_USE_RENAME 1
 #define FILES_TEXT_USE_SAVE_COLOR 2
+#define FILES_TEXT_USE_HANDLE 3
 
 extern uint8_t mission_picking;
 void ui_mainmenu_do(UInt events);

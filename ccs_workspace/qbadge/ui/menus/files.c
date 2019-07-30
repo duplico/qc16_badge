@@ -68,6 +68,17 @@ void put_all_filenames(char *curr_fname) {
 
     Graphics_setFont(&ui_gr_context_landscape, &UI_FIXED_FONT);
 
+    file_num++;
+    if (file_num < first_file || file_num > last_file) {
+    } else {
+        put_filename(&ui_gr_context_landscape, "/conf/handle", y);
+        y+=UI_FIXED_FONT_HEIGHT;
+        if (first_file + ui_y_cursor == file_num) {
+            // This is the selected file.
+            strncpy(curr_fname, "/conf/handle", 14);
+        }
+    }
+
     for (uint8_t i=0; i<2; i++) {
         file_num++;
         if (file_num < first_file || file_num > last_file) {
@@ -77,7 +88,6 @@ void put_all_filenames(char *curr_fname) {
             if (first_file + ui_y_cursor == file_num) {
                 // This is the selected file.
                 strncpy(curr_fname, dirs[i], SPIFFS_OBJ_NAME_LEN);
-                put_filename(&ui_gr_context_landscape, "SEL", y);
             }
         }
 
@@ -99,7 +109,6 @@ void put_all_filenames(char *curr_fname) {
             if (ui_y_cursor == file_num) {
                 // This is the selected file.
                 strncpy(curr_fname, (char *) pe->name, SPIFFS_OBJ_NAME_LEN);
-                put_filename(&ui_gr_context_landscape, "SEL", y);
             }
             put_filename(&ui_gr_context_landscape, (int8_t *) pe->name, y);
             y+=UI_FIXED_FONT_HEIGHT;
@@ -111,7 +120,9 @@ void put_all_filenames(char *curr_fname) {
 
     y = TOPBAR_HEIGHT + 6 + UI_FIXED_FONT_HEIGHT*(ui_y_cursor - first_file);
 
-    if (!strncmp("/colors/", curr_fname, SPIFFS_OBJ_NAME_LEN)) {
+    if (!strncmp("/conf/handle", curr_fname, SPIFFS_OBJ_NAME_LEN)) {
+        put_filecursor(&ui_gr_context_landscape, "  edit:", y);
+    } else if (!strncmp("/colors/", curr_fname, SPIFFS_OBJ_NAME_LEN)) {
         // If this is a "directory heading":
         put_filecursor(&ui_gr_context_landscape, " store:", y);
     } else if (!strncmp("/photos/", curr_fname, SPIFFS_OBJ_NAME_LEN)) {
@@ -173,16 +184,20 @@ void ui_files_do(UInt events) {
         {
             // Rename curr_file_name to text
             SPIFFS_rename(&fs, curr_file_name, text);
+            free(text);
             Event_post(ui_event_h, UI_EVENT_REFRESH);
             break;
         }
         case FILES_TEXT_USE_SAVE_COLOR:
             // Save current colors as text
             save_anim(text);
+            free(text);
+            break;
+        case FILES_TEXT_USE_HANDLE:
+            write_conf();
             break;
         }
 
-        free(text);
     }
 
     if (pop_events(&events, UI_EVENT_BACK)) {
@@ -193,8 +208,12 @@ void ui_files_do(UInt events) {
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
         case KB_OK:
-            if (!strncmp("/colors/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
+            if (!strncmp("/conf/handle", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
+                text_use = FILES_TEXT_USE_HANDLE;
+                ui_textentry_load(badge_conf.handle, QC16_BADGE_NAME_LEN);
+            } else if (!strncmp("/colors/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
                 // Color SAVE request
+                // TODO: This is a crappy approach, all told.
                 text = malloc(QC16_PHOTO_NAME_LEN+1);
                 memset(text, 0x00, QC16_PHOTO_NAME_LEN+1);
                 text_use = FILES_TEXT_USE_SAVE_COLOR;

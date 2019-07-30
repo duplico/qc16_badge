@@ -59,6 +59,7 @@ void ui_textentry_load(char *dest, uint8_t len) {
 void ui_textentry_unload(uint8_t save) {
     ui_textentry = 0;
     if (save && textbox_buf[0] && textbox_dest) {
+        // TODO: Manage null terms.
         // If we're supposed to copy this back to the destination,
         //  and if text was actually entered, then save it.
         strncpy(textbox_dest, textbox_buf, textbox_len);

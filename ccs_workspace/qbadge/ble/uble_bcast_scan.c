@@ -89,8 +89,8 @@ uint8 advertData[29] =
  // Appearance: This is a #badgelife header.
  3,    // Length of this data
  GAP_ADTYPE_APPEARANCE, // Data type: "Appearance" // 0x19
- 0xDC, // DC
- 0x27, // 27
+ 0x27, // 0xDC27, Little-Endian
+ 0xDC,
 
  // complete name
  QC16_BADGE_NAME_LEN+1, // index 7   // length of this data

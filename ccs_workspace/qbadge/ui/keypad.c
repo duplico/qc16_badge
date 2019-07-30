@@ -113,7 +113,6 @@ void kb_clock_swi(UArg a0) {
         // A button is pressed.
 
         // Is it the same as the most recently pressed key?
-        // TODO: this is fucking broken.
         if (kb_active_key_masked == button_press) {
             kb_typematic_count++;
         } else {

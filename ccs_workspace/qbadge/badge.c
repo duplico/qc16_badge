@@ -115,10 +115,10 @@ void generate_config() {
 
     badge_conf.last_clock = 0;
     badge_conf.agent_present = 1;
-    // TODO:
-    badge_conf.element_level_max[0] = 2;
-    badge_conf.element_level_max[1] = 2;
-    badge_conf.element_level_max[2] = 2;
+
+    badge_conf.element_level_max[0] = 1;
+    badge_conf.element_level_max[1] = 1;
+    badge_conf.element_level_max[2] = 1;
 
     // TODO:
     badge_conf.element_qty[0] = 5;

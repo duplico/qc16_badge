@@ -259,10 +259,11 @@ uint8_t set_badge_connected(uint16_t id, uint8_t type, uint8_t levels, char *nam
         ret = 1;
         if (is_cbadge(id)) {
             badge_conf.stats.cbadges_connected_count++;
-            // TODO: check whether we should increase our level capacity.
+            game_process_new_cbadge();
         } else {
             badge_conf.stats.qbadges_connected_count++;
         }
+        Event_post(ui_event_h, UI_EVENT_DO_SAVE);
     }
     badge_file.times_connected++;
 

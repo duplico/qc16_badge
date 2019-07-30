@@ -340,6 +340,35 @@ void mission_begin_by_id(uint8_t mission_id) {
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
 }
 
+void game_process_new_cbadge() {
+    // What a silly way to do this...
+
+    switch(badge_conf.stats.cbadges_connected_count) {
+    case CBADGE_QTY_PLUS1:
+        break;
+    case CBADGE_QTY_PLUS2:
+        break;
+    case CBADGE_QTY_PLUS3:
+        break;
+    case CBADGE_QTY_PLUS4:
+        break;
+    default:
+        return;
+    }
+
+    // TODO: Animation???
+
+    for (uint8_t i=0; i<3; i++) {
+        if (badge_conf.element_level_max[i] < 5) {
+            badge_conf.element_level_max[i]++;
+        }
+    }
+
+    // TODO: I think the HUD will be updated after this finishes, automatically
+
+    // The calling function has already asked for a save.
+}
+
 /// Attempt to start a mission, returning 1 for success and 0 for failure.
 uint8_t mission_begin() {
     // NB: For now, we ACCEPT the RACE CONDITION that the following could

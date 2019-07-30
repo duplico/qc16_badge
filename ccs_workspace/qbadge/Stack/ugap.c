@@ -47,12 +47,13 @@
 /*********************************************************************
  * INCLUDES
  */
-#include <ble/util.h>
 #include <string.h>
 
 #include <icall.h>
 
 #include "bcomdef.h"
+#include "util.h"
+
 #include "port.h"
 #include "uble.h"
 #include "ull.h"
@@ -1149,7 +1150,8 @@ bStatus_t ugap_monitorStop(void)
 bStatus_t ugap_monitorRequest(uint8_t  channel,
                               uint32_t accessAddr,
                               uint32_t startTime,
-                              uint16_t duration)
+                              uint16_t duration,
+                              uint32_t crcInit)
 {
   if (ugmState == UGAP_MONITOR_STATE_MONITORING)
   {
@@ -1169,6 +1171,7 @@ bStatus_t ugap_monitorRequest(uint8_t  channel,
   ubleParams.monitorChan = channel;
   ubleParams.startTime = startTime;
   ubleParams.accessAddr = accessAddr;
+  ubleParams.crcInit = crcInit;
 
   if (duration <= UBLE_MAX_MONITOR_DURATION)
   {

@@ -136,6 +136,7 @@ ubleParams_t ubleParams = {
   UBLE_PARAM_DFLT_MONITOR_DURATION,       /* monitorDuration */
   UBLE_PARAM_DFLT_MONITOR_START_TIME,     /* startTime */
   UBLE_PARAM_DFLT_MONITOR_ACCESS_ADDR,    /* access address */
+  UBLE_PARAM_DFLT_MONITOR_CRCINIT         /* crcInit */
 #endif /* FEATURE_MONITOR */
 };
 

@@ -311,6 +311,10 @@ void ui_task_fn(UArg a0, UArg a1) {
     // Create and start the LED task; start the tail animation clock.
     led_init();
 
+    while (!post_status_leds) {
+        Task_sleep(10);
+    }
+
     // Now, let's look at the POST results.
     if (post_errors) {
         Graphics_clearDisplay(&ui_gr_context_landscape);
@@ -322,13 +326,13 @@ void ui_task_fn(UArg a0, UArg a1) {
         Graphics_drawString(&ui_gr_context_landscape, disp_text, 99, 5, y, 1);
         y += 21;
 
-        if (post_status_leds) {
+        if (post_status_leds < 1) {
             sprintf(disp_text, "  LED error: %d", post_status_leds);
             Graphics_drawString(&ui_gr_context_landscape, disp_text, 99, 5, y, 1);
             y += 21;
         }
 
-        if (post_status_spiffs) {
+        if (post_status_spiffs < 1) {
             sprintf(disp_text, "  SPIFFS error: %d", post_status_spiffs);
             Graphics_drawString(&ui_gr_context_landscape, disp_text, 99, 5, y, 1);
             y += 21;

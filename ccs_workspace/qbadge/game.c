@@ -382,46 +382,45 @@ uint8_t mission_begin() {
 
 /// Complete and receive rewards from a mission.
 void complete_mission(mission_t *mission) {
+    uint8_t element_position = 0;
+    uint8_t element_position_other = 0;
+    element_type element;
+
     badge_conf.agent_present = 1;
     Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
 
-    uint8_t element_position = 0;
-    // NB: the primary element is always better, so if that's us then we want it:
-    if (mission->element_types[0] == badge_conf.element_selected && mission->element_levels[0] <= badge_conf.element_level[badge_conf.element_selected]) {
-        element_position = 0;
-    } else if (mission->element_types[1] < 3) {
-        element_position = 1;
-    } else {
-        // oops
-        return;
+    // You get both rewards for a double-Q mission,
+    //  but you only level up in the part that you did.
+
+    element_position = mission_element_id_we_fill(mission);
+    element_position_other = (element_position == 1) ? 0 : 1;
+
+    if (mission->element_types[element_position_other] < 3) {
+        // It's also a qbadge element, so we get its rewards too.
+        badge_conf.element_qty[mission->element_types[element_position_other]] += mission->element_rewards[element_position_other];
     }
 
+    element = mission->element_types[element_position];
+
     // Ok! WE DID IT.
-    // We definitely get all the resources we earned.
-    // NB: We're not worrying about a rollover, because it's 32 bits,
-    //     and that would be LOLtastic if that happened.
-    //     (also, it would take running almost 4.3 million
-    //      level 5 missions.)
-    badge_conf.element_qty[badge_conf.element_selected] += mission->element_rewards[element_position];
+    badge_conf.element_qty[element] += mission->element_rewards[element_position];
 
     // Now, let's look at progress.
     // First, we'll add the level-up amount.
-    // NB: This is constructed in a way that means a byte won't be able to
-    //     overflow. So, it's OK to blindly add the progress reward,
-    //     and then check what happened.
-    badge_conf.element_level_progress[badge_conf.element_selected] += mission->element_progress[element_position];
+    if (badge_conf.element_level[element] < 5) {
+        badge_conf.element_level_progress[element] += mission->element_progress[element_position];
 
-    // First, we need to constrain our progress by our level cap.
-    // NB: This depends DESPERATELY on a level cap never being 0.
-    if (badge_conf.element_level_progress[badge_conf.element_selected] > exp_required_per_level[badge_conf.element_level_max[badge_conf.element_selected]-1]) {
-        badge_conf.element_level_progress[badge_conf.element_selected] = exp_required_per_level[badge_conf.element_level_max[badge_conf.element_selected]-1];
-    }
+        // First, we need to constrain our progress by our level cap.
+        // NB: This depends DESPERATELY on a level cap never being 0.
+        if (badge_conf.element_level_progress[element] > exp_required_per_level[badge_conf.element_level_max[element]-1]) {
+            badge_conf.element_level_progress[element] = exp_required_per_level[badge_conf.element_level_max[element]-1];
+        }
 
-    // Now, we can determine if this was enough to increase a level.
-    if (badge_conf.element_level_progress[badge_conf.element_selected] >= exp_required_per_level[badge_conf.element_level[badge_conf.element_selected]]) {
-        badge_conf.element_level[badge_conf.element_selected]++;
-        if (badge_conf.element_level[badge_conf.element_selected] > 5)
-            badge_conf.element_level[badge_conf.element_selected] = 5;
+        // Now, we can determine if this was enough to increase a level.
+        if (badge_conf.element_level_progress[element] >= exp_required_per_level[badge_conf.element_level[element]]) {
+            // We already guarded against being over 5, so let's just add:
+            badge_conf.element_level[element]++;
+        }
     }
 
     // We already posted the agent-present event, so we should be good to go.

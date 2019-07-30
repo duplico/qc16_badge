@@ -535,11 +535,12 @@ void ui_task_fn(UArg a0, UArg a1) {
             }
         }
 
-        if (refreshed) {
-            // If we just finished refreshing the screen, pop any keyboard
-            //  events off, to avoid spurious double-presses.
-            Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS,  BIOS_NO_WAIT);
-        }
+        // TODO:
+//        if (refreshed) {
+//            // If we just finished refreshing the screen, pop any keyboard
+//            //  events off, to avoid spurious double-presses.
+//            Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS,  BIOS_NO_WAIT);
+//        }
 
     }
 }

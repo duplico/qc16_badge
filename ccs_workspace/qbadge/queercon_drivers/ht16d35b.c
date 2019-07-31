@@ -184,6 +184,15 @@ void ht16d_init() {
     // SW Reset (HTCMD_SW_RESET)
     ht16d_send_cmd_single(HTCMD_SW_RESET);
 
+    if (post_status_leds == -3) {
+        // Broken I2C connection
+        // TODO: try pumping the clock line a bunch to flush it out,
+        //       then reopen the I2C
+
+        ht16d_send_cmd_single(HTCMD_SW_RESET);
+
+    }
+
     // Set global brightness
     ht16_d_send_cmd_dat(HTCMD_GLOBAL_BRTNS, HT16D_BRIGHTNESS_DEFAULT);
     // Set BW/Binary display mode.

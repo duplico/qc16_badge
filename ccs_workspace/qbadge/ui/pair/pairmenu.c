@@ -163,7 +163,7 @@ void ui_pair_menu_do(UInt events) {
     }
 
     if (pop_events(&events, UI_EVENT_TEXT_READY)) {
-        // TODO: send a handle-giving serial message
+        Event_post(serial_event_h, SERIAL_EVENT_SENDHANDLE);
     }
 
     if (pop_events(&events, UI_EVENT_TEXT_CANCELED)) {

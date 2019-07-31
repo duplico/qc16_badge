@@ -38,6 +38,7 @@
 #define UI_EVENT_KB_FLIP Event_Id_31
 #define UI_EVENT_KB_PRESS Event_Id_30
 // and the rest from the bottom:
+#define UI_EVENT_SERIAL_DONE Event_Id_12
 #define UI_EVENT_BATTERY_LOW Event_Id_11
 #define UI_EVENT_TEXTBOX_OK Event_Id_10
 #define UI_EVENT_TEXTBOX_NO Event_Id_09

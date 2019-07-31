@@ -333,6 +333,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             } else {
                 serial_ll_state = SERIAL_LL_STATE_C_IDLE;
             }
+            Event_post(ui_event_h, UI_EVENT_REFRESH);
         } else if (header->opcode == SERIAL_OPCODE_APPFILE) {
             if (SPIFFS_write(&fs, serial_fd, payload, header->payload_len) == header->payload_len) {
                 serial_send_ack();
@@ -398,6 +399,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         } else {
             serial_ll_state = SERIAL_LL_STATE_C_IDLE;
         }
+        Event_post(ui_event_h, UI_EVENT_SERIAL_DONE);
         break;
     }
 

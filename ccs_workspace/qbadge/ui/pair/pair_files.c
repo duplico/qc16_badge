@@ -121,7 +121,7 @@ void ui_draw_pair_files() {
 }
 
 void ui_pair_files_do(UInt events) {
-    if (pop_events(&events, UI_EVENT_BACK)) {
+    if (pop_events(&events, UI_EVENT_BACK) ) {
         ui_transition(UI_SCREEN_PAIR_MENU);
         return;
     }
@@ -147,6 +147,9 @@ void ui_pair_files_do(UInt events) {
                     serial_file_to_send[8] = '.';
                 }
                 Event_post(serial_event_h, SERIAL_EVENT_SENDFILE);
+                Event_pend(ui_event_h, UI_EVENT_SERIAL_DONE, UI_EVENT_SERIAL_DONE, BIOS_WAIT_FOREVER);
+                // TODO: what if this breaks?
+                ui_transition(UI_SCREEN_PAIR_MENU);
             }
             break;
         }

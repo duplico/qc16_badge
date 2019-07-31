@@ -37,14 +37,12 @@ led_tail_anim_t led_tail_anim_current = {
 const uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT] = {
     0,  //    LED_TAIL_ANIM_TYPE_OFF,
     1,  //    LED_TAIL_ANIM_TYPE_ON,
+    6,  //    LED_TAIL_ANIM_TYPE_SIX_ON
     6,  //    LED_TAIL_ANIM_TYPE_CYCLE,
-    6,  //    LED_TAIL_ANIM_TYPE_FADE,
     6,  //    LED_TAIL_ANIM_TYPE_SCROLL,
-    6,  //    LED_TAIL_ANIM_TYPE_SCROLLFADE,
-    6,  //    LED_TAIL_ANIM_TYPE_PANES,
+    3,  //    LED_TAIL_ANIM_TYPE_PANES,
     3,  //    LED_TAIL_ANIM_TYPE_BUBBLE,
-    1,  //    LED_TAIL_ANIM_TYPE_FLASH,
-    1,  //    LED_TAIL_ANIM_TYPE_FIRE,
+    2,  //    LED_TAIL_ANIM_TYPE_FLASH,
 };
 
 rgbcolor_t led_tail_src[6];
@@ -91,7 +89,17 @@ rgbcolor_t led_white = {0xf, 0xf, 0xf};
 rgbcolor_t led_white_full = {0xff, 0xff, 0xff};
 
 uint8_t led_tail_anim_type_is_valid(led_tail_anim_type t) {
-    return t < 3;
+    if ((1 << (uint8_t) t) & badge_conf.color_types_unlocked) {
+        return 1;
+    }
+    return 0;
+}
+
+uint8_t led_tail_anim_mod_is_valid(led_tail_anim_mod t) {
+    if ((1 << (uint8_t) t) & badge_conf.color_mods_unlocked) {
+        return 1;
+    }
+    return 0;
 }
 
 void led_tail_anim_type_next() {
@@ -114,6 +122,29 @@ void led_tail_anim_type_prev() {
         next_type -= 1;
     } while (!led_tail_anim_type_is_valid(next_type));
     led_tail_anim_current.type = next_type;
+    led_tail_start_anim();
+}
+
+void led_tail_anim_mod_next() {
+    led_tail_anim_mod next_mod = led_tail_anim_current.modifier;
+    do {
+        next_mod += 1;
+        if (next_mod >= LED_TAIL_ANIM_MOD_COUNT)
+            next_mod = (led_tail_anim_mod) 0;
+    } while (!led_tail_anim_mod_is_valid(next_mod));
+    led_tail_anim_current.modifier = next_mod;
+    led_tail_start_anim();
+}
+
+void led_tail_anim_mod_prev() {
+    led_tail_anim_mod next_mod = led_tail_anim_current.modifier;
+    do {
+        if (next_mod == 0) {
+            next_mod = LED_TAIL_ANIM_MOD_COUNT;
+        }
+        next_mod -= 1;
+    } while (!led_tail_anim_mod_is_valid(next_mod));
+    led_tail_anim_current.modifier = next_mod;
     led_tail_start_anim();
 }
 

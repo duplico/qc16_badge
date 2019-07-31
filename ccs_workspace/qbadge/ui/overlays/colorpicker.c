@@ -55,6 +55,7 @@ void ui_colorpicking_wireframe() {
     Graphics_drawLineH(&ui_gr_context_portrait, 0, EPD_WIDTH-1, UI_PICKER_TOP+2);
     Graphics_drawLineH(&ui_gr_context_portrait, 0, EPD_WIDTH-1, UI_PICKER_TOP+3);
 
+    // TODO: Shrink or delete:
     // Draw the boxes that hold our non-LED color representations
     Graphics_drawLineH(&ui_gr_context_portrait, 1, EPD_WIDTH-1, EPD_HEIGHT-UI_PICKER_COLORBOX_H-UI_PICKER_COLORBOX_BPAD);
     Graphics_drawLineH(&ui_gr_context_portrait, 1, EPD_WIDTH-1, EPD_HEIGHT-UI_PICKER_COLORBOX_BPAD);
@@ -75,12 +76,22 @@ void ui_colorpicking_wireframe() {
     }
 
     // Draw the icon for the animation type currently selected:
-    qc16gr_drawImage(&ui_gr_context_portrait, image_anim_type_buttons[led_tail_anim_current.type], 32, UI_PICKER_TOP+4);
+    qc16gr_drawImage(&ui_gr_context_portrait, image_color_type[led_tail_anim_current.type], 48, UI_PICKER_TOP+6);
 
-    if (ui_colorpicker_cursor_anim) {
-        // If we have the animation type selected, draw a box around its area:
-        // It's approx 64x64
-        rect = (Graphics_Rectangle){10,UI_PICKER_TOP+4, EPD_WIDTH-11,UI_PICKER_TOP+4+64};
+    if (ui_colorpicker_cursor_anim == 2) {
+        // If we have the animation type selected, draw arrows to the left and right:
+        // TODO
+        rect = (Graphics_Rectangle){10,UI_PICKER_TOP+6, EPD_WIDTH-11,UI_PICKER_TOP+6+34};
+        Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
+    }
+
+    // Draw the icon for the animation modifier currently selected:
+    qc16gr_drawImage(&ui_gr_context_portrait, image_color_mod[led_tail_anim_current.modifier], 48, UI_PICKER_TOP+6+36);
+
+    if (ui_colorpicker_cursor_anim == 1) {
+        // If we have the animation type selected, draw arrows to the left and right:
+        // TODO
+        rect = (Graphics_Rectangle){10,UI_PICKER_TOP+6+36, EPD_WIDTH-11,UI_PICKER_TOP+6+36+32};
         Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
     }
 
@@ -175,28 +186,47 @@ void ui_colorpicking_do(UInt events) {
         Graphics_flushBuffer(&ui_gr_context_landscape);
     }
 
+    // TODO: Refactor out this enclosing if statement.
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         if (ui_colorpicker_cursor_anim) {
             // Animation selection is highlighted
 
             switch(kb_active_key_masked) {
             case KB_RIGHT:
-                led_tail_anim_type_next();
-                ui_colorpicker_cursor_pos = 0;
-                Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
-                Event_post(ui_event_h, UI_EVENT_REFRESH);
-                break;
-            case KB_LEFT:
-                led_tail_anim_type_prev();
-                ui_colorpicker_cursor_pos = 0;
-                Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
-                Event_post(ui_event_h, UI_EVENT_REFRESH);
-                break;
-            case KB_DOWN:
-                if (led_tail_anim_color_counts[led_tail_anim_current.type]) {
-                    ui_colorpicker_cursor_anim = 0;
+                if (ui_colorpicker_cursor_anim == 2) {
+                    led_tail_anim_type_next();
+                    ui_colorpicker_cursor_pos = 0;
+                    Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
+                    Event_post(ui_event_h, UI_EVENT_REFRESH);
+                } else if (ui_colorpicker_cursor_anim == 1) {
+                    led_tail_anim_mod_next();
+                    Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
                     Event_post(ui_event_h, UI_EVENT_REFRESH);
                 }
+                break;
+            case KB_LEFT:
+                if (ui_colorpicker_cursor_anim == 2) {
+                    led_tail_anim_type_prev();
+                    ui_colorpicker_cursor_pos = 0;
+                    Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
+                    Event_post(ui_event_h, UI_EVENT_REFRESH);
+                } else if (ui_colorpicker_cursor_anim == 1) {
+                    led_tail_anim_mod_prev();
+                    Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
+                    Event_post(ui_event_h, UI_EVENT_REFRESH);
+                }
+                break;
+            case KB_DOWN:
+                if (led_tail_anim_color_counts[led_tail_anim_current.type] && ui_colorpicker_cursor_anim) {
+                    ui_colorpicker_cursor_anim--;
+                    Event_post(ui_event_h, UI_EVENT_REFRESH);
+                }
+                break;
+            case KB_UP:
+                if (ui_colorpicker_cursor_anim < 2) {
+                    ui_colorpicker_cursor_anim++;
+                }
+                Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
             }
 
@@ -233,7 +263,9 @@ void ui_colorpicking_do(UInt events) {
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
             case KB_UP:
-                ui_colorpicker_cursor_anim = 1;
+                if (ui_colorpicker_cursor_anim < 2) {
+                    ui_colorpicker_cursor_anim++;
+                }
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
             }

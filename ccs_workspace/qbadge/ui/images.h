@@ -8,8 +8,7 @@
 #ifndef UI_IMAGES_H_
 #define UI_IMAGES_H_
 
-extern const Graphics_Image img_example_photo;
-extern const Graphics_Image img_city;
+extern const Graphics_Image img_queercon_photo;
 extern const Graphics_Image img_picker;
 extern const Graphics_Image img_cameras;
 extern const Graphics_Image img_cocktails;
@@ -33,7 +32,8 @@ extern const Graphics_Image img_uber_plate;
 
 extern const Graphics_Image img_remote_icon_separator;
 
-extern const tImage *image_anim_type_buttons[];
+extern const tImage *image_color_type[];
+extern const tImage *image_color_mod[];
 extern const tImage *image_mainmenu_icons[];
 extern const tImage *image_missionmenu_icons[];
 extern const Graphics_Image *image_element_icons[6];

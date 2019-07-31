@@ -50,7 +50,7 @@ const uint16_t mission_reward_per_level[6][2] = {
     {5,5},      // 5-10
     {10,40},    // 10-50
     {50,50},    // 50-100
-    {100,900}   // 100-1000
+    {100,154}   // 100-254
 };
 
 const uint8_t exp_required_per_level[6] = {

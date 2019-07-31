@@ -229,7 +229,7 @@ static void UBLEBcastScan_taskFxn(UArg a0, UArg a1)
         // Waits for an event to be posted associated with the calling thread.
         // Note that an event associated with a thread is posted when a
         // message is queued to the message receive queue of the thread
-        events = Event_pend(uble_event_h, Event_Id_NONE, UEB_QUEUE_EVT, BIOS_WAIT_FOREVER);
+        events = Event_pend(uble_event_h, Event_Id_NONE, UEB_QUEUE_EVT + UBLE_EVENT_UPDATE_ADV, BIOS_WAIT_FOREVER);
 
         // If RTOS queue is not empty, process app message.
         while (!Queue_empty(appMsgQueue))
@@ -256,7 +256,7 @@ static void UBLEBcastScan_taskFxn(UArg a0, UArg a1)
         }
 
         if (events & UBLE_EVENT_UPDATE_ADV) {
-//            UBLEBcastScan_bcast_advPrepareCB();
+            UBLEBcastScan_bcast_advPrepareCB();
         }
     }
 }
@@ -326,12 +326,12 @@ static void UBLEBcastScan_bcast_stateChangeCB(ugapBcastState_t newState)
  * @return  None.
  */
 static void UBLEBcastScan_bcast_advPrepareCB(void) {
-//    char *name = (char *) &advertData[9];
-//    qc16_ble_t *badge_frame = (qc16_ble_t *) &advertData[25];
-//    memcpy(name, badge_conf.handle, QC16_BADGE_NAME_LEN);
-//    badge_frame->badge_id = badge_conf.badge_id;
-//    badge_frame->badge_type = badge_conf.badge_type;
-//    badge_frame->badge_levels = 0;
+    char *name = (char *) &advertData[9];
+    qc16_ble_t *badge_frame = (qc16_ble_t *) &advertData[25];
+    strncpy(name, badge_conf.handle, QC16_BADGE_NAME_LEN);
+    badge_frame->badge_id = badge_conf.badge_id;
+    badge_frame->badge_type = badge_conf.badge_type;
+    badge_frame->badge_levels = 0;
 
     uble_setParameter(UBLE_PARAM_ADVDATA, sizeof(advertData), advertData);
 }
@@ -603,6 +603,10 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
                     // this is the queercon ID.
                     badge_frame = (qc16_ble_t *) &advData[i+4];
                     seems_queercon |= 0x0f;
+                } else if (advData[i+2] == 0xFF && advData[i+3] == 0x71) {
+                    // DCFurs badge
+                    dcfurs_nearby = 1;
+                    dcfurs_nearby_curr = 1;
                 }
                 break;
             }

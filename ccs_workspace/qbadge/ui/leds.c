@@ -54,6 +54,7 @@ rgbcolor_t led_tail_dest[6];
 /// Step values of the dustbuster
 rgbdelta_t led_tail_step[6];
 uint16_t led_tail_steps_per_frame;
+uint16_t led_tail_frame_duration_ms = 1000;
 uint16_t led_tail_frames_this_anim;
 uint16_t led_tail_frame_curr;
 uint16_t led_tail_frame_next;
@@ -69,6 +70,8 @@ Clock_Handle led_tail_clock_h;
 uint8_t led_sidelight_animating = 0;
 uint8_t led_sidelight_in_use = 1;
 uint8_t led_sidelight_state = 0;
+
+uint8_t led_sidelight_mod_bits = 0b000000;
 
 rgbcolor_t led_rainbow_colors[6] = {
     {63, 0, 0},  // Red
@@ -218,7 +221,17 @@ void led_tail_frame_setup() {
             }
         }
         break;
+    case LED_TAIL_ANIM_TYPE_PANES:
+        for (uint8_t i=0; i<6; i++) {
+            led_tail_src[i].r = led_tail_anim_current.colors[((led_tail_frame_curr+i)/6) % led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_PANES]].r;
+            led_tail_src[i].g = led_tail_anim_current.colors[((led_tail_frame_curr+i)/6) % led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_PANES]].g;
+            led_tail_src[i].b = led_tail_anim_current.colors[((led_tail_frame_curr+i)/6) % led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_PANES]].b;
 
+            led_tail_dest[i].r = led_tail_anim_current.colors[((led_tail_frame_next+i)/6) % led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_PANES]].r;
+            led_tail_dest[i].g = led_tail_anim_current.colors[((led_tail_frame_next+i)/6) % led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_PANES]].g;
+            led_tail_dest[i].b = led_tail_anim_current.colors[((led_tail_frame_next+i)/6) % led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_PANES]].b;
+        }
+        break;
     }
 
     memcpy(led_tail_curr, led_tail_src, sizeof(rgbcolor_t)*6);
@@ -253,7 +266,7 @@ void led_tail_timestep() {
         Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
     }
 
-    Clock_setTimeout(led_tail_clock_h, 100000/led_tail_steps_per_frame);
+    Clock_setTimeout(led_tail_clock_h, (led_tail_frame_duration_ms*100)/led_tail_steps_per_frame);
     Clock_start(led_tail_clock_h);
 }
 
@@ -265,12 +278,9 @@ void led_tail_start_anim() {
     memset(led_tail_step, 0x00, sizeof(rgbdelta_t)*6);
     led_tail_frame_curr = 0;
     led_tail_step_curr = 0;
+    led_tail_frame_duration_ms = 100; // default to 1sec
+    led_tail_steps_per_frame = 40;
 
-
-//    LED_TAIL_ANIM_TYPE_CYCLE,   // all lights cycle through same colors
-//    LED_TAIL_ANIM_TYPE_SCROLL,  // lights scroll
-//    LED_TAIL_ANIM_TYPE_PANES,   // 3 lights at a time (cameras)
-//    LED_TAIL_ANIM_TYPE_BUBBLE,  // 3 colors, lights fade up randomly (locks)
 //    LED_TAIL_ANIM_TYPE_FLASH,   // 2 color pulses (coins)
 
     switch(led_tail_anim_current.type) {
@@ -291,18 +301,42 @@ void led_tail_start_anim() {
         return;
     case LED_TAIL_ANIM_TYPE_SCROLL:
     case LED_TAIL_ANIM_TYPE_CYCLE:
-        led_tail_steps_per_frame = 100;
         led_tail_frames_this_anim = 6;
         break;
     case LED_TAIL_ANIM_TYPE_BUBBLE:
-        led_tail_steps_per_frame = 100;
+        led_tail_frame_duration_ms = 750;
         led_tail_frames_this_anim = 3;
+        break;
+    case LED_TAIL_ANIM_TYPE_PANES:
+        led_tail_frame_duration_ms = 400;
+        led_tail_frames_this_anim = 18;
+        break;
+    case LED_TAIL_ANIM_TYPE_FLASH:
+        led_tail_frame_duration_ms = 400;
+        led_tail_frames_this_anim = 4;
+        break;
+    }
+
+    switch(led_tail_anim_current.modifier) {
+    case LED_TAIL_ANIM_MOD_NORMAL:
+        // do nothing.
+        break;
+    case LED_TAIL_ANIM_MOD_FAST:
+        led_tail_frame_duration_ms /= 8;
+        led_tail_steps_per_frame /= 4;
+        break;
+    case LED_TAIL_ANIM_MOD_SLOW:
+        led_tail_frame_duration_ms *= 4;
+        led_tail_steps_per_frame *= 4;
+        break;
+    default:
+        // TODO: The rest
         break;
     }
 
     led_tail_frame_setup();
 
-    Clock_setTimeout(led_tail_clock_h, 100000/led_tail_steps_per_frame);
+    Clock_setTimeout(led_tail_clock_h, (led_tail_frame_duration_ms*100)/led_tail_steps_per_frame);
     Clock_start(led_tail_clock_h);
 }
 

@@ -401,6 +401,7 @@ void ui_task_fn(UArg a0, UArg a1) {
         }
 
         if (events & UI_EVENT_PAIRED) {
+            // TODO: enable side lights
             uint8_t remote_levels = 0;
             uint8_t starting_element = 0;
 
@@ -546,6 +547,12 @@ void ui_task_fn(UArg a0, UArg a1) {
 
                 case UI_SCREEN_PAIR_MENU:
                     ui_pair_menu_do(events);
+                    break;
+                case UI_SCREEN_PAIR_CB_INFO:
+                    ui_pair_cb_info_do(events);
+                    break;
+                case UI_SCREEN_PAIR_FILE:
+                    ui_pair_files_do(events);
                     break;
                 }
             }

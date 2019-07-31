@@ -41,6 +41,9 @@ uint8_t handler_near_rssi_curr = 0;
 element_type handler_near_element_curr = ELEMENT_COUNT_NONE;
 char handler_near_handle_curr[QC16_BADGE_NAME_LEN+1] = {0,};
 
+uint8_t dcfurs_nearby = 0;
+uint8_t dcfurs_nearby_curr = 0;
+
 Clock_Handle radar_clock_h;
 
 uint8_t handler_nearby() {
@@ -68,6 +71,9 @@ void reset_scan_cycle(UArg a0) {
 
     handler_near_id_curr = QBADGE_ID_MAX_UNASSIGNED;
     handler_near_element_curr = ELEMENT_COUNT_NONE;
+
+    dcfurs_nearby = dcfurs_nearby_curr;
+    dcfurs_nearby_curr = 0;
 
     process_seconds();
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);

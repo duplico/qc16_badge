@@ -6,7 +6,7 @@ translate([-45,-41,7.5]) {
 
 difference() {
     keypad_circle();
-    scale([1.01,1.01,0.5])
+    scale([1.005,1.005,0.5])
     import("qbadge_board.stl");
     
     scale([1,1,10]) translate([0,-100,0]) {

@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Task.h>
@@ -161,6 +162,7 @@ void led_show_curr_colors() {
     }
 
     for (uint8_t i=0; i<count; i++) {
+        // TODO: dim these:
         ht16d_put_color(6+i*(6/count), 6/count, &led_tail_anim_current.colors[i]);
     }
 
@@ -170,6 +172,7 @@ void led_show_curr_colors() {
 /// Start the current frame of the LED animation.
 void led_tail_frame_setup() {
     led_tail_frame_next = (led_tail_frame_curr+1)%led_tail_frames_this_anim;
+    uint8_t this_frame_light = 0xff;
 
     switch(led_tail_anim_current.type) {
     case LED_TAIL_ANIM_TYPE_CYCLE:
@@ -183,6 +186,39 @@ void led_tail_frame_setup() {
             led_tail_dest[i].b = led_tail_anim_current.colors[led_tail_frame_next].b;
         }
         break;
+    case LED_TAIL_ANIM_TYPE_SCROLL:
+        for (uint8_t i=0; i<6; i++) {
+            led_tail_src[i].r = led_tail_anim_current.colors[(led_tail_frame_curr+6-i)%6].r;
+            led_tail_src[i].g = led_tail_anim_current.colors[(led_tail_frame_curr+6-i)%6].g;
+            led_tail_src[i].b = led_tail_anim_current.colors[(led_tail_frame_curr+6-i)%6].b;
+
+            led_tail_dest[i].r = led_tail_anim_current.colors[(led_tail_frame_next+6-i)%6].r;
+            led_tail_dest[i].g = led_tail_anim_current.colors[(led_tail_frame_next+6-i)%6].g;
+            led_tail_dest[i].b = led_tail_anim_current.colors[(led_tail_frame_next+6-i)%6].b;
+        }
+        break;
+    case LED_TAIL_ANIM_TYPE_BUBBLE:
+        this_frame_light = rand() % 6;
+
+        for (uint8_t i=0; i<6; i++) {
+            led_tail_src[i].r = 0;
+            led_tail_src[i].g = 0;
+            led_tail_src[i].b = 0;
+
+            uint8_t color_id = led_tail_frame_curr % led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_BUBBLE];
+
+            if (i == this_frame_light) {
+                led_tail_dest[i].r = led_tail_anim_current.colors[color_id].r;
+                led_tail_dest[i].g = led_tail_anim_current.colors[color_id].g;
+                led_tail_dest[i].b = led_tail_anim_current.colors[color_id].b;
+            } else {
+                led_tail_dest[i].r = 0;
+                led_tail_dest[i].g = 0;
+                led_tail_dest[i].b = 0;
+            }
+        }
+        break;
+
     }
 
     memcpy(led_tail_curr, led_tail_src, sizeof(rgbcolor_t)*6);
@@ -230,6 +266,13 @@ void led_tail_start_anim() {
     led_tail_frame_curr = 0;
     led_tail_step_curr = 0;
 
+
+//    LED_TAIL_ANIM_TYPE_CYCLE,   // all lights cycle through same colors
+//    LED_TAIL_ANIM_TYPE_SCROLL,  // lights scroll
+//    LED_TAIL_ANIM_TYPE_PANES,   // 3 lights at a time (cameras)
+//    LED_TAIL_ANIM_TYPE_BUBBLE,  // 3 colors, lights fade up randomly (locks)
+//    LED_TAIL_ANIM_TYPE_FLASH,   // 2 color pulses (coins)
+
     switch(led_tail_anim_current.type) {
     case LED_TAIL_ANIM_TYPE_OFF:
         ht16d_put_color(0, 6, &led_off);
@@ -241,9 +284,19 @@ void led_tail_start_anim() {
         Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
         // No animating; just set the color.
         return;
+    case LED_TAIL_ANIM_TYPE_SIX_ON:
+        ht16d_put_colors(0, 6, &led_tail_anim_current.colors[0]);
+        Event_post(led_event_h, LED_EVENT_FLUSH);
+        // No animating; just set the color.
+        return;
+    case LED_TAIL_ANIM_TYPE_SCROLL:
     case LED_TAIL_ANIM_TYPE_CYCLE:
         led_tail_steps_per_frame = 100;
         led_tail_frames_this_anim = 6;
+        break;
+    case LED_TAIL_ANIM_TYPE_BUBBLE:
+        led_tail_steps_per_frame = 100;
+        led_tail_frames_this_anim = 3;
         break;
     }
 

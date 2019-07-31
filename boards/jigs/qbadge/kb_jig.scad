@@ -1,7 +1,9 @@
 $fn=180;
 
+
 difference() {
     keypad_circle();
+    scale([1,1,0.75])
     import("qbadge_board.stl");
     
     scale([1,1,10]) translate([0,-100,0]) {
@@ -13,10 +15,11 @@ difference() {
     rj_cutout();
 }
 
+
 module keypad_circle() {
     difference() {
         cylinder(d=110, h=10);
-        cylinder(d=83.82, h=12);
+        scale([10.1,10.1]) linear_extrude(15) import("keypad_rB0_outline_v1.dxf");
     }
 }
 

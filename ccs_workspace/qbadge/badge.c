@@ -135,6 +135,12 @@ void generate_config() {
 
     badge_conf.element_selected = ELEMENT_COUNT_NONE;
 
+//    badge_conf.color_mods_unlocked = 0b00000001;
+//    badge_conf.color_types_unlocked = 0b00000111;
+    // TODO:
+    badge_conf.color_mods_unlocked = 0xff;
+    badge_conf.color_types_unlocked = 0xff;
+
     // TODO: Confirm initialization coverage:
     // TODO: Extract constants
     // TODO: Finalize these numbers:
@@ -146,8 +152,8 @@ void generate_config() {
     badge_conf.stats.qbadges_in_system = QBADGE_COUNT_INITIAL;
 
     // Initialize the first photo:
-    save_photo(&img_city, "Tower");
-    strcpy(badge_conf.current_photo, "Tower");
+    save_photo(&img_queercon_photo, ".Queercon16");
+    strcpy(badge_conf.current_photo, ".Queercon16");
 
     write_conf();
 }
@@ -164,7 +170,7 @@ uint8_t config_is_valid() {
 
 /// Validate, load, and/or generate this badge's configuration as appropriate.
 void config_init() {
-    if (!conf_file_exists()) {
+    if (1 || !conf_file_exists()) {
         // If no config exists, generate it.
         generate_config();
 

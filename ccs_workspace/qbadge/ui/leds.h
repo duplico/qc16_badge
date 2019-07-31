@@ -22,16 +22,14 @@
 #define LED_EVENT_SIDELIGHT_DIS Event_Id_08
 
 typedef enum {
-    LED_TAIL_ANIM_TYPE_OFF = 0,
-    LED_TAIL_ANIM_TYPE_ON,
-    LED_TAIL_ANIM_TYPE_CYCLE,
-    LED_TAIL_ANIM_TYPE_FADE,
-    LED_TAIL_ANIM_TYPE_SCROLL,
-    LED_TAIL_ANIM_TYPE_SCROLLFADE,
-    LED_TAIL_ANIM_TYPE_PANES,
-    LED_TAIL_ANIM_TYPE_BUBBLE,
-    LED_TAIL_ANIM_TYPE_FLASH,
-    LED_TAIL_ANIM_TYPE_FIRE,
+    LED_TAIL_ANIM_TYPE_OFF = 0, // lights off
+    LED_TAIL_ANIM_TYPE_ON,      // one light on
+    LED_TAIL_ANIM_TYPE_SIX_ON,  // all on different colors
+    LED_TAIL_ANIM_TYPE_CYCLE,   // all lights cycle through same colors
+    LED_TAIL_ANIM_TYPE_SCROLL,  // lights scroll
+    LED_TAIL_ANIM_TYPE_PANES,   // 3 lights at a time (cameras)
+    LED_TAIL_ANIM_TYPE_BUBBLE,  // 3 colors, lights fade up randomly (locks)
+    LED_TAIL_ANIM_TYPE_FLASH,   // 2 color pulses (coins)
     LED_TAIL_ANIM_TYPE_COUNT
 } led_tail_anim_type;
 
@@ -40,8 +38,8 @@ typedef enum {
     LED_TAIL_ANIM_MOD_FAST,
     LED_TAIL_ANIM_MOD_SLOW,
     LED_TAIL_ANIM_MOD_TWINKLE,
-    LED_TAIL_ANIM_MOD_SALT,
-    LED_TAIL_ANIM_MOD_PEPPER,
+    LED_TAIL_ANIM_MOD_FIRE,
+    LED_TAIL_ANIM_MOD_ICE,
     LED_TAIL_ANIM_MOD_FLAG,
     LED_TAIL_ANIM_MOD_FLAG_MOV,
     LED_TAIL_ANIM_MOD_COUNT
@@ -70,6 +68,8 @@ void led_show_curr_colors();
 void led_tail_start_anim();
 void led_tail_anim_type_next();
 void led_tail_anim_type_prev();
+void led_tail_anim_mod_next();
+void led_tail_anim_mod_prev();
 
 void led_sidelight_set_level(uint8_t level);
 void led_sidelight_set_color(rgbcolor_t *color);

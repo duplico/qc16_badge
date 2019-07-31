@@ -78,15 +78,6 @@ void ui_draw_info() {
     Graphics_flushBuffer(&ui_gr_context_landscape);
 }
 
-void ui_draw_scan() {
-    // Clear the buffer.
-    Graphics_clearDisplay(&ui_gr_context_landscape);
-
-    ui_draw_top_bar();
-
-    Graphics_flushBuffer(&ui_gr_context_landscape);
-}
-
 UInt pop_events(UInt *events_ptr, UInt events_to_check) {
     UInt in_events;
 
@@ -236,22 +227,6 @@ void ui_info_do(UInt events) {
     }
     if (pop_events(&events, UI_EVENT_REFRESH)) {
         ui_draw_info();
-    }
-    if (pop_events(&events, UI_EVENT_KB_PRESS)) {
-        switch(kb_active_key_masked) {
-        case KB_OK:
-            break;
-        }
-    }
-}
-
-void ui_scan_do(UInt events) {
-    if (pop_events(&events, UI_EVENT_BACK)) {
-        ui_transition(UI_SCREEN_MAINMENU);
-        return;
-    }
-    if (pop_events(&events, UI_EVENT_REFRESH)) {
-        ui_draw_scan();
     }
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {

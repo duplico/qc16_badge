@@ -97,6 +97,8 @@ typedef struct {
     uint32_t handler_cooldown_time;
     uint8_t mission_assigned[4];
     mission_t missions[4];
+    uint8_t color_types_unlocked;
+    uint8_t color_mods_unlocked;
     char current_photo[QC16_PHOTO_NAME_LEN+1];
     char handle[QC16_BADGE_NAME_LEN + 1];
     qbadge_stats_t stats;

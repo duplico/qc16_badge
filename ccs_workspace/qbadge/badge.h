@@ -38,7 +38,7 @@ extern uint8_t badge_paired;
 extern pair_payload_t paired_badge;
 extern char handler_name_missionpicking[QC16_BADGE_NAME_LEN+1];
 uint8_t mission_getting_possible();
-uint8_t handler_nearby();
+uint8_t handler_human_nearby();
 mission_t generate_mission();
 void mission_begin_by_id(uint8_t mission_id);
 uint8_t mission_begin();

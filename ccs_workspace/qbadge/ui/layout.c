@@ -188,7 +188,7 @@ void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint1
     } else {
         if (mission_getting_possible()) {
             qc16gr_drawImage(gr, &img_hud_handler_sideways, x, y+1);
-            if (handler_nearby()) {
+            if (handler_human_nearby()) {
                 // Use the handler's name
                 strncpy(str, handler_near_handle, QC16_BADGE_NAME_LEN);
             } else {

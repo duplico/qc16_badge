@@ -46,8 +46,8 @@ uint32_t serial_ll_next_timeout;
 Clock_Handle serial_timeout_clock_h;
 
 spiffs_file serial_fd;
-
 uint8_t serial_new_cbadge = 0;
+uint8_t *serial_file_payload;
 
 Event_Handle serial_event_h;
 char serial_file_to_send[SPIFFS_OBJ_NAME_LEN+1] = {0,};
@@ -196,6 +196,34 @@ void serial_mission_go(uint8_t local_mission_id, mission_t *mission) {
     free(out_payload);
 }
 
+void serial_file_start() {
+    if (serial_ll_state == SERIAL_LL_STATE_C_FILE_RX) {
+        return;
+    }
+
+    serial_fd = SPIFFS_open(&fs, serial_file_to_send, SPIFFS_O_RDONLY, 0);
+    if (serial_fd >= 0) {
+        serial_ll_state = SERIAL_LL_STATE_C_FILE_TX;
+    } else {
+        return;
+    }
+    serial_file_payload = malloc(128); // TODO: Extract constant.
+    strncpy(serial_file_payload, serial_file_to_send, SPIFFS_OBJ_NAME_LEN);
+    serial_file_payload[SPIFFS_OBJ_NAME_LEN] = 0x00;
+    serial_send(SERIAL_OPCODE_PUTFILE, serial_file_payload, SPIFFS_OBJ_NAME_LEN+1);
+    // Send the full file name. Now we await an ACK.
+}
+
+void serial_file_send_next() {
+    int32_t ret;
+    ret = SPIFFS_read(&fs, serial_fd, serial_file_payload, 128);
+    serial_send(SERIAL_OPCODE_APPFILE, serial_file_payload, ret);
+    if (ret != 128) {
+        // Done after this one.
+        serial_ll_state = SERIAL_LL_STATE_C_FILE_TX_DONE;
+    }
+}
+
 void serial_rx_done(serial_header_t *header, uint8_t *payload) {
     // If this is called, it's already been validated.
     // NB: payload will be freed immediately after this returns, so
@@ -261,6 +289,11 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
                 serial_send_ack();
             } else {
             }
+        }
+
+        if (header->opcode == SERIAL_OPCODE_GETFILE) {
+            strncpy(serial_file_to_send, payload, header->payload_len);
+            serial_file_start();
         }
 
         if (header->opcode == SERIAL_OPCODE_PAIR) {
@@ -349,6 +382,25 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             Event_post(ui_event_h, UI_EVENT_REFRESH);
         }
 
+        break;
+    case SERIAL_LL_STATE_C_FILE_TX:
+        if (header->opcode == SERIAL_OPCODE_ACK) {
+            serial_file_send_next();
+            break;
+        }
+        // Otherwise, fall through...
+    case SERIAL_LL_STATE_C_FILE_TX_DONE:
+        // Free the buffer, and close the file.
+        // TODO: prevent a memory leak with this in the timeout
+        // (make a cleanup function or something)
+        free(serial_file_payload);
+        SPIFFS_close(&fs, serial_fd);
+        serial_send(SERIAL_OPCODE_ENDFILE, NULL, 0);
+        if (badge_paired) {
+            serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
+        } else {
+            serial_ll_state = SERIAL_LL_STATE_C_IDLE;
+        }
         break;
 //    default:
     }
@@ -464,7 +516,7 @@ void serial_task_fn(UArg a0, UArg a1) {
         }
 
         if (events & SERIAL_EVENT_SENDHANDLE) {
-            serial_send(SERIAL_OPCODE_SETNAME, &paired_badge.handle, QC16_BADGE_NAME_LEN+1);
+            serial_send(SERIAL_OPCODE_SETNAME, paired_badge.handle, QC16_BADGE_NAME_LEN+1);
         }
 
     }

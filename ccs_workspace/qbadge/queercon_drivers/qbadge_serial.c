@@ -422,6 +422,7 @@ void serial_task_fn(UArg a0, UArg a1) {
     serial_header_t header_in;
     uint8_t syncbyte_input[1];
     uint8_t *payload_input;
+    UInt events = 0;
     volatile int_fast32_t result;
 
     serial_ll_next_timeout = Clock_getTicks() + PRX_TIME_MS * 100;
@@ -431,6 +432,8 @@ void serial_task_fn(UArg a0, UArg a1) {
         if (serial_ll_next_timeout && Clock_getTicks() >= serial_ll_next_timeout) {
             serial_timeout();
         }
+
+        events = Event_pend(serial_event_h, Event_Id_NONE, ~Event_Id_NONE, BIOS_NO_WAIT);
 
         // This blocks on a semaphore while waiting to return, so it's safe
         //  not to have a Task_yield() in this.
@@ -459,6 +462,11 @@ void serial_task_fn(UArg a0, UArg a1) {
                 }
             }
         }
+
+        if (events & SERIAL_EVENT_SENDHANDLE) {
+            serial_send(SERIAL_OPCODE_SETNAME, &paired_badge.handle, QC16_BADGE_NAME_LEN+1);
+        }
+
     }
 }
 

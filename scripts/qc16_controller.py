@@ -309,9 +309,9 @@ def main():
 
     if args.command == 'setid':
         if is_cbadge(badge_id) and not is_cbadge(args.id):
-            print("Can't give a qbadge ID to a cbadge.")
-        elif is_qbadge(badge_id) and is_qbadge(args.id):
-            print("Can't give a cbadge ID to a qbadge.")
+            print("This is a cbadge, and that ID isn't a cbadge ID.")
+        elif is_qbadge(badge_id) and not is_qbadge(args.id):
+            print("This is a qbadge, and that ID isn't a qbadge ID.")
         elif not is_cbadge(args.id) and not is_qbadge(args.id):
             print("Supplied ID must be in range for cbadge or qbadge.")
         else:
@@ -322,6 +322,7 @@ def main():
     if args.command == 'stats':
         send_message(ser, SERIAL_OPCODE_STAT1Q)
         header, payload = await_serial(ser, SERIAL_OPCODE_STATA)
+        print(header)
         print(Stats._make(struct.unpack(STATA_FMT, payload)))
         send_message(ser, SERIAL_OPCODE_STAT2Q)
         header, payload = await_serial(ser, SERIAL_OPCODE_PAIR)

@@ -315,6 +315,33 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             }
         }
 
+        // STAT1Q
+        if (header->opcode == SERIAL_OPCODE_STAT1Q) {
+            serial_send(SERIAL_OPCODE_STATA, (uint8_t *) &badge_conf.stats, sizeof(qbadge_stats_t));
+        }
+
+        // STAT2Q:
+        if (header->opcode == SERIAL_OPCODE_STAT2Q) {
+            serial_send_pair_msg();
+        }
+
+        // SETID
+        if (header->opcode == SERIAL_OPCODE_SETID) {
+            memcpy(&badge_conf.badge_id, payload, sizeof(badge_conf.badge_id));
+            Event_post(ui_event_h, UI_EVENT_DO_SAVE);
+            serial_send_ack();
+        }
+
+        // SETNAME:
+        if (header->opcode == SERIAL_OPCODE_SETNAME) {
+            memcpy(&badge_conf.handle, (uint8_t *) payload, QC16_BADGE_NAME_LEN);
+            // Guarantee null term:
+            badge_conf.handle[QC16_BADGE_NAME_LEN] = 0x00;
+            Event_post(ui_event_h, UI_EVENT_DO_SAVE);
+            // Don't ACK, but rather send a pairing update with our new handle:
+            serial_send_pair_msg();
+        }
+
         if (header->opcode == SERIAL_OPCODE_DUMPQ) {
             uint8_t pillar_id = payload[0];
             if (pillar_id > 3) {

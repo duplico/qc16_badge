@@ -81,7 +81,7 @@ uint8_t validate_header(serial_header_t *header) {
         }
         break;
     case SERIAL_OPCODE_SETID:
-        if (header->payload_len != sizeof(uint16_t)) {
+        if (header->payload_len != sizeof(uint16_t) || header->from_id != CONTROLLER_ID) {
             return 0;
         }
         break;
@@ -96,7 +96,7 @@ uint8_t validate_header(serial_header_t *header) {
         }
         break;
     case SERIAL_OPCODE_SETTYPE:
-        if (header->payload_len != 1) {
+        if (header->payload_len != 1 || header->from_id != CONTROLLER_ID) {
             return 0;
         }
         break;

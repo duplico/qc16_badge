@@ -298,6 +298,17 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             serial_send_ack();
         }
 
+        // SETTYPE
+        if (header->opcode == SERIAL_OPCODE_SETTYPE) {
+            // A promotion! (or demotion...)
+            if ((payload[0] & BADGE_TYPE_ELEMENT_MASK) < 3) {
+                badge_conf.badge_type = payload[0];
+                Event_post(ui_event_h, UI_EVENT_DO_SAVE);
+                Event_post(ui_event_h, UI_EVENT_REFRESH);
+                serial_send_ack();
+            }
+        }
+
         // SETNAME:
         if (header->opcode == SERIAL_OPCODE_SETNAME) {
             memcpy(&badge_conf.handle, (uint8_t *) payload, QC16_BADGE_NAME_LEN);

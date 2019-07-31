@@ -28,6 +28,9 @@ extern uint8_t handler_near_rssi;
 extern element_type handler_near_element;
 extern char handler_near_handle[QC16_BADGE_NAME_LEN+1];
 
+extern uint8_t dcfurs_nearby;
+extern uint8_t dcfurs_nearby_curr;
+
 extern uint8_t mission_accepted[3];
 extern mission_t missions[3];
 

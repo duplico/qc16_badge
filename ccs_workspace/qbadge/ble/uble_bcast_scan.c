@@ -586,6 +586,15 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
         // The advData is up to 31 bytes long, which should be len-8-6
         uint8_t i = 0;
         uint8_t seems_queercon = 0;
+
+        if (advData[len-8]) {
+            // CRC error
+            return;
+        }
+
+        // NB: len-8-6 is the length of the advertisement. This is because it's
+        //     followed by 6 bytes of Postfix (RSSI STATUS TIMESTAMPx4)
+        //     and by 8 bytes of Status (bCrcErr bIgnore channelx6)
         while (i < len-8-6) {
             uint8_t section_len = advData[i];
             switch(advData[i+1]) {

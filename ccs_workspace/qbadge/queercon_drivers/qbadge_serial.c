@@ -256,44 +256,10 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         }
         break;
     case SERIAL_LL_STATE_C_IDLE:
-        if (header->opcode == SERIAL_OPCODE_PUTFILE) {
-            // We're putting a file!
-            // Assure that there is a null terminator in payload.
-            payload[header->payload_len-1] = 0;
-            if (strncmp("/photos/", payload, 8)
-                    && strncmp("/colors/", payload, 8)
-                    && header->from_id != CONTROLLER_ID) {
-                // If this isn't in /photos/ or /colors/,
-                //  and it's not from the controller, which is the only
-                //  thing allowed to send us other files...
-                break;
-                // ignore it. no ack.
-            }
-
-            // Check to see if we would be clobbering a file, and if so,
-            //   append numbers to it until we won't be.
-            // (we give up once we get to 99)
-            char fname[SPIFFS_OBJ_NAME_LEN] = {0,};
-            strncpy(fname, payload, header->payload_len);
-
-            uint8_t append=1;
-            spiffs_stat stat;
-            while (!SPIFFS_stat(&fs, fname, &stat) && append < 99) {
-                sprintf(&fname[header->payload_len]-1, "%d", append++);
-            }
-
-            serial_fd = SPIFFS_open(&fs, fname, SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);
-            if (serial_fd > 0) {
-                // The open worked properly...
-                serial_ll_state = SERIAL_LL_STATE_C_FILE_RX;
-                serial_send_ack();
-            } else {
-            }
-        }
 
         if (header->opcode == SERIAL_OPCODE_GETFILE) {
             strncpy(serial_file_to_send, payload, header->payload_len);
-            serial_file_start();
+            Event_post(serial_event_h, SERIAL_EVENT_SENDFILE);
         }
 
         if (header->opcode == SERIAL_OPCODE_PAIR) {
@@ -362,7 +328,11 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             // Save the file.
             SPIFFS_close(&fs, serial_fd);
             serial_send_ack();
-            serial_ll_state = SERIAL_LL_STATE_C_IDLE;
+            if (badge_paired) {
+                serial_ll_state = SERIAL_LL_STATE_C_PAIRED;
+            } else {
+                serial_ll_state = SERIAL_LL_STATE_C_IDLE;
+            }
         } else if (header->opcode == SERIAL_OPCODE_APPFILE) {
             if (SPIFFS_write(&fs, serial_fd, payload, header->payload_len) == header->payload_len) {
                 serial_send_ack();
@@ -429,7 +399,42 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             serial_ll_state = SERIAL_LL_STATE_C_IDLE;
         }
         break;
-//    default:
+    }
+
+
+    if (header->opcode == SERIAL_OPCODE_PUTFILE) {
+        // We're putting a file!
+        // Assure that there is a null terminator in payload.
+        payload[header->payload_len-1] = 0;
+        if (strncmp("/photos/", payload, 8)
+                && strncmp("/colors/", payload, 8)
+                && header->from_id != CONTROLLER_ID) {
+            // If this isn't in /photos/ or /colors/,
+            //  and it's not from the controller, which is the only
+            //  thing allowed to send us other files...
+            return;
+            // ignore it. no ack.
+        }
+
+        // Check to see if we would be clobbering a file, and if so,
+        //   append numbers to it until we won't be.
+        // (we give up once we get to 99)
+        char fname[SPIFFS_OBJ_NAME_LEN] = {0,};
+        strncpy(fname, payload, header->payload_len);
+
+        uint8_t append=1;
+        spiffs_stat stat;
+        while (header->from_id != CONTROLLER_ID && !SPIFFS_stat(&fs, fname, &stat) && append < 99) {
+            sprintf(&fname[header->payload_len]-1, "%d", append++);
+        }
+
+        serial_fd = SPIFFS_open(&fs, fname, SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);
+        if (serial_fd > 0) {
+            // The open worked properly...
+            serial_ll_state = SERIAL_LL_STATE_C_FILE_RX;
+            serial_send_ack();
+        } else {
+        }
     }
 }
 
@@ -513,6 +518,10 @@ void serial_task_fn(UArg a0, UArg a1) {
         }
 
         events = Event_pend(serial_event_h, Event_Id_NONE, ~Event_Id_NONE, BIOS_NO_WAIT);
+
+        if (events & SERIAL_EVENT_SENDFILE) {
+            serial_file_start();
+        }
 
         // This blocks on a semaphore while waiting to return, so it's safe
         //  not to have a Task_yield() in this.

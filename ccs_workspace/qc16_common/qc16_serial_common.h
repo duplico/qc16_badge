@@ -42,6 +42,7 @@
 #define SERIAL_LL_STATE_C_FILE_TX 4
 #define SERIAL_LL_STATE_C_PAIRING 5
 #define SERIAL_LL_STATE_C_PAIRED 6
+#define SERIAL_LL_STATE_C_FILE_TX_DONE 7
 
 // Shared struct and functions:
 

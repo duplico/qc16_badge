@@ -200,13 +200,17 @@ def main():
 
     id_parser = cmd_parsers.add_parser('autoid')
 
-    #   Send image
+    #   Send image (qbadge only)
     image_parser = cmd_parsers.add_parser('image')
     image_parser.add_argument('--name', '-n', required=True, type=str, help="The alphanumeric filename for the image")
     image_parser.add_argument('path', type=str, help="Path to the image to place on the badge")
     #   Set handle (cbadge only)
     handle_parser = cmd_parsers.add_parser('handle')
     handle_parser.add_argument('new_handle', type=str, help='The handle to assign the badge.')
+
+    #   Get file (qbadge only)
+    handle_parser = cmd_parsers.add_parser('getfile')
+    handle_parser.add_argument('spiffs_path', type=str, help='SPIFFS path to the file on the badge.')
 
     #   Promote (uber or handler)
     promote_parser = cmd_parsers.add_parser('promote')
@@ -284,8 +288,24 @@ def main():
                 with open(autoid_file, 'w') as f:
                     f.write(str(next_id+1))
                 
-            
-        
+    if args.command == 'getfile':
+        file = bytes()
+        send_message(ser, SERIAL_OPCODE_GETFILE, payload=args.spiffs_path.encode('utf-8'))
+        print("Sent get")
+        header, payload = await_serial(ser, SERIAL_OPCODE_PUTFILE)
+        print("Got PUTFILE")
+        send_message(ser, SERIAL_OPCODE_ACK)
+        print("Sent ACK")
+        while True:
+            header, payload = await_serial(ser)
+            send_message(ser, SERIAL_OPCODE_ACK)
+            if header.opcode == SERIAL_OPCODE_ENDFILE:
+                print("Got file segment")
+                break
+            else:
+                print("File done.")
+                file += payload
+        print(file)
 
     if args.command == 'setid':
         if is_cbadge(badge_id) and not is_cbadge(args.id):

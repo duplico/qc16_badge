@@ -24,6 +24,7 @@
 #include <queercon_drivers/storage.h>
 #include <qc16_serial_common.h>
 
+#include <ui/overlays/overlays.h>
 #include <ui/pair/pair.h>
 #include "ui/ui.h"
 #include "ui/graphics.h"
@@ -35,7 +36,7 @@
 #include <ui/layout.h>
 
 char pair_menu_text[3][MAINMENU_NAME_MAX_LEN+1] = {
-    "Info",
+    "Set name",
     "Files",
     "GO!",
 };
@@ -53,7 +54,7 @@ void ui_draw_pair_menu_icons() {
     uint8_t menu_mask = 0x00;
     uint16_t menu_x = 5;
 
-    strcpy(pair_menu_text[0], "Info");
+    strcpy(pair_menu_text[0], "Set name");
 
     if (is_qbadge(paired_badge.badge_id)) {
         menu_mask |= 0b010;

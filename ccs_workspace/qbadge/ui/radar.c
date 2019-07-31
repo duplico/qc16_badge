@@ -46,7 +46,10 @@ uint8_t dcfurs_nearby_curr = 0;
 
 Clock_Handle radar_clock_h;
 
-uint8_t handler_nearby() {
+uint8_t handler_human_nearby() {
+    if (!badge_conf.handler_allowed) {
+        return 0;
+    }
     return handler_near_id != QBADGE_ID_MAX_UNASSIGNED;
 }
 

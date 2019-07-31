@@ -31,11 +31,6 @@ char handler_name_missionpicking[QC16_BADGE_NAME_LEN+1] = {0,};
 
 uint8_t mission_avail_levels[6] = {0,};
 
-/// Returns true if it is possible to call generate_mission().
-uint8_t mission_getting_possible() {
-    return handler_nearby() || badge_conf.vhandler_present;
-}
-
 const uint8_t mission_exp_per_level[6] = {
     EXP_PER_LEVEL0,
     EXP_PER_LEVEL1,
@@ -62,6 +57,14 @@ const uint8_t exp_required_per_level[6] = {
     255, // NB: must be unreachable
 };
 
+/// Returns true if it is possible to call generate_mission().
+uint8_t mission_getting_possible() {
+    if (!badge_conf.handler_allowed) {
+        return 0;
+    }
+    return handler_human_nearby() || badge_conf.vhandler_present;
+}
+
 /// Generate and return a new mission. NB: GATE ON mission_getting_possible().
 mission_t generate_mission() {
     mission_t new_mission;
@@ -74,7 +77,7 @@ mission_t generate_mission() {
     // handler, which is available to assign low-level missions at
     // a configurable time interval.
 
-    if (handler_nearby()) {
+    if (handler_human_nearby()) {
         // Human handler.
         // We use the one with the highest RSSI
         // Mostly, it assigns missions that are on-brand for that handler.

@@ -157,7 +157,7 @@ void ui_draw_battery_at(Graphics_Context *gr, uint16_t x, uint16_t y) {
         Graphics_drawStringCentered(gr, "LOW!", 4, x + TOPBAR_ICON_WIDTH/2, y + TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 3, 0);
     } else {
         // Otherwise, voltage reading
-        Graphics_setFont(gr, &g_sFontFixed6x8);
+        Graphics_setFont(gr, &UI_SMALL_FONT);
         char bat_text[5] = "3.0V";
         sprintf(bat_text, "%d.%dV", vbat_out_uvolts/1000000, (vbat_out_uvolts/100000) % 10);
         Graphics_drawStringCentered(gr, (int8_t *) bat_text, 4, x + TOPBAR_ICON_WIDTH/2, y + TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 3, 0);
@@ -195,7 +195,7 @@ void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint1
                 // vhandler
                 sprintf(str, "vhandler");
             }
-            Graphics_setFont(gr, &g_sFontFixed6x8);
+            Graphics_setFont(gr, &UI_SMALL_FONT);
             Graphics_drawStringCentered(
                     gr,
                     (int8_t *) str,
@@ -217,7 +217,7 @@ void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint1
     qc16gr_drawImage(gr, &img_hud_radar, x, y);
 
     sprintf(str, "%d", qbadges_near_count);
-    Graphics_setFont(gr, &g_sFontFixed6x8);
+    Graphics_setFont(gr, &UI_SMALL_FONT);
     Graphics_drawStringCentered(
             gr,
         (int8_t *) str,

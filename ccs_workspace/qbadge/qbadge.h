@@ -24,6 +24,10 @@
 #define UI_FIXED_FONT g_sFontfixed9x15b
 #define UI_FIXED_FONT_WIDTH 9
 #define UI_FIXED_FONT_HEIGHT 15
+//#define UI_SMALL_FONT g_sFontFixed6x8
+#define UI_SMALL_FONT g_sFontfixed6x10
+#define UI_SMALL_FONT_WIDTH 5
+#define UI_SMALL_FONT_HEIGHT 8
 #define BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH_DOWN 28
 #define BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH_UP 42
 #define TEXTENTRY_MAX_LEN 40
@@ -72,6 +76,7 @@ typedef struct {
 } badge_file_t;
 
 extern const Graphics_Font UI_FIXED_FONT;
+extern const Graphics_Font UI_SMALL_FONT;
 extern uint_fast16_t vbat_out_uvolts;
 
 #endif /* QBADGE_H_ */

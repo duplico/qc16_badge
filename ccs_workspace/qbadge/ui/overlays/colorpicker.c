@@ -269,6 +269,7 @@ void ui_colorpicking_do(UInt events) {
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
                 break;
             }
+            Event_post(led_event_h, LED_EVENT_BRIGHTNESS);
         }
 
         // Universal ones:

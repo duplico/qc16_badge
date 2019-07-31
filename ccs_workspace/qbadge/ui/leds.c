@@ -277,6 +277,18 @@ void led_tail_timestep() {
         Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
     }
 
+
+    if (!led_sidelight_animating && led_tail_anim_current.modifier == LED_TAIL_ANIM_MOD_FLAG_MOV) {
+        // Display the animation's colors.
+        for (uint8_t i=0; i<led_tail_anim_color_counts[led_tail_anim_current.type]; i++) {
+            uint8_t leds_per_color = 6/led_tail_anim_color_counts[led_tail_anim_current.type];
+            // Reverse one so they line up with each other:
+            ht16d_put_color(18-(i+1)*leds_per_color, leds_per_color, &led_tail_curr[i]);
+            ht16d_put_color(18+i*leds_per_color, leds_per_color, &led_tail_curr[i]);
+        }
+        Event_post(led_event_h, LED_EVENT_FLUSH);
+    }
+
     Clock_setTimeout(led_tail_clock_h, (led_tail_frame_duration_ms*100)/led_tail_steps_per_frame);
     Clock_start(led_tail_clock_h);
 }
@@ -340,11 +352,14 @@ void led_tail_start_anim() {
         led_tail_frame_duration_ms *= 4;
         led_tail_steps_per_frame *= 4;
         break;
+    case LED_TAIL_ANIM_MOD_FLAG:
+        break;
     default:
         // TODO: The rest
         break;
     }
 
+    Event_post(led_event_h, LED_EVENT_BRIGHTNESS);
     led_tail_frame_setup();
 
     Clock_setTimeout(led_tail_clock_h, (led_tail_frame_duration_ms*100)/led_tail_steps_per_frame);
@@ -357,7 +372,6 @@ void led_tail_step_swi(UArg a0) {
 
 void led_sidelight_set_color(rgbcolor_t *color) {
     ht16d_put_color(12, 12, color);
-    ht16d_send_gray();
     Event_post(led_event_h, LED_EVENT_FLUSH);
 }
 
@@ -385,14 +399,6 @@ void led_element_light() {
 }
 
 void led_adjust_brightness() {
-//    if (brightness < BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH) {
-//        // Dim enough that we want to turn on the sidelights.
-//        led_sidelight_activate();
-//    } else {
-//        // Bright enough that we want to turn off the sidelights.
-//        led_sidelight_deactivate();
-//    }
-
     // brightness is between 1 and 63
 
     rgbcolor_t sidelight_color = {0,};
@@ -420,7 +426,20 @@ void led_adjust_brightness() {
 
     // If the sidelights are in use, as sidelights, send the right color:
     if (!led_sidelight_animating) {
-        led_sidelight_set_color(&sidelight_color);
+        if (led_tail_anim_current.modifier == LED_TAIL_ANIM_MOD_FLAG) {
+            // Display the animation's colors.
+            for (uint8_t i=0; i<led_tail_anim_color_counts[led_tail_anim_current.type]; i++) {
+                uint8_t leds_per_color = 6/led_tail_anim_color_counts[led_tail_anim_current.type];
+                // Reverse one so they line up with each other:
+                ht16d_put_color(18-(i+1)*leds_per_color, leds_per_color, &led_tail_anim_current.colors[i]);
+                ht16d_put_color(18+i*leds_per_color, leds_per_color, &led_tail_anim_current.colors[i]);
+            }
+            Event_post(led_event_h, LED_EVENT_FLUSH);
+        } else if (led_tail_anim_current.modifier == LED_TAIL_ANIM_MOD_FLAG_MOV) {
+            // nothing to do, the animation loop handles it.
+        } else {
+            led_sidelight_set_color(&sidelight_color);
+        }
     }
 
     ht16d_set_global_brightness(brightness);

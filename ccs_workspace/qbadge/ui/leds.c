@@ -232,6 +232,17 @@ void led_tail_frame_setup() {
             led_tail_dest[i].b = led_tail_anim_current.colors[((led_tail_frame_next+i)/6) % led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_PANES]].b;
         }
         break;
+    case LED_TAIL_ANIM_TYPE_FLASH:
+        for (uint8_t i=0; i<6; i++) {
+            led_tail_src[i].r = 0;
+            led_tail_src[i].g = 0;
+            led_tail_src[i].b = 0;
+
+            led_tail_dest[i].r = led_tail_anim_current.colors[led_tail_frame_next].r;
+            led_tail_dest[i].g = led_tail_anim_current.colors[led_tail_frame_next].g;
+            led_tail_dest[i].b = led_tail_anim_current.colors[led_tail_frame_next].b;
+        }
+        break;
     }
 
     memcpy(led_tail_curr, led_tail_src, sizeof(rgbcolor_t)*6);
@@ -313,7 +324,7 @@ void led_tail_start_anim() {
         break;
     case LED_TAIL_ANIM_TYPE_FLASH:
         led_tail_frame_duration_ms = 400;
-        led_tail_frames_this_anim = 4;
+        led_tail_frames_this_anim = 2;
         break;
     }
 

@@ -9,11 +9,11 @@
 #define UI_LAYOUT_H_
 
 #include <stdint.h>
-
+#include <qc16.h>
 #include <ti/grlib/grlib.h>
 
 #define MAINMENU_ICON_COUNT 4
-#define MAINMENU_NAME_MAX_LEN 12
+#define MAINMENU_NAME_MAX_LEN QC16_BADGE_NAME_LEN
 
 #define FILES_LEFT_X 72
 

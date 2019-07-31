@@ -160,8 +160,6 @@ void ui_transition(uint8_t destination) {
         break;
     case UI_SCREEN_PAIR_FILE:
         break;
-    case UI_SCREEN_PAIR_CB_INFO:
-        break;
     }
 
     ui_current = destination;
@@ -547,9 +545,6 @@ void ui_task_fn(UArg a0, UArg a1) {
 
                 case UI_SCREEN_PAIR_MENU:
                     ui_pair_menu_do(events);
-                    break;
-                case UI_SCREEN_PAIR_CB_INFO:
-                    ui_pair_cb_info_do(events);
                     break;
                 case UI_SCREEN_PAIR_FILE:
                     ui_pair_files_do(events);

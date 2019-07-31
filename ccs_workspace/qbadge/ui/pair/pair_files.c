@@ -48,7 +48,7 @@ void ui_pair_files_do(UInt events) {
     }
 
     if (pop_events(&events, UI_EVENT_REFRESH)) {
-        ui_draw_pair_cb();
+        ui_draw_pair_files();
     }
 
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
@@ -57,6 +57,7 @@ void ui_pair_files_do(UInt events) {
             switch(ui_y_cursor) {
             case 0:
                 // TODO: do handle things
+
                 break;
             }
             break;

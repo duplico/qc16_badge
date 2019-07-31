@@ -65,6 +65,7 @@ int main()
     led_event_h = Event_create(NULL, NULL);
     uble_event_h = Event_create(NULL, NULL);
     ui_event_h = Event_create(NULL, NULL);
+    serial_event_h = Event_create(NULL, NULL);
 
     // Create and start the UI task; this thread bootstraps the badge by
     //  initializing all the other tasks.

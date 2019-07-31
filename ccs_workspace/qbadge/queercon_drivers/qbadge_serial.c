@@ -49,6 +49,9 @@ spiffs_file serial_fd;
 
 uint8_t serial_new_cbadge = 0;
 
+Event_Handle serial_event_h;
+char serial_file_to_send[SPIFFS_OBJ_NAME_LEN+1] = {0,};
+
 const PIN_Config serial_gpio_prx[] = {
     QC16_PIN_SERIAL_DIO1_PTX | PIN_INPUT_EN | PIN_PULLDOWN,
     QC16_PIN_SERIAL_DIO2_PRX | PIN_GPIO_OUTPUT_EN | PIN_GPIO_HIGH,

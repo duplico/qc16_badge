@@ -78,7 +78,8 @@ void put_pairing_filenames(char *curr_fname) {
             if (strncmp(dirs[i], (char *) pe->name, 8)) {
                 continue;
             }
-            if (!strncmp("/colors/.current", (char *) pe->name, 16)) {
+            if (pe->name[8] == '.') {
+                // Ignore protected files.
                 continue;
             }
             file_num++;
@@ -132,13 +133,19 @@ void ui_pair_files_do(UInt events) {
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
         case KB_OK:
-            if (!strncmp("/colors/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
+            if (curr_file_name[8] == '.') {
+                break; // Can't share a protected file.
+            } else if (!strncmp("/colors/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
                 // Just the directory. Ignore.
             } else if (!strncmp("/photos/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
                 // Just the directory. Ignore.
             } else {
                 // Send the file.
                 strncpy(serial_file_to_send, curr_file_name, SPIFFS_OBJ_NAME_LEN);
+                if (serial_file_to_send[8] == '!') {
+                    // A superprotected file is shared as a protected file.
+                    serial_file_to_send[8] = '.';
+                }
                 Event_post(serial_event_h, SERIAL_EVENT_SENDFILE);
             }
             break;

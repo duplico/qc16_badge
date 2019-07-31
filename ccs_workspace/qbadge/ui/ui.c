@@ -401,7 +401,7 @@ void ui_task_fn(UArg a0, UArg a1) {
         }
 
         if (events & UI_EVENT_PAIRED) {
-            // TODO: enable side lights
+            Event_post(led_event_h, LED_EVENT_SIDELIGHT_EN);
             uint8_t remote_levels = 0;
             uint8_t starting_element = 0;
 

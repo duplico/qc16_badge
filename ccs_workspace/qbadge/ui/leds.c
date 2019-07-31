@@ -280,11 +280,10 @@ void led_tail_timestep() {
 
     if (!led_sidelight_animating && led_tail_anim_current.modifier == LED_TAIL_ANIM_MOD_FLAG_MOV) {
         // Display the animation's colors.
-        for (uint8_t i=0; i<led_tail_anim_color_counts[led_tail_anim_current.type]; i++) {
-            uint8_t leds_per_color = 6/led_tail_anim_color_counts[led_tail_anim_current.type];
+        for (uint8_t i=0; i<6; i++) {
             // Reverse one so they line up with each other:
-            ht16d_put_color(18-(i+1)*leds_per_color, leds_per_color, &led_tail_curr[i]);
-            ht16d_put_color(18+i*leds_per_color, leds_per_color, &led_tail_curr[i]);
+            ht16d_put_color(18-(i+1), 1, &led_tail_curr[i]);
+            ht16d_put_color(18+i, 1, &led_tail_curr[i]);
         }
         Event_post(led_event_h, LED_EVENT_FLUSH);
     }
@@ -303,8 +302,9 @@ void led_tail_start_anim() {
     led_tail_step_curr = 0;
     led_tail_frame_duration_ms = 100; // default to 1sec
     led_tail_steps_per_frame = 40;
+    led_tail_frames_this_anim = 0;
 
-//    LED_TAIL_ANIM_TYPE_FLASH,   // 2 color pulses (coins)
+    Event_post(led_event_h, LED_EVENT_BRIGHTNESS);
 
     switch(led_tail_anim_current.type) {
     case LED_TAIL_ANIM_TYPE_OFF:
@@ -359,7 +359,6 @@ void led_tail_start_anim() {
         break;
     }
 
-    Event_post(led_event_h, LED_EVENT_BRIGHTNESS);
     led_tail_frame_setup();
 
     Clock_setTimeout(led_tail_clock_h, (led_tail_frame_duration_ms*100)/led_tail_steps_per_frame);
@@ -426,7 +425,7 @@ void led_adjust_brightness() {
 
     // If the sidelights are in use, as sidelights, send the right color:
     if (!led_sidelight_animating) {
-        if (led_tail_anim_current.modifier == LED_TAIL_ANIM_MOD_FLAG) {
+        if (led_sidelight_in_use && (led_tail_anim_current.modifier == LED_TAIL_ANIM_MOD_FLAG || (!led_tail_frames_this_anim && led_tail_anim_current.modifier == LED_TAIL_ANIM_MOD_FLAG_MOV))) {
             // Display the animation's colors.
             for (uint8_t i=0; i<led_tail_anim_color_counts[led_tail_anim_current.type]; i++) {
                 uint8_t leds_per_color = 6/led_tail_anim_color_counts[led_tail_anim_current.type];
@@ -463,10 +462,6 @@ void led_task_fn(UArg a0, UArg a1) {
     while (1) {
         events = Event_pend(led_event_h, Event_Id_NONE, ~Event_Id_NONE,  BIOS_WAIT_FOREVER);
 
-        if (events & LED_EVENT_FLUSH) {
-            led_flush();
-        }
-
         if (events & LED_EVENT_SHOW_UPCONF) {
             led_show_curr_colors();
         }
@@ -495,6 +490,10 @@ void led_task_fn(UArg a0, UArg a1) {
 
         if (events & LED_EVENT_SIDELIGHT_EN) {
             led_sidelight_activate();
+        }
+
+        if (events & LED_EVENT_FLUSH) {
+            led_flush();
         }
     }
 }

@@ -34,7 +34,7 @@
 #include <board.h>
 #include <ui/layout.h>
 
-const char pair_menu_text[3][MAINMENU_NAME_MAX_LEN+1] = {
+char pair_menu_text[3][MAINMENU_NAME_MAX_LEN+1] = {
     "Info",
     "Files",
     "GO!",
@@ -53,10 +53,16 @@ void ui_draw_pair_menu_icons() {
     uint8_t menu_mask = 0x00;
     uint16_t menu_x = 5;
 
+    strcpy(pair_menu_text[0], "Info");
+
     if (is_qbadge(paired_badge.badge_id)) {
         menu_mask |= 0b010;
     } else {
         menu_mask |= 0b001;
+        if (paired_badge.handle[0]) {
+            strncpy(pair_menu_text[0], paired_badge.handle, MAINMENU_NAME_MAX_LEN);
+            pair_menu_text[0][MAINMENU_NAME_MAX_LEN] = 0x00;
+        }
     }
 
     if (pairing_mission_doable_count) {
@@ -67,7 +73,7 @@ void ui_draw_pair_menu_icons() {
         menu_x = 296/2 - img_pair_cb.xSize/2;
     }
 
-    ui_draw_menu_icons(ui_x_cursor, menu_mask, 0, pair_menu_icons, pair_menu_text, 10, menu_x, TOPBAR_HEIGHT+8, 3);
+    ui_draw_menu_icons(ui_x_cursor, menu_mask, 0, pair_menu_icons, (const char (*)[13]) pair_menu_text, 10, menu_x, TOPBAR_HEIGHT+8, 3);
 }
 
 void ui_draw_pair_missions() {
@@ -155,6 +161,14 @@ void ui_pair_menu_do(UInt events) {
         ui_draw_pair_menu();
     }
 
+    if (pop_events(&events, UI_EVENT_TEXT_READY)) {
+        // TODO: send a handle-giving serial message
+    }
+
+    if (pop_events(&events, UI_EVENT_TEXT_CANCELED)) {
+        // Nothing to do.
+    }
+
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         switch(kb_active_key_masked) {
         case KB_OK:
@@ -168,7 +182,7 @@ void ui_pair_menu_do(UInt events) {
                 }
                 break;
             case 0:
-                ui_transition(UI_SCREEN_PAIR_CB_INFO);
+                ui_textentry_load(paired_badge.handle, QC16_BADGE_NAME_LEN);
                 break;
             case 1:
                 ui_transition(UI_SCREEN_PAIR_FILE);

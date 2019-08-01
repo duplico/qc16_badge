@@ -54,6 +54,14 @@ uint8_t handler_human_nearby() {
 }
 
 void reset_scan_cycle(UArg a0) {
+    if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_EXTPOWER) { // 50 mV
+        // We're on external power.
+    } else if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_CUTOFF) {
+        // Batteries are below cut-off voltage
+        // Do nothing.
+        return;
+    }
+
     if (qbadges_near_count_running != qbadges_near_count) {
         qbadges_near_count = qbadges_near_count_running;
         Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
@@ -90,6 +98,13 @@ uint8_t badge_seen(uint16_t id) {
 }
 
 uint8_t badge_connected(uint16_t id) {
+    if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_EXTPOWER) { // 50 mV
+        // We're on external power.
+    } else if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_CUTOFF) {
+        // Batteries are below cut-off voltage
+        // Do nothing.
+        return 0;
+    }
     badge_file_t badge_file = {0,};
 
     // file name is /badges/###
@@ -120,8 +135,15 @@ uint8_t badge_near_curr(uint16_t id) {
     return 0;
 }
 
-// TODO: name is not guaranteed to be null-termed.
 void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8_t rssi) {
+    if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_EXTPOWER) { // 50 mV
+        // We're on external power.
+    } else if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_CUTOFF) {
+        // Batteries are below cut-off voltage
+        // Do nothing.
+        return;
+    }
+
     if (!is_qbadge(id) || id == QBADGE_ID_MAX_UNASSIGNED)
         return;
 
@@ -234,6 +256,14 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
 }
 
 uint8_t set_badge_connected(uint16_t id, uint8_t type, uint8_t levels, char *name) {
+    if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_EXTPOWER) { // 50 mV
+        // We're on external power.
+    } else if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_CUTOFF) {
+        // Batteries are below cut-off voltage
+        // Do nothing.
+        return 0;
+    }
+
     if (!is_qbadge(id) && !is_cbadge(id))
         return 0;
     if (id == QBADGE_ID_MAX_UNASSIGNED || id == CBADGE_ID_MAX_UNASSIGNED)

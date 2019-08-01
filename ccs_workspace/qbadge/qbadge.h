@@ -33,7 +33,7 @@
 #define TEXTENTRY_MAX_LEN 40
 
 #define UVOLTS_EXTPOWER 50000
-#define UVOLTS_CUTOFF 1900000
+#define UVOLTS_CUTOFF 1820000
 
 // NB: Should be longer than the UI autorefresh timeout
 #define SCAN_PERIOD_SECONDS 60

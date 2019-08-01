@@ -68,7 +68,14 @@ void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
     case ADCBUF_CH_VBAT:
         ADCBuf_convertAdjustedToMicroVolts(handle, completedChannel, completedADCBuffer, &vbat_out_uvolts, conversion->samplesRequestedCount);
         vbat_centivolts_curr = vbat_out_uvolts/10000;
-        if (vbat_centivolts_prev - vbat_centivolts_curr > 35 || vbat_centivolts_prev - vbat_centivolts_curr < -35) {
+        if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_EXTPOWER) { // 50 mV
+            // We're on external power.
+        } else if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_CUTOFF) {
+            // Batteries are below cut-off voltage
+            // Start sending events
+            //  (we're not going to last long below 1.82 V)
+            Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
+        } else if (vbat_centivolts_prev - vbat_centivolts_curr > 35 || vbat_centivolts_prev - vbat_centivolts_curr < -35) {
             vbat_centivolts_prev = vbat_centivolts_curr;
             Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
         }

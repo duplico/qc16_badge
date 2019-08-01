@@ -9,6 +9,7 @@
 #include <stdlib.h>
 
 #include <xdc/runtime/Error.h>
+#include <ti/sysbios/hal/Hwi.h>
 #include <ti/drivers/UART.h>
 #include <ti/drivers/uart/UARTCC26XX.h>
 #include <ti/drivers/PIN.h>
@@ -134,7 +135,12 @@ void serial_enter_c_idle() {
 }
 
 void serial_send_pair_msg() {
+    volatile uint32_t keyHwi;
+
+    keyHwi = Hwi_disable();
     pair_payload_t *pair_payload_out = malloc(sizeof(pair_payload_t));
+    Hwi_restore(keyHwi);
+
     memset(pair_payload_out, 0, sizeof(pair_payload_t));
 
     pair_payload_out->badge_id = badge_conf.badge_id;
@@ -161,7 +167,9 @@ void serial_send_pair_msg() {
 
     serial_send(SERIAL_OPCODE_PAIR, (uint8_t *) pair_payload_out, sizeof(pair_payload_t));
 
+    keyHwi = Hwi_disable();
     free(pair_payload_out);
+    Hwi_restore(keyHwi);
 }
 
 /// Send the pairing payload from this badge.
@@ -188,16 +196,24 @@ void serial_update_element() {
 }
 
 void serial_mission_go(uint8_t local_mission_id, mission_t *mission) {
+    volatile uint32_t keyHwi;
+
+    keyHwi = Hwi_disable();
     uint8_t *out_payload = malloc(sizeof(mission_t)+1);
+    Hwi_restore(keyHwi);
     out_payload[0] = local_mission_id;
     memcpy(&out_payload[1], mission, sizeof(mission_t));
 
     serial_send(SERIAL_OPCODE_GOMISSION, out_payload, sizeof(mission_t)+1);
 
+    keyHwi = Hwi_disable();
     free(out_payload);
+    Hwi_restore(keyHwi);
 }
 
 void serial_file_start() {
+    volatile uint32_t keyHwi;
+
     if (serial_ll_state == SERIAL_LL_STATE_C_FILE_RX) {
         return;
     }
@@ -208,7 +224,11 @@ void serial_file_start() {
     } else {
         return;
     }
+
+    keyHwi = Hwi_disable();
     serial_file_payload = malloc(128); // TODO: Extract constant.
+    Hwi_restore(keyHwi);
+
     strncpy(serial_file_payload, serial_file_to_send, SPIFFS_OBJ_NAME_LEN);
     serial_file_payload[SPIFFS_OBJ_NAME_LEN] = 0x00;
     serial_send(SERIAL_OPCODE_PUTFILE, serial_file_payload, SPIFFS_OBJ_NAME_LEN+1);
@@ -226,6 +246,7 @@ void serial_file_send_next() {
 }
 
 void serial_rx_done(serial_header_t *header, uint8_t *payload) {
+    volatile uint32_t keyHwi;
     // If this is called, it's already been validated.
     // NB: payload will be freed immediately after this returns, so
     //     it should be copied to a more durable buffer if it needs to be
@@ -402,7 +423,10 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         // Free the buffer, and close the file.
         // TODO: prevent a memory leak with this in the timeout
         // (make a cleanup function or something)
+        keyHwi = Hwi_disable();
         free(serial_file_payload);
+        Hwi_restore(keyHwi);
+
         SPIFFS_close(&fs, serial_fd);
         serial_send(SERIAL_OPCODE_ENDFILE, NULL, 0);
         if (badge_paired) {
@@ -521,6 +545,7 @@ void serial_task_fn(UArg a0, UArg a1) {
     uint8_t *payload_input;
     UInt events = 0;
     volatile int_fast32_t result;
+    volatile uint32_t keyHwi;
 
     serial_ll_next_timeout = Clock_getTicks() + PRX_TIME_MS * 100;
 
@@ -564,7 +589,10 @@ void serial_task_fn(UArg a0, UArg a1) {
                     && validate_header(&header_in)) {
                 if (header_in.payload_len) {
                     // Payload expected.
+
+                    keyHwi = Hwi_disable();
                     payload_input = malloc(header_in.payload_len);
+                    Hwi_restore(keyHwi);
 
                     result = UART_read(uart, payload_input, header_in.payload_len);
                     if (result == header_in.payload_len && crc16_buf(payload_input, header_in.payload_len) == header_in.crc16_payload) {
@@ -573,7 +601,10 @@ void serial_task_fn(UArg a0, UArg a1) {
                     } else {
                         // ruh roh
                     }
+
+                    keyHwi = Hwi_disable();
                     free(payload_input);
+                    Hwi_restore(keyHwi);
                 } else {
                     // RXed good.
                     serial_rx_done(&header_in, payload_input);

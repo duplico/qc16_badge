@@ -14,6 +14,7 @@
 #include <grlib/grlib.h>
 #include "graphics.h"
 #include <spiffs.h>
+#include <ti/sysbios/hal/Hwi.h>
 #include <queercon_drivers/storage.h>
 
 #define RLE_BATCH_READ_SIZE 38
@@ -233,6 +234,7 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
                               int16_t y)
 {
     Graphics_Image bitmap;
+    volatile uint32_t keyHwi;
 
     int16_t bPP, width, height, x0, x1, x2;
     const uint32_t palette[2] = {0, 1};
@@ -334,7 +336,9 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
     //
     if(!(bPP & 0xF0))
     {
+        keyHwi = Hwi_disable();
         image = malloc(((width * bPP) + 7) / 8);
+        Hwi_restore(keyHwi);
         //
         // The image is not compressed.  See if the top portion of the image
         // lies above the clipping region.
@@ -372,6 +376,11 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
             if (ret < ((width * bPP) + 7) / 8) {
                 SPIFFS_close(&fs, fd);
                 storage_bad_file(pathname);
+
+                keyHwi = Hwi_disable();
+                free(image);
+                Hwi_restore(keyHwi);
+
                 return;
             }
 
@@ -386,10 +395,14 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
             //
             y++;
         }
+        keyHwi = Hwi_disable();
         free(image);
+        Hwi_restore(keyHwi);
     } else {
         // The image is compressed with RLE4, RLE7 or RLE8 Algorithm
+        keyHwi = Hwi_disable();
         image = malloc(RLE_BATCH_READ_SIZE);
+        Hwi_restore(keyHwi);
         uint8_t read_len = 0;
         uint8_t img_index = read_len;
 
@@ -415,6 +428,11 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
                 if (ret < read_len) {
                     SPIFFS_close(&fs, fd);
                     storage_bad_file(pathname);
+
+                    keyHwi = Hwi_disable();
+                    free(image);
+                    Hwi_restore(keyHwi);
+
                     return;
                 }
             }
@@ -461,7 +479,10 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
             }
 
         } while (y_offset < height);
+
+        keyHwi = Hwi_disable();
         free(image);
+        Hwi_restore(keyHwi);
     }
     SPIFFS_close(&fs, fd);
 }

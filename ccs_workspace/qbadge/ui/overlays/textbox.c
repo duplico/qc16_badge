@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <ti/sysbios/hal/Hwi.h>
 #include <ti/grlib/grlib.h>
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Task.h>
@@ -37,11 +38,16 @@ char *textbox_buf;
 extern const tFont g_sFontfixed10x20;
 
 void ui_textbox_load(char *text) {
+    volatile uint32_t keyHwi;
     textbox_len = strlen(text);
     if (textbox_len > 60) {
         textbox_len = 60;
     }
+
+    keyHwi = Hwi_disable();
     textbox_buf = malloc(textbox_len+1);
+    Hwi_restore(keyHwi);
+
     memset(textbox_buf, 0x00, textbox_len+1);
     strncpy(textbox_buf, text, textbox_len);
     ui_textbox = 1;
@@ -53,7 +59,11 @@ void ui_textbox_load(char *text) {
 }
 
 void ui_textbox_unload(uint8_t ok) {
+    volatile uint32_t keyHwi;
+    keyHwi = Hwi_disable();
     free(textbox_buf);
+    Hwi_restore(keyHwi);
+
     ui_textbox = 0;
     if (ok) {
         Event_post(ui_event_h, UI_EVENT_TEXTBOX_OK);

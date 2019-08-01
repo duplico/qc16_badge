@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <ti/sysbios/hal/Hwi.h>
 #include <ti/grlib/grlib.h>
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Task.h>
@@ -37,11 +38,16 @@ char *textbox_buf;
 uint8_t textentry_cursor = 0;
 
 void ui_textentry_load(char *dest, uint8_t len) {
+    volatile uint32_t keyHwi;
     if (len > TEXTENTRY_MAX_LEN) {
         len = TEXTENTRY_MAX_LEN;
     }
     textentry_len = len;
+
+    keyHwi = Hwi_disable();
     textbox_buf = malloc(len);
+    Hwi_restore(keyHwi);
+
     textbox_dest = dest;
     textentry_cursor = 0;
     memset(textbox_buf, 0x00, len);
@@ -55,6 +61,7 @@ void ui_textentry_load(char *dest, uint8_t len) {
 }
 
 void ui_textentry_unload(uint8_t save) {
+    volatile uint32_t keyHwi;
     ui_textentry = 0;
     if (save && textbox_buf[0] && textbox_dest) {
         // TODO: Manage null terms.
@@ -66,7 +73,10 @@ void ui_textentry_unload(uint8_t save) {
         Event_post(ui_event_h, UI_EVENT_TEXT_CANCELED);
     }
 
+    keyHwi = Hwi_disable();
     free(textbox_buf);
+    Hwi_restore(keyHwi);
+
     Event_post(ui_event_h, UI_EVENT_REFRESH);
 }
 

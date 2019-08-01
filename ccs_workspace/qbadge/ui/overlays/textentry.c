@@ -31,23 +31,21 @@
 #include <board.h>
 #include <ui/layout.h>
 
-uint8_t textbox_len;
+uint8_t textentry_len;
 char *textbox_dest;
 char *textbox_buf;
 uint8_t textentry_cursor = 0;
-
-extern const tFont g_sFontfixed10x20;
 
 void ui_textentry_load(char *dest, uint8_t len) {
     if (len > TEXTENTRY_MAX_LEN) {
         len = TEXTENTRY_MAX_LEN;
     }
-    textbox_len = len;
+    textentry_len = len;
     textbox_buf = malloc(len);
     textbox_dest = dest;
     textentry_cursor = 0;
     memset(textbox_buf, 0x00, len);
-    strncpy(textbox_buf, textbox_dest, textbox_len);
+    strncpy(textbox_buf, textbox_dest, textentry_len);
     ui_textentry = 1;
 
     // Fade out everything.
@@ -62,7 +60,7 @@ void ui_textentry_unload(uint8_t save) {
         // TODO: Manage null terms.
         // If we're supposed to copy this back to the destination,
         //  and if text was actually entered, then save it.
-        strncpy(textbox_dest, textbox_buf, textbox_len);
+        strncpy(textbox_dest, textbox_buf, textentry_len);
         Event_post(ui_event_h, UI_EVENT_TEXT_READY);
     } else {
         Event_post(ui_event_h, UI_EVENT_TEXT_CANCELED);
@@ -73,13 +71,13 @@ void ui_textentry_unload(uint8_t save) {
 }
 
 void ui_textentry_draw() {
-    uint16_t entry_width = textbox_len * 10;
+    uint16_t entry_width = UI_FIXED_FONT_WIDTH * textentry_len;
     uint16_t txt_left = 148 - (entry_width/2);
     uint16_t txt_top = 64 - 10;
 
     Graphics_Rectangle rect = {
         .xMin = txt_left-3, .yMin = txt_top-3,
-        .xMax = txt_left + entry_width + 3, .yMax = txt_top + 22,
+        .xMax = txt_left + entry_width + 3, .yMax = txt_top + UI_FIXED_FONT_HEIGHT+3,
     };
 
     // Draw a little frame.
@@ -97,7 +95,7 @@ void ui_textentry_draw() {
 
     // Draw the text itself:
     Graphics_setFont(&ui_gr_context_landscape, &UI_FIXED_FONT);
-    Graphics_drawString(&ui_gr_context_landscape, (int8_t *)textbox_buf, textbox_len, txt_left, txt_top, 1);
+    Graphics_drawString(&ui_gr_context_landscape, (int8_t *)textbox_buf, textentry_len, txt_left, txt_top, 1);
 
     // Now invert and draw the current character:
     Graphics_setBackgroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);
@@ -121,7 +119,8 @@ void ui_textentry_do(UInt events) {
         switch(kb_active_key_masked) {
         case KB_RIGHT:
             // right cursor
-            if (textentry_cursor < strlen(textbox_buf)) {
+            // strlen protects from skipping a null; textentry_len-1 protects from an overrun.
+            if (textentry_cursor < strlen(textbox_buf) && textentry_cursor < textentry_len-1) {
                 textentry_cursor++;
                 Event_post(ui_event_h, UI_EVENT_REFRESH);
             }

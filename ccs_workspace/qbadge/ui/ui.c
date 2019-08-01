@@ -120,6 +120,10 @@ void ui_transition(uint8_t destination) {
         Event_post(led_event_h, LED_EVENT_SIDELIGHT_EN);
     }
 
+    if (destination == UI_SCREEN_IDLE && led_tail_anim_current.type == LED_TAIL_ANIM_TYPE_OFF) {
+        Event_post(led_event_h, LED_EVENT_SIDELIGHT_DIS);
+    }
+
     ui_x_cursor = 0;
     ui_y_cursor = 0;
 

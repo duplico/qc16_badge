@@ -255,6 +255,9 @@ void led_tail_frame_setup() {
 }
 
 void led_tail_timestep() {
+    if (!led_tail_frames_this_anim) {
+        return;
+    }
     led_tail_step_curr += 1;
     if (led_tail_step_curr >= led_tail_steps_per_frame) {
         led_tail_step_curr = 0;
@@ -369,6 +372,9 @@ void led_tail_start_anim() {
 }
 
 void led_tail_step_swi(UArg a0) {
+    if (!led_tail_frames_this_anim) {
+        return;
+    }
     Event_post(led_event_h, LED_EVENT_TAIL_STEP);
 }
 

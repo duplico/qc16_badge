@@ -34,8 +34,6 @@
 
 // Keyboard related:
 
-// let's start KB events from the top
-#define UI_EVENT_KB_FLIP Event_Id_31
 #define UI_EVENT_KB_PRESS Event_Id_30
 // and the rest from the bottom:
 #define UI_EVENT_SERIAL_DONE Event_Id_12

@@ -271,7 +271,6 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             badge_paired = 1;
             serial_pair(header->from_id);
             Event_post(ui_event_h, UI_EVENT_PAIRED);
-
         }
 
         if (header->opcode == SERIAL_OPCODE_DISCON) {

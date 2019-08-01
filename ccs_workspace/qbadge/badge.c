@@ -144,11 +144,11 @@ void generate_config() {
     // TODO: Confirm initialization coverage:
     // TODO: Extract constants
     // TODO: Finalize these numbers:
-    badge_conf.stats.cbadge_handlers_in_system = 10;
-    badge_conf.stats.cbadge_ubers_in_system = 10;
+    badge_conf.stats.cbadge_handlers_in_system = CBADGE_HANDLER_COUNT_INITIAL;
+    badge_conf.stats.cbadge_ubers_in_system = CBADGE_UBER_COUNT_INITIAL;
     badge_conf.stats.cbadges_in_system = CBADGE_COUNT_INITIAL;
-    badge_conf.stats.qbadge_handlers_in_system = 7;
-    badge_conf.stats.qbadge_ubers_in_system = 14;
+    badge_conf.stats.qbadge_handlers_in_system = QBADGE_HANDLER_COUNT_INITIAL;
+    badge_conf.stats.qbadge_ubers_in_system = QBADGE_UBER_COUNT_INITIAL;
     badge_conf.stats.qbadges_in_system = QBADGE_COUNT_INITIAL;
 
     // Initialize the first photo:

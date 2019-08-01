@@ -159,13 +159,26 @@ void generate_config() {
 }
 
 uint8_t config_is_valid() {
+    qbadge_conf_t candidate_conf;
     volatile int32_t status;
     spiffs_stat stat;
+
     status = SPIFFS_stat(&fs, "/qbadge/conf", &stat);
-    if (status == SPIFFS_OK && stat.size == sizeof(badge_conf)) {
-        return 1;
+    if (status != SPIFFS_OK || stat.size == sizeof(badge_conf)) {
+        return 0;
     }
-    return 0;
+
+    storage_read_file("/qbadge/conf", (uint8_t *) (&candidate_conf), sizeof(qbadge_conf_t));
+
+    if (!is_qbadge(candidate_conf.badge_id)) {
+        return 0;
+    }
+
+    if (candidate_conf.element_selected > ELEMENT_COUNT_NONE) {
+        return 0;
+    }
+
+    return 1;
 }
 
 /// Validate, load, and/or generate this badge's configuration as appropriate.

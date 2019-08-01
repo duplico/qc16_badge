@@ -23,6 +23,7 @@
 
 #define SERIAL_EVENT_SENDHANDLE Event_Id_00
 #define SERIAL_EVENT_SENDFILE Event_Id_01
+#define SERIAL_EVENT_UPDATE Event_Id_02
 
 extern Event_Handle serial_event_h;
 extern char serial_file_to_send[SPIFFS_OBJ_NAME_LEN+1];

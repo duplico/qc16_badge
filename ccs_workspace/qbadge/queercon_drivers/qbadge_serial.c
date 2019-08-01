@@ -545,6 +545,14 @@ void serial_task_fn(UArg a0, UArg a1) {
             serial_file_start();
         }
 
+        if (events & SERIAL_EVENT_UPDATE) {
+            if (serial_ll_state == SERIAL_LL_STATE_C_PAIRED) {
+                // Something relevant has just updated, so we need to send
+                //  some new information to the paired badge.
+                serial_send_pair_msg();
+            }
+        }
+
         // This blocks on a semaphore while waiting to return, so it's safe
         //  not to have a Task_yield() in this.
         result = UART_read(uart, syncbyte_input, 1);

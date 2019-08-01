@@ -18,6 +18,7 @@
 #include <post.h>
 
 #include "queercon_drivers/storage.h"
+#include <queercon_drivers/qbadge_serial.h>
 #include <ui/graphics.h>
 #include <ui/images.h>
 #include <ui/ui.h>
@@ -56,6 +57,7 @@ void unlock_color_type(led_tail_anim_type color_type) {
 void process_seconds() {
     if (!badge_conf.agent_present && Seconds_get() > badge_conf.agent_return_time) {
         complete_mission_id(badge_conf.agent_mission_id);
+        Event_post(serial_event_h, SERIAL_EVENT_UPDATE);
     }
 
     if (!badge_conf.vhandler_present && Seconds_get() > badge_conf.vhandler_return_time) {

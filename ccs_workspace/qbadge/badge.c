@@ -33,6 +33,26 @@ volatile const uint16_t startup_id = QBADGE_ID_MAX_UNASSIGNED;
 uint8_t badge_paired = 0;
 pair_payload_t paired_badge = {0,};
 
+uint8_t color_mod_unlocked(led_tail_anim_mod mod) {
+    return badge_conf.color_mods_unlocked & (0x01 << (uint8_t) mod);
+}
+
+uint8_t color_type_unlocked(led_tail_anim_type color_type) {
+    return badge_conf.color_types_unlocked & (0x01 << (uint8_t) color_type);
+}
+
+void unlock_color_mod(led_tail_anim_mod mod) {
+    badge_conf.color_mods_unlocked |= (0x01 << (uint8_t) mod);
+    led_tail_anim_current.modifier = mod;
+    led_tail_start_anim();
+}
+
+void unlock_color_type(led_tail_anim_type color_type) {
+    badge_conf.color_types_unlocked |= (0x01 << (uint8_t) color_type);
+    led_tail_anim_current.type = color_type;
+    led_tail_start_anim();
+}
+
 void process_seconds() {
     if (!badge_conf.agent_present && Seconds_get() > badge_conf.agent_return_time) {
         complete_mission_id(badge_conf.agent_mission_id);
@@ -46,6 +66,11 @@ void process_seconds() {
     if (!badge_conf.handler_allowed && Seconds_get() > badge_conf.handler_cooldown_time) {
         badge_conf.handler_allowed = 1;
         Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
+    }
+
+    if (Seconds_get() > 54000 && ! color_mod_unlocked(LED_TAIL_ANIM_MOD_FLAG_MOV)) {
+        // During the kickoff party or so, enable the animating screen.
+        unlock_color_mod(LED_TAIL_ANIM_MOD_FLAG_MOV);
     }
 }
 

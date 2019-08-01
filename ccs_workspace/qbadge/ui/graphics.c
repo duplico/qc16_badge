@@ -605,3 +605,17 @@ void qc16gr_drawProgressBar(Graphics_Context *gr_context, uint16_t x, uint16_t y
     drawRectangle_xy(gr_context, x, y, x+width-1, y+height-1);
     fillRectangle_xy(gr_context, x, y, x+(width*progress/total), y+height-1);
 }
+
+void qc16gr_draw_larrow(Graphics_Context *gr_context, uint16_t x, uint16_t y, uint16_t height) {
+    for (uint8_t i=0; i<height/2; i++) {
+        Graphics_drawLineH(gr_context, x - height/2 + i, x, y-i);
+        Graphics_drawLineH(gr_context, x - height/2 + i, x, y+i);
+    }
+}
+
+void qc16gr_draw_rarrow(Graphics_Context *gr_context, uint16_t x, uint16_t y, uint16_t height) {
+    for (uint8_t i=0; i<height/2; i++) {
+        Graphics_drawLineH(gr_context, x, x + height/2 - i, y-i);
+        Graphics_drawLineH(gr_context, x, x + height/2 - i, y+i);
+    }
+}

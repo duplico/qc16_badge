@@ -55,23 +55,27 @@ void ui_colorpicking_wireframe() {
     Graphics_drawLineH(&ui_gr_context_portrait, 0, EPD_WIDTH-1, UI_PICKER_TOP+2);
     Graphics_drawLineH(&ui_gr_context_portrait, 0, EPD_WIDTH-1, UI_PICKER_TOP+3);
 
-    // TODO: Shrink or delete:
-    // Draw the boxes that hold our non-LED color representations
-    Graphics_drawLineH(&ui_gr_context_portrait, 1, EPD_WIDTH-1, EPD_HEIGHT-UI_PICKER_COLORBOX_H-UI_PICKER_COLORBOX_BPAD);
-    Graphics_drawLineH(&ui_gr_context_portrait, 1, EPD_WIDTH-1, EPD_HEIGHT-UI_PICKER_COLORBOX_BPAD);
-
+    // Draw boxes for each color:
     uint8_t count = led_tail_anim_color_counts[led_tail_anim_current.type];
+
     if (count) {
-        uint16_t width = EPD_WIDTH/count;
+        uint16_t width = (EPD_WIDTH-1)/count;
         for (uint8_t i=0; i<count; i++) {
+            rect.xMin = i*width;
+            rect.xMax = rect.xMin + width;
+            rect.yMin = EPD_HEIGHT-UI_PICKER_COLORBOX_H-UI_PICKER_COLORBOX_BPAD;
+            rect.yMax = rect.yMin + UI_PICKER_COLORBOX_H;
+
             if (!ui_colorpicker_cursor_anim && ui_colorpicker_cursor_pos == i) {
-                // draw an arrow:
-                uint8_t arrow_x = ((width*i)+(width/2)-10);
-                Graphics_drawLine(&ui_gr_context_portrait, arrow_x, EPD_HEIGHT-64, arrow_x+10, EPD_HEIGHT-48);
-                Graphics_drawLine(&ui_gr_context_portrait, arrow_x+21, EPD_HEIGHT-64, arrow_x+11, EPD_HEIGHT-48);
+                fillRectangle(&ui_gr_context_portrait, &rect);
+                rect.xMin++;
+                rect.yMin++;
+                rect.xMax--;
+                rect.yMax--;
+                fadeRectangle(&ui_gr_context_portrait, &rect);
+            } else {
+                Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
             }
-            rect = (Graphics_Rectangle) {width*i, EPD_HEIGHT-16, width*(i+1), EPD_HEIGHT-48};
-            Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
         }
     }
 
@@ -81,8 +85,8 @@ void ui_colorpicking_wireframe() {
     if (ui_colorpicker_cursor_anim == 2) {
         // If we have the animation type selected, draw arrows to the left and right:
         // TODO
-        rect = (Graphics_Rectangle){10,UI_PICKER_TOP+6, EPD_WIDTH-11,UI_PICKER_TOP+6+34};
-        Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
+        qc16gr_draw_larrow(&ui_gr_context_portrait, 48-4, UI_PICKER_TOP+6 + image_color_type[0]->ySize/2, 11);
+        qc16gr_draw_rarrow(&ui_gr_context_portrait, 48+image_color_type[0]->xSize+3, UI_PICKER_TOP+6 + image_color_type[0]->ySize/2, 11);
     }
 
     // Draw the icon for the animation modifier currently selected:
@@ -91,8 +95,8 @@ void ui_colorpicking_wireframe() {
     if (ui_colorpicker_cursor_anim == 1) {
         // If we have the animation type selected, draw arrows to the left and right:
         // TODO
-        rect = (Graphics_Rectangle){10,UI_PICKER_TOP+6+36, EPD_WIDTH-11,UI_PICKER_TOP+6+36+32};
-        Graphics_drawRectangle(&ui_gr_context_portrait, &rect);
+        qc16gr_draw_larrow(&ui_gr_context_portrait, 48-4, UI_PICKER_TOP+6+34 + image_color_mod[0]->ySize/2, 11);
+        qc16gr_draw_rarrow(&ui_gr_context_portrait, 48+image_color_type[0]->xSize+4, UI_PICKER_TOP+6+34 + image_color_mod[0]->ySize/2, 11);
     }
 
 }
@@ -197,7 +201,6 @@ void ui_colorpicking_do(UInt events) {
         Graphics_flushBuffer(&ui_gr_context_landscape);
     }
 
-    // TODO: Refactor out this enclosing if statement.
     if (pop_events(&events, UI_EVENT_KB_PRESS)) {
         if (ui_colorpicker_cursor_anim) {
             // Animation selection is highlighted

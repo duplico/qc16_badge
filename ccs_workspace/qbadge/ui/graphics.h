@@ -25,4 +25,7 @@ void qc16gr_drawImageFromFile(const Graphics_Context *context,
                               int16_t x,
                               int16_t y);
 uint16_t qc16gr_get_image_size(const Graphics_Image *bitmap);
+void qc16gr_draw_larrow(Graphics_Context *gr_context, uint16_t x, uint16_t y, uint16_t height);
+void qc16gr_draw_rarrow(Graphics_Context *gr_context, uint16_t x, uint16_t y, uint16_t height);
+
 #endif /* UI_GRAPHICS_H_ */

@@ -162,14 +162,25 @@ void ui_colorpicking_colorbutton() {
         color_index = 5;
         break;
     }
+    uint8_t color_cycle;
 
-    if (memcmp(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[color_index], sizeof(rgbcolor_t)) == 0) {
-        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_off, sizeof(rgbcolor_t));
-    } else if (memcmp(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_off, sizeof(rgbcolor_t)) == 0) {
-        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_white, sizeof(rgbcolor_t));
-    } else {
-        memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_rainbow_colors[color_index], sizeof(rgbcolor_t));
+    for (color_cycle = 0; color_cycle<4; color_cycle++) {
+        if (memcmp(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_button_color_sequence[color_index][color_cycle], sizeof(rgbcolor_t)) == 0) {
+            // The currently lit color is led_button_color_sequence[color_index][color_cycle].
+            break;
+        }
     }
+
+    // Is it black, or for some reason not in the list?
+    if (color_cycle >= 3) {
+        // If so, set that to the first color:
+        color_cycle = 0;
+    } else {
+        // Otherwise, keep moving along the sequence.
+        color_cycle++;
+    }
+
+    memcpy(&led_tail_anim_current.colors[ui_colorpicker_cursor_pos], &led_button_color_sequence[color_index][color_cycle], sizeof(rgbcolor_t));
 
     Event_post(led_event_h, LED_EVENT_SHOW_UPCONF);
 

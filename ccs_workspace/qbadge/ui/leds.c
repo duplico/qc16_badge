@@ -27,8 +27,8 @@ led_tail_anim_t led_tail_anim_current = {
     .modifier = LED_TAIL_ANIM_MOD_NORMAL,
     .colors= {
               {63, 0, 0},  // Red
-              {63, 5, 0}, // Orange
-              {63, 15, 0}, // Yellow
+              {63, 8, 0}, // Orange
+              {63, 18, 0}, // Yellow
               {0, 15, 0},   // Green
               {0, 0, 36},  // Blue
               {32, 0, 24}, // Purple
@@ -73,13 +73,13 @@ uint8_t led_sidelight_state = 0;
 
 uint8_t led_sidelight_mod_bits = 0b000000;
 
-rgbcolor_t led_rainbow_colors[6] = {
-    {63, 0, 0},  // Red
-    {63, 5, 0}, // Orange
-    {63, 15, 0}, // Yellow
-    {0, 16, 0},   // Green
-    {0, 0, 36},  // Blue
-    {32, 0, 24}, // Purple
+rgbcolor_t led_button_color_sequence[6][4] = {
+    {{63, 0, 0}, {40, 8, 24}, {63, 62, 62}, {0, 0, 0}}, //red, ultramaroon, white, off
+    {{63, 8, 0}, {41, 8, 8}, {62, 63, 63}, {0, 0, 0}}, //orange, "brown", white, off
+    {{63, 18, 0}, {62, 55, 22}, {63, 63, 62}, {0, 0, 0}}, //yellow, extra-yellow, white, off
+    {{0, 24, 0}, {0, 20, 8}, {62, 63, 62}, {0, 0, 0}}, // green, wintergreen, white, off
+    {{0, 0, 36}, {0, 16, 32}, {62, 62, 63}, {0, 0, 0}}, // blue, cyan, white, off
+    {{32, 0, 24}, {56, 0, 8}, {63, 62, 63}, {0, 0, 0}}, // violet, pink, white, off
 };
 
 rgbcolor_t led_fn_colors[3] = {

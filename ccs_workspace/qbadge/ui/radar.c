@@ -81,6 +81,7 @@ void reset_scan_cycle(UArg a0) {
     handler_near_handle[QC16_BADGE_NAME_LEN] = 0x00;
 
     handler_near_id_curr = QBADGE_ID_MAX_UNASSIGNED;
+    handler_near_rssi_curr = 0;
     handler_near_element_curr = ELEMENT_COUNT_NONE;
 
     dcfurs_nearby = dcfurs_nearby_curr;

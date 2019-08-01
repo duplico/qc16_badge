@@ -152,7 +152,14 @@ void ui_draw_battery_at(Graphics_Context *gr, uint16_t x, uint16_t y) {
         Graphics_drawRectangle(gr, &rect);
     }
 
-    if (vbat_out_uvolts/1000000 < 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 < VBAT_LOW_2DOT)) {
+
+    if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_EXTPOWER) { // 50 mV
+        // We're on external power.
+        Graphics_drawStringCentered(gr, "ext", 4, x + TOPBAR_ICON_WIDTH/2, y + TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 3, 0);
+    } else if (vbat_out_uvolts < UVOLTS_CUTOFF) {
+        // Batteries are below cut-off voltage
+        Graphics_drawStringCentered(gr, "dead", 4, x + TOPBAR_ICON_WIDTH/2, y + TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 3, 0);
+    } else if (vbat_out_uvolts/1000000 < 2 || (vbat_out_uvolts/1000000 == 2 && (vbat_out_uvolts/100000) % 10 < VBAT_LOW_2DOT)) {
         // Very low battery warning
         Graphics_drawStringCentered(gr, "LOW!", 4, x + TOPBAR_ICON_WIDTH/2, y + TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 3, 0);
     } else {
@@ -180,6 +187,12 @@ void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint1
     // Give more space for the text.
     x += 5;
 
+    uint8_t extra_spacing = 0;
+
+    if (handler_human_nearby() && strlen(handler_near_handle) > 11 && qbadges_near_count > 99) {
+        extra_spacing = 3;
+    }
+
     if (agent_vertical) {
         if (mission_getting_possible()) {
             qc16gr_drawImage(gr, &img_hud_handler, x, y+1);
@@ -200,7 +213,7 @@ void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint1
                     gr,
                     (int8_t *) str,
                     QC16_BADGE_NAME_LEN,
-                    x+img_hud_handler_sideways.xSize/2,
+                    x+img_hud_handler_sideways.xSize/2 - extra_spacing,
                     y+TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1,
                     0
             );
@@ -222,7 +235,7 @@ void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint1
             gr,
         (int8_t *) str,
         4,
-        x+img_hud_radar.xSize/2,
+        x+img_hud_radar.xSize/2 + extra_spacing,
         y+TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1,
         0
     );

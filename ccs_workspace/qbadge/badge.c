@@ -156,6 +156,8 @@ void generate_config() {
     strcpy(badge_conf.current_photo, ".Queercon16");
 
     write_conf();
+    write_anim_curr();
+    save_anim("Rainbow");
 }
 
 uint8_t config_is_valid() {

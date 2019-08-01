@@ -59,7 +59,7 @@ typedef struct {
 
 extern Event_Handle led_event_h;
 extern led_tail_anim_t led_tail_anim_current;
-extern rgbcolor_t led_rainbow_colors[6];
+extern rgbcolor_t led_button_color_sequence[6][4];
 extern rgbcolor_t led_off;
 extern rgbcolor_t led_white;
 extern const uint8_t led_tail_anim_color_counts[LED_TAIL_ANIM_TYPE_COUNT];

@@ -213,10 +213,7 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
         Event_post(ui_event_h, UI_EVENT_DO_SAVE);
     }
 
-    // TODO: Check whether it's uber or handler now, and didn't used to be.
-    // TODO: How's the performance on this?
-
-
+    // Check whether it's uber or handler now, and didn't used to be.
     if (badge_file.badge_type != type) {
         // TODO: What if it's changed, and we've already connected to it?
         write_file = 1;
@@ -236,19 +233,21 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
             }
         }
     }
-
+    // Check whether its levels have changed:
     badge_file.badge_id = id;
     if (badge_file.levels != levels) {
         write_file = 1;
         badge_file.levels = levels;
     }
 
+    // Check whether its handle has changed:
     if (strncmp(badge_file.handle, name, QC16_BADGE_NAME_LEN)) {
         write_file = 1;
         strncpy(badge_file.handle, name, QC16_BADGE_NAME_LEN);
         badge_file.handle[QC16_BADGE_NAME_LEN] = 0x00;
     }
 
+    // Write, if need be.
     if (write_file) {
         storage_overwrite_file(fname, (uint8_t *) &badge_file, sizeof(badge_file_t));
     }

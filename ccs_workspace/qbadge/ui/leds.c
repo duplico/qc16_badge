@@ -82,9 +82,9 @@ rgbcolor_t led_button_color_sequence[6][4] = {
 };
 
 rgbcolor_t led_fn_colors[3] = {
-    {7, 0x00, 1}, // pink (locks)
-    {5, 1, 2}, // pink (coins)
-    {0, 3, 6}, // blue (cameras)
+    {4, 0, 1}, // pink (locks)
+    {1, 0, 1}, // pink (coins)
+    {0, 1, 1}, // blue (cameras)
 };
 
 rgbcolor_t led_off = {0, 0, 0};

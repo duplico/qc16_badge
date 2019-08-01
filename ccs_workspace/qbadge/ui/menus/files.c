@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include <ti/sysbios/hal/Hwi.h>
 #include <ti/grlib/grlib.h>
 #include <ti/sysbios/BIOS.h>
 #include <ti/sysbios/knl/Task.h>
@@ -169,13 +170,16 @@ void ui_draw_files() {
 void ui_files_do(UInt events) {
     static uint8_t text_use = 0;
     static char *text;
+    volatile uint32_t keyHwi;
 
     // NB: Do these first out of an abundance of caution to avoid
     //     memory leaks:
-    if (pop_events(&events, UI_EVENT_TEXT_CANCELED)) {
+    if (pop_events(&events, UI_EVENT_TEXT_CANCELED) && text_use != FILES_TEXT_USE_HANDLE) {
         // dooo noooooothiiiiing
         // except prevent a memory leak:
+        keyHwi = Hwi_disable();
         free(text);
+        Hwi_restore(keyHwi);
     }
 
     if (pop_events(&events, UI_EVENT_TEXT_READY)) {
@@ -184,17 +188,25 @@ void ui_files_do(UInt events) {
         {
             // Rename curr_file_name to text
             SPIFFS_rename(&fs, curr_file_name, text);
+
+            keyHwi = Hwi_disable();
             free(text);
+            Hwi_restore(keyHwi);
             Event_post(ui_event_h, UI_EVENT_REFRESH);
+
             break;
         }
         case FILES_TEXT_USE_SAVE_COLOR:
             // Save current colors as text
             save_anim(text);
+
+            keyHwi = Hwi_disable();
             free(text);
+            Hwi_restore(keyHwi);
+
             break;
         case FILES_TEXT_USE_HANDLE:
-            write_conf();
+            Event_post(ui_event_h, UI_EVENT_DO_SAVE);
             break;
         }
 
@@ -213,8 +225,10 @@ void ui_files_do(UInt events) {
                 ui_textentry_load(badge_conf.handle, QC16_BADGE_NAME_LEN);
             } else if (!strncmp("/colors/", curr_file_name, SPIFFS_OBJ_NAME_LEN)) {
                 // Color SAVE request
-                // TODO: This is a crappy approach, all told.
+                keyHwi = Hwi_disable();
                 text = malloc(QC16_PHOTO_NAME_LEN+1);
+                Hwi_restore(keyHwi);
+
                 memset(text, 0x00, QC16_PHOTO_NAME_LEN+1);
                 text_use = FILES_TEXT_USE_SAVE_COLOR;
                 ui_textentry_load(text, 12);
@@ -245,7 +259,9 @@ void ui_files_do(UInt events) {
                         // Allocate space for the entire path, but only expose
                         //  the file name part to textentry.
                         // NB: SPIFFS_OBJ_NAME_LEN includes the null term.
+                        keyHwi = Hwi_disable();
                         text = malloc(SPIFFS_OBJ_NAME_LEN);
+                        Hwi_restore(keyHwi);
                         strncpy(text, curr_file_name, SPIFFS_OBJ_NAME_LEN);
                         text_use = FILES_TEXT_USE_RENAME;
                         ui_textentry_load(&text[8], QC16_PHOTO_NAME_LEN);

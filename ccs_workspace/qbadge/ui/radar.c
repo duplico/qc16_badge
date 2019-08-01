@@ -167,24 +167,27 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
         }
     }
 
-    if (badge_near_curr(id)) {
-        // Already marked this cycle.
-        return;
-    }
+    // Protect our nearby buffers.
 
-    // If this badge is not currently recorded as nearby, and it's not ourself,
-    //  then go ahead and count it as nearby.
-    // TODO: Make sure the use of badge_near and badge_near_curr is correct:
-    if (!badge_near_curr(id) && id != badge_conf.badge_id) {
-        set_id_buf(id, (uint8_t *) qbadges_near_curr);
-        qbadges_near_count_running++;
-        if (qbadges_near_count_running > qbadges_near_count) {
-            qbadges_near_count = qbadges_near_count_running;
-            Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
+    if (id < 653) {
+        if (badge_near_curr(id)) {
+            // Already marked this cycle.
+            return;
         }
-    } else {
-        // Already marked. We can leave...
-        return;
+
+        // If this badge is not currently recorded as nearby, and it's not ourself,
+        //  then go ahead and count it as nearby.
+        if (!badge_near_curr(id) && id != badge_conf.badge_id) {
+            set_id_buf(id, (uint8_t *) qbadges_near_curr);
+            qbadges_near_count_running++;
+            if (qbadges_near_count_running > qbadges_near_count) {
+                qbadges_near_count = qbadges_near_count_running;
+                Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
+            }
+        } else {
+            // Already marked. We can leave...
+            return;
+        }
     }
 
     // If we're here, it's the first time we've seen this badge this cycle.
@@ -215,7 +218,6 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
 
     // Check whether it's uber or handler now, and didn't used to be.
     if (badge_file.badge_type != type) {
-        // TODO: What if it's changed, and we've already connected to it?
         write_file = 1;
         badge_file.badge_type = type;
         if (type & BADGE_TYPE_HANDLER_MASK) {
@@ -231,6 +233,12 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
                 badge_conf.stats.qbadge_ubers_in_system++;
                 Event_post(ui_event_h, UI_EVENT_DO_SAVE);
             }
+        }
+
+        // If the type changed, and we've connected to it,
+        //  then re-connect to fix our numbers.
+        if (badge_file.badge_type && badge_file.times_connected) {
+            set_badge_connected(id, type, levels, name);
         }
     }
     // Check whether its levels have changed:

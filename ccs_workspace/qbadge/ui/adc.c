@@ -105,8 +105,6 @@ void adc_timer_fn(UArg a0)
         next_conversion.samplesRequestedCount = ADC_BRIGHTNESS_SAMPLES;
         ADCBuf_convert(adc_buf_h, &next_conversion, 1);
     } else {
-//        Event_post(led_event_h, LED_EVENT_SIDE_OFF_AND_TRIGGER_ADC);
-        // TODO: figure the above out.
         adc_trigger_light();
     }
 
@@ -114,10 +112,10 @@ void adc_timer_fn(UArg a0)
     if (AONBatMonNewTempMeasureReady()) {
         if (AONBatMonTemperatureGetDegC() < 6) { // deg C (-256..255)
             // it's COLD!
-            // TODO: Unlock the ICE (?) animation
+            unlock_color_mod(LED_TAIL_ANIM_MOD_ICE);
         } else if (AONBatMonTemperatureGetDegC() > 37) {
             // it's HOT! (over 100 F)
-            // TODO: Unlock the FIRE animation
+            unlock_color_mod(LED_TAIL_ANIM_MOD_FIRE);
         }
     }
 }

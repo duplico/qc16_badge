@@ -412,6 +412,12 @@ void ui_task_fn(UArg a0, UArg a1) {
                 starting_element = 3;
             }
 
+            if (paired_badge.last_clock > (Seconds_get() - 60)) {
+                // if this badge is more than 60 seconds in my future,
+                //  then go ahead and adopt its time.
+                Seconds_set(paired_badge.last_clock);
+            }
+
             // This is base 6 because of course it is.
             remote_levels = paired_badge.element_level[starting_element];
             remote_levels += paired_badge.element_level[starting_element+1]*6;

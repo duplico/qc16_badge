@@ -409,8 +409,8 @@ void led_element_light() {
 void led_adjust_brightness() {
     // brightness is between 1 and 63
     uint8_t brightness_loc = brightness;
-    if (brightness_loc < 16) {
-        brightness_loc = 16;
+    if (brightness_loc < 32) {
+        brightness_loc = 32;
     }
     rgbcolor_t sidelight_color = {0,};
 

@@ -235,7 +235,7 @@ void ui_draw_hud(Graphics_Context *gr, uint8_t agent_vertical, uint16_t x, uint1
             gr,
         (int8_t *) str,
         4,
-        x+img_hud_radar.xSize/2 + extra_spacing,
+        x+img_hud_radar.xSize/2 + 1 + extra_spacing,
         y+TOPBAR_ICON_HEIGHT + TOPBAR_TEXT_HEIGHT/2 - 1,
         0
     );

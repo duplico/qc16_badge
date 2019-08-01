@@ -77,12 +77,13 @@ mission_t generate_mission() {
     // handler, which is available to assign low-level missions at
     // a configurable time interval.
 
+    badge_conf.handler_cooldown_time = Seconds_get() + HANDLER_COOLDOWN_SECONDS;
+    badge_conf.handler_allowed = 0;
+
     if (handler_human_nearby()) {
         // Human handler.
         // We use the one with the highest RSSI
         // Mostly, it assigns missions that are on-brand for that handler.
-        badge_conf.handler_cooldown_time = Seconds_get() + HANDLER_COOLDOWN_SECONDS;
-        badge_conf.handler_allowed = 0;
 
         // There's a chance the mission will be off-brand.
         if (!(rand() % HANDLER_OFFBRAND_ELEMENT_ONE_IN)) {

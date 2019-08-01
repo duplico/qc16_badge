@@ -77,9 +77,6 @@ mission_t generate_mission() {
     // handler, which is available to assign low-level missions at
     // a configurable time interval.
 
-    badge_conf.handler_cooldown_time = Seconds_get() + HANDLER_COOLDOWN_SECONDS;
-    badge_conf.handler_allowed = 0;
-
     if (handler_human_nearby()) {
         // Human handler.
         // We use the one with the highest RSSI
@@ -106,7 +103,7 @@ mission_t generate_mission() {
             new_mission.element_levels[0] = rand() % badge_conf.element_level[new_mission.element_types[0]]+1;
             // Assign a level to the second mission element,
             //  even if it won't be used:
-            new_mission.element_levels[1] = rand() % new_mission.element_levels[0]+1;
+            new_mission.element_levels[1] = rand() % new_mission.element_levels[new_mission.element_types[0]]+1;
         }
 
 
@@ -168,6 +165,9 @@ mission_t generate_mission() {
         strncpy(handler_name_missionpicking, "vhandler", QC16_BADGE_NAME_LEN);
         handler_name_missionpicking[QC16_BADGE_NAME_LEN] = 0x00;
     }
+
+    badge_conf.handler_cooldown_time = Seconds_get() + HANDLER_COOLDOWN_SECONDS;
+    badge_conf.handler_allowed = 0;
 
     // Is the mission too high-level for us? If so, reduce it:
     if (new_mission.element_levels[0] > badge_conf.element_level[new_mission.element_types[0]]) {

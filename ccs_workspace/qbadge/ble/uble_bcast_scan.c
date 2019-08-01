@@ -567,6 +567,10 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
      */
     if (status == SUCCESS)
     {
+        if (len < 14) {
+            // broken
+            return;
+        }
         // We want: pPayload[0] == 0x02; (non-connectable non-scannable)
         // pPayload[1] == length
         // Now, look for:
@@ -578,9 +582,11 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
         //    followed by our beacon struct, whatever that is.
         // Guarantee null term:
         char badge_name[QC16_BADGE_NAME_LEN+1] = {0,};
-        uint8_t rssi = *(uint8_t *)(pPayload + len - 6);
+        uint8_t rssi = pPayload[len-6]; // was: *(uint8_t *)(pPayload + len - 6);
         qc16_ble_t *badge_frame;
+
         // the MAC address is 6 bytes at pPayload[2]
+
         // the data begins at pPayload[8]
         uint8_t *advData = &pPayload[8];
         // The advData is up to 31 bytes long, which should be len-8-6
@@ -597,6 +603,12 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
         //     and by 8 bytes of Status (bCrcErr bIgnore channelx6)
         while (i < len-8-6) {
             uint8_t section_len = advData[i];
+
+            if (section_len > len-8-6) {
+                // malformed
+                return;
+            }
+
             switch(advData[i+1]) {
             case GAP_ADTYPE_LOCAL_NAME_COMPLETE:
                 if (section_len != QC16_BADGE_NAME_LEN+1) {
@@ -616,6 +628,9 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
                     // DCFurs badge
                     dcfurs_nearby = 1;
                     dcfurs_nearby_curr = 1;
+                } else {
+                    // Ignore others.
+                    return;
                 }
                 break;
             }

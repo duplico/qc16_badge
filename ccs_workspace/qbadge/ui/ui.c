@@ -89,6 +89,8 @@ UInt pop_events(UInt *events_ptr, UInt events_to_check) {
 void ui_draw_screensaver() {
     Graphics_clearDisplay(&ui_gr_context_portrait);
 
+    ui_draw_hud(&ui_gr_context_portrait, 1, 0, UI_IDLE_HUD_Y);
+
     if (badge_conf.badge_type & BADGE_TYPE_UBER_MASK) {
         qc16gr_drawImage(&ui_gr_context_portrait, &img_uber_plate, 0, 0);
     } else if (badge_conf.badge_type & BADGE_TYPE_HANDLER_MASK) {
@@ -97,7 +99,6 @@ void ui_draw_screensaver() {
         qc16gr_drawImage(&ui_gr_context_portrait, &img_human_plate, 0, 0);
     }
 
-    ui_draw_hud(&ui_gr_context_portrait, 1, 0, UI_IDLE_HUD_Y);
 
     Graphics_drawLineH(&ui_gr_context_portrait, 0, 128, UI_IDLE_PHOTO_TOP-2);
     Graphics_drawLineH(&ui_gr_context_portrait, 0, 128, UI_IDLE_PHOTO_TOP-1);

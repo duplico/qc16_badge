@@ -196,7 +196,7 @@ uint8_t config_is_valid() {
     spiffs_stat stat;
 
     status = SPIFFS_stat(&fs, "/qbadge/conf", &stat);
-    if (status != SPIFFS_OK || stat.size == sizeof(badge_conf)) {
+    if (status != SPIFFS_OK || stat.size != sizeof(badge_conf)) {
         return 0;
     }
 
@@ -215,7 +215,7 @@ uint8_t config_is_valid() {
 
 /// Validate, load, and/or generate this badge's configuration as appropriate.
 void config_init() {
-    if (1 || !conf_file_exists()) {
+    if (!conf_file_exists()) {
         // If no config exists, generate it.
         generate_config();
 

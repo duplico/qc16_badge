@@ -165,8 +165,11 @@ void led_show_curr_colors() {
     }
 
     for (uint8_t i=0; i<count; i++) {
-        // TODO: dim these:
-        ht16d_put_color(6+i*(6/count), 6/count, &led_tail_anim_current.colors[i]);
+        rgbcolor_t c;
+        c.r = led_tail_anim_current.colors[i].r >> 3;
+        c.g = led_tail_anim_current.colors[i].g >> 3;
+        c.b = led_tail_anim_current.colors[i].b >> 3;
+        ht16d_put_color(6+i*(6/count), 6/count, &c);
     }
 
     Event_post(led_event_h, LED_EVENT_FLUSH);

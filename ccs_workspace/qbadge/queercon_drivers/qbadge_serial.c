@@ -23,6 +23,7 @@
 
 #include <badge.h>
 #include "board.h"
+#include <qbadge.h>
 #include <qc16_serial_common.h>
 #include <queercon_drivers/qbadge_serial.h>
 #include <queercon_drivers/storage.h>
@@ -526,6 +527,15 @@ void serial_task_fn(UArg a0, UArg a1) {
 
     while (1) {
         // Just keep listening, unless we have a timeout.
+        if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_EXTPOWER) { // 50 mV
+            // We're on external power.
+        } else if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_CUTOFF) {
+            // Batteries are below cut-off voltage
+            // Do nothing.
+            while (1) {
+                Task_yield();
+            }
+        }
         if (serial_ll_next_timeout && Clock_getTicks() >= serial_ll_next_timeout) {
             serial_timeout();
         }

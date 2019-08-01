@@ -250,8 +250,12 @@ void ui_task_fn(UArg a0, UArg a1) {
         Task_sleep(100);
         if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_EXTPOWER) { // 50 mV
             // We're on external power.
-        } else if (vbat_out_uvolts < UVOLTS_CUTOFF) {
+        } else if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_CUTOFF) {
             // Batteries are below cut-off voltage
+            // DO NOTHING to endanger the badge.
+            while (1) {
+                Task_sleep(100000);
+            }
         }
     } while (!vbat_out_uvolts);
 
@@ -344,6 +348,15 @@ void ui_task_fn(UArg a0, UArg a1) {
 
     while (1) {
         events = Event_pend(ui_event_h, Event_Id_NONE, ~Event_Id_NONE,  UI_AUTOREFRESH_TIMEOUT);
+
+        if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_EXTPOWER) { // 50 mV
+            // We're on external power.
+        } else if (vbat_out_uvolts < UVOLTS_CUTOFF) {
+            // Batteries are below cut-off voltage
+            // Draw the screensaver and give up.
+            ui_draw_screensaver();
+            while (1);
+        }
 
         if (events & UI_EVENT_REFRESH) {
             process_seconds();

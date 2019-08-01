@@ -94,23 +94,25 @@ mission_t generate_mission() {
 
         // There's a chance that the handler will automatically assign the
         //  maximum available level for this mission.
-        if (!(rand() % HANDLER_MAXLEVEL_ELEMENT_ONE_IN)) {
-            new_mission.element_levels[0] = badge_conf.element_level[new_mission.element_types[0]];
+        if (rand() % HANDLER_LOWLEVEL_ELEMENT_ONE_IN) {
+            // Max level.
+            new_mission.element_levels[0] = badge_conf.element_level[new_mission.element_types[0]]; // already % 3
             // Assign a level to the second mission element,
             //  even if it won't be used:
             new_mission.element_levels[1] = new_mission.element_levels[0];
         } else {
-            new_mission.element_levels[0] = rand() % badge_conf.element_level[new_mission.element_types[0]]+1;
+            // Random non-max level.
+            new_mission.element_levels[0] = rand() % (badge_conf.element_level[new_mission.element_types[0]]+1);
             // Assign a level to the second mission element,
             //  even if it won't be used:
-            new_mission.element_levels[1] = rand() % new_mission.element_levels[new_mission.element_types[0]]+1;
+            new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
         }
 
 
         // Decide whether we're going to do a second element.
         //  This is based on the primary element's level. A second element
         //  is required much more often for higher level missions.
-        if (new_mission.element_levels[0] && (rand() % new_mission.element_levels[0]+1)) {
+        if (new_mission.element_levels[0] && (rand() % (new_mission.element_levels[0]+1))) {
             // Level 0 will always be solo.
             // Level 1 will be 50/50 pair vs solo
             // Level 3 will be 67/33 pair vs solo
@@ -168,6 +170,14 @@ mission_t generate_mission() {
 
     badge_conf.handler_cooldown_time = Seconds_get() + HANDLER_COOLDOWN_SECONDS;
     badge_conf.handler_allowed = 0;
+
+    if (new_mission.element_levels[0] > 5) {
+        new_mission.element_levels[0] = 5;
+    }
+
+    if (new_mission.element_levels[1] > 5) {
+        new_mission.element_levels[1] = 5;
+    }
 
     // Is the mission too high-level for us? If so, reduce it:
     if (new_mission.element_levels[0] > badge_conf.element_level[new_mission.element_types[0]]) {

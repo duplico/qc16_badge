@@ -183,6 +183,7 @@ void ui_pair_menu_do(UInt events) {
                 }
                 break;
             case 0:
+                paired_badge.handle[QC16_BADGE_NAME_LEN] = 0x00;
                 ui_textentry_load(paired_badge.handle, QC16_BADGE_NAME_LEN);
                 break;
             case 1:

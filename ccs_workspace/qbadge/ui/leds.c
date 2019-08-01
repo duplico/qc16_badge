@@ -23,7 +23,7 @@
 #include <ui/adc.h>
 
 led_tail_anim_t led_tail_anim_current = {
-    .type=LED_TAIL_ANIM_TYPE_CYCLE,
+    .type=LED_TAIL_ANIM_TYPE_SIX_ON,
     .modifier = LED_TAIL_ANIM_MOD_NORMAL,
     .colors= {
               {63, 0, 0},  // Red

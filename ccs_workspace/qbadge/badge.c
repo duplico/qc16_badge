@@ -145,10 +145,9 @@ void generate_config() {
     badge_conf.element_level_max[1] = 1;
     badge_conf.element_level_max[2] = 1;
 
-    // TODO:
-    badge_conf.element_qty[0] = 5;
-    badge_conf.element_qty[1] = 700;
-    badge_conf.element_qty[2] = 123456789;
+    badge_conf.element_qty[0] = 0;
+    badge_conf.element_qty[1] = 0;
+    badge_conf.element_qty[2] = 0;
 
     badge_conf.vhandler_present = 1;
     badge_conf.handler_allowed = 1;

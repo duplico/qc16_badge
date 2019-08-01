@@ -408,14 +408,17 @@ void led_element_light() {
 
 void led_adjust_brightness() {
     // brightness is between 1 and 63
-
+    uint8_t brightness_loc = brightness;
+    if (brightness_loc < 16) {
+        brightness_loc = 16;
+    }
     rgbcolor_t sidelight_color = {0,};
 
     if ((led_sidelight_state && brightness < BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH_UP)
             || brightness < BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH_DOWN)
     {
         // Lights should be on.
-        sidelight_color.r = 64-brightness;
+        sidelight_color.r = 64-brightness_loc;
         sidelight_color.g = sidelight_color.r;
         sidelight_color.b = sidelight_color.r;
         led_sidelight_state = 1;
@@ -450,7 +453,7 @@ void led_adjust_brightness() {
         }
     }
 
-    ht16d_set_global_brightness(brightness);
+    ht16d_set_global_brightness(brightness_loc);
 }
 
 void led_task_fn(UArg a0, UArg a1) {

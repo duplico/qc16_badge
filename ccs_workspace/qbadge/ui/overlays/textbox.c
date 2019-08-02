@@ -91,8 +91,6 @@ void ui_textbox_draw() {
     Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
     rect.xMin++; rect.yMin++; rect.xMax--; rect.yMax--;
 
-    // TODO: Put little OK/BACK icons in the bottom corner.
-
     // Clear text area:
     Graphics_setBackgroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_BLACK);
     Graphics_setForegroundColor(&ui_gr_context_landscape, GRAPHICS_COLOR_WHITE);

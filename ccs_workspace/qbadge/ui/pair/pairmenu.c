@@ -86,8 +86,6 @@ void ui_draw_pair_missions() {
 
     uint8_t candidate_mission_id = 0;
 
-    // TODO: Determine whether to start with my missions, or remote missions.
-
     Graphics_Rectangle rect;
     rect.xMin=MISSION_BOX_X;
     rect.yMin=MISSION_BOX_Y;

@@ -76,7 +76,7 @@ void process_seconds() {
         Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
     }
 
-    if (Seconds_get() > 54000 && ! color_mod_unlocked(LED_TAIL_ANIM_MOD_FLAG_MOV)) {
+    if (Seconds_get() > 90000 && ! color_mod_unlocked(LED_TAIL_ANIM_MOD_FLAG_MOV)) {
         // During the kickoff party or so, enable the animating screen.
         unlock_color_mod(LED_TAIL_ANIM_MOD_FLAG_MOV);
     }

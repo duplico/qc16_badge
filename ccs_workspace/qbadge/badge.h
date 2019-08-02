@@ -14,6 +14,8 @@
 
 #include <qc16_serial_common.h>
 
+#include <ui/leds.h>
+
 extern qbadge_conf_t badge_conf;
 
 extern volatile uint32_t qc_clock;
@@ -27,6 +29,14 @@ extern uint16_t handler_near_id;
 extern uint8_t handler_near_rssi;
 extern element_type handler_near_element;
 extern char handler_near_handle[QC16_BADGE_NAME_LEN+1];
+
+extern uint16_t element_nearest_id[3];
+extern uint8_t element_nearest_level[3];
+extern uint8_t element_nearest_rssi[3];
+
+extern uint16_t element_nearest_id_curr[3];
+extern uint8_t element_nearest_level_curr[3];
+extern uint8_t element_nearest_rssi_curr[3];
 
 extern uint8_t dcfurs_nearby;
 extern uint8_t dcfurs_nearby_curr;
@@ -58,6 +68,8 @@ void write_conf();
 void config_init();
 uint8_t badge_seen(uint16_t id);
 uint8_t badge_connected(uint16_t id);
+uint8_t badge_near(uint16_t id);
+uint8_t badge_near_curr(uint16_t id);
 void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8_t rssi);
 uint8_t set_badge_connected(uint16_t id, uint8_t type, uint8_t levels, char *name);
 void write_anim_curr();
@@ -67,5 +79,7 @@ void load_anim(char *name);
 void generate_config();
 void process_seconds();
 void radar_init();
+void unlock_color_mod(led_tail_anim_mod mod);
+void unlock_color_type(led_tail_anim_type color_type);
 
 #endif /* BADGE_H_ */

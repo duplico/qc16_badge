@@ -70,8 +70,9 @@ extern Event_Handle uble_event_h;
 typedef struct {
     uint16_t badge_id;
     uint8_t badge_type;
-    uint8_t levels;
+    uint8_t levels[3];
     uint16_t times_connected;
+    uint8_t last_rssi;
     char handle[QC16_BADGE_NAME_LEN+1];
 } badge_file_t;
 

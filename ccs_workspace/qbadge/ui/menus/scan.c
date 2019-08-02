@@ -34,11 +34,59 @@
 #include <ui/layout.h>
 #include <ui/overlays/overlays.h>
 
+void ui_draw_scan_entries() {
+    uint16_t y= TOPBAR_HEIGHT + 4;
+    uint16_t x;
+    badge_file_t badge_file;
+    char str_buf[24] = {0,};
+
+    Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
+
+
+    Graphics_drawStringCentered(&ui_gr_context_landscape, "Closest handler and mission partners", 45, 147, y+8, 0);
+    y += 18;
+
+    // Handler:
+    if (handler_near_element < ELEMENT_COUNT_NONE) {
+        qc16gr_drawImage(&ui_gr_context_landscape, &img_hud_handler, 5, y);
+        qc16gr_drawImage(&ui_gr_context_landscape, image_element_icons[(uint8_t) handler_near_element], 5+img_hud_handler.xSize+1, y+img_hud_handler.ySize-image_element_icons[0]->ySize);
+        Graphics_drawString(&ui_gr_context_landscape, (int8_t *) handler_near_handle, QC16_BADGE_NAME_LEN, 5+1+img_hud_handler.xSize+image_element_icons[0]->xSize, y+img_hud_handler.ySize-18, 0);
+    }
+
+    y = TOPBAR_HEIGHT + 4 + 18+ 28 - 22;
+    y += 30;
+
+    x = 14;
+    for (uint8_t i=0; i<3; i++) {
+        if (i == 1) {
+            y = TOPBAR_HEIGHT + 4 + 18+ 28 - 22;
+            x += 141;
+        }
+
+        if (element_nearest_id[i] != QBADGE_ID_MAX_UNASSIGNED) {
+            // Draw this element and level:
+            sprintf(str_buf, "%d", element_nearest_level[i]);
+            Graphics_drawString(&ui_gr_context_landscape, (int8_t *) str_buf, 1, x, y+6, 0);
+            qc16gr_drawImage(&ui_gr_context_landscape, image_element_icons[i], x+7, y);
+            if (storage_read_badge_id(element_nearest_id[i], &badge_file)) {
+                // Draw the detected badge's name:
+                Graphics_drawString(&ui_gr_context_landscape, (int8_t *) badge_file.handle, QC16_BADGE_NAME_LEN, x+7+22+1, y+6, 0);
+            }
+            // TODO: draw the RSSI somehow (vertical progress bar?)
+        }
+
+        y += 30;
+    }
+
+    Graphics_drawStringCentered(&ui_gr_context_landscape, "Boop badge detected!", 20, 147, 119, 0);
+}
+
 void ui_draw_scan() {
     // Clear the buffer.
     Graphics_clearDisplay(&ui_gr_context_landscape);
 
     ui_draw_top_bar();
+    ui_draw_scan_entries();
 
     Graphics_flushBuffer(&ui_gr_context_landscape);
 }

@@ -284,6 +284,7 @@ void ui_story_do(UInt events) {
             badge_conf.element_level[starting_element]++;
             badge_conf.element_level_progress[starting_element] = exp_required_per_level[0];
             badge_conf.element_qty[starting_element]+=10;
+            badge_conf.stats.element_qty_cumulative[starting_element]+=10;
         }
 
         ui_textbox_load("Great! Now press OK, and enter a name.");

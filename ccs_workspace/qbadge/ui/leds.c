@@ -332,6 +332,8 @@ void led_tail_start_anim() {
 
     Event_post(led_event_h, LED_EVENT_BRIGHTNESS);
 
+    memcpy(led_tail_curr, led_tail_anim_current.colors, 6*sizeof(rgbcolor_t));
+
     switch(led_tail_anim_current.type) {
     case LED_TAIL_ANIM_TYPE_OFF:
         ht16d_put_color(0, 6, &led_off);
@@ -339,12 +341,14 @@ void led_tail_start_anim() {
         // No animating; just set the color.
         return;
     case LED_TAIL_ANIM_TYPE_ON:
-        ht16d_put_color(0, 6, &led_tail_anim_current.colors[0]);
+        do_twinkle();
+        ht16d_put_color(0, 6, &led_tail_curr[0]);
         Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
         // No animating; just set the color.
         return;
     case LED_TAIL_ANIM_TYPE_SIX_ON:
-        ht16d_put_colors(0, 6, &led_tail_anim_current.colors[0]);
+        do_twinkle();
+        ht16d_put_colors(0, 6, &led_tail_curr[0]);
         Event_post(led_event_h, LED_EVENT_FLUSH);
         // No animating; just set the color.
         return;
@@ -565,7 +569,7 @@ void led_task_fn(UArg a0, UArg a1) {
         }
 
         if (events & LED_EVENT_TAIL_MOD) {
-            led_tail_frame_setup();
+            led_tail_start_anim();
         }
 
         if (events & LED_EVENT_FLUSH) {

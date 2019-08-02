@@ -16,11 +16,10 @@ class QcImage(object):
             self.image = Image.open(path)
         
         self.name = name
-
-        if photo:
-            self.image.thumbnail((128, 170))
-        elif landscape:
+        if landscape:
             self.image.thumbnail((296, 128))
+        elif photo:
+            self.image.thumbnail((128, 170))
         else:
             self.image.thumbnail((128,296))
         self.image = self.image.convert('1')

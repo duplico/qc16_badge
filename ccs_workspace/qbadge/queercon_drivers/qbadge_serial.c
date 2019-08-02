@@ -469,7 +469,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         }
 
         serial_fd = SPIFFS_open(&fs, fname, SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);
-        if (serial_fd > 0) {
+        if (serial_fd >= 0) {
             // The open worked properly...
             serial_ll_state = SERIAL_LL_STATE_C_FILE_RX;
             serial_send_ack();

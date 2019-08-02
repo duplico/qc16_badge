@@ -20,6 +20,7 @@
 #define LED_EVENT_FN_STEP       Event_Id_06
 #define LED_EVENT_SIDELIGHT_EN  Event_Id_07
 #define LED_EVENT_SIDELIGHT_DIS Event_Id_08
+#define LED_EVENT_TAIL_MOD     Event_Id_09
 
 typedef enum {
     LED_TAIL_ANIM_TYPE_OFF = 0, // lights off

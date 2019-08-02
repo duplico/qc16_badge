@@ -268,12 +268,15 @@ void ui_story_do(UInt events) {
         switch(kb_active_key_masked) {
         case KB_F1_LOCK:
             starting_element = ELEMENT_LOCKS;
+            unlock_color_type(LED_TAIL_ANIM_TYPE_BUBBLE);
             break;
         case KB_F2_COIN:
             starting_element = ELEMENT_COINS;
+            unlock_color_type(LED_TAIL_ANIM_TYPE_FLASH);
             break;
         case KB_F3_CAMERA:
             starting_element = ELEMENT_CAMERAS;
+            unlock_color_type(LED_TAIL_ANIM_TYPE_PANES);
             break;
         default:
             return;

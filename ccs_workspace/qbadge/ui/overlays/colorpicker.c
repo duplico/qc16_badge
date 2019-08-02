@@ -104,6 +104,13 @@ void ui_colorpicking_wireframe() {
 void ui_colorpicking_load() {
     ui_colorpicking = 1;
 
+    // Clear the mod/type if it's not one we're allowed to use:
+    led_tail_anim_mod_next();
+    led_tail_anim_mod_prev();
+
+    led_tail_anim_type_next();
+    led_tail_anim_type_prev();
+
     Graphics_Rectangle rect;
     rect.xMin = 0;
     rect.yMin = 0;

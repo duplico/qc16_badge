@@ -51,8 +51,7 @@ rgbcolor_t led_tail_src[6];
 rgbcolor_t led_tail_curr[6];
 /// Destination colors of the dustbuster
 rgbcolor_t led_tail_dest[6];
-/// Step values of the dustbuster
-rgbdelta_t led_tail_step[6];
+
 uint16_t led_tail_steps_per_frame;
 uint16_t led_tail_frame_duration_ms = 1000;
 uint16_t led_tail_frames_this_anim;
@@ -66,11 +65,12 @@ uint8_t led_task_stack[LED_STACKSIZE];
 Event_Handle led_event_h;
 
 Clock_Handle led_tail_clock_h;
+Clock_Handle led_mod_clock_h;
 
 uint8_t led_sidelight_in_use = 1;
 uint8_t led_sidelight_state = 0;
 
-uint8_t led_sidelight_mod_bits = 0b000000;
+uint8_t led_tail_twinkle_bits = 0b000000;
 
 rgbcolor_t led_button_color_sequence[6][4] = {
     {{63, 0, 0}, {40, 8, 24}, {63, 62, 62}, {0, 0, 0}}, //red, ultramaroon, white, off
@@ -174,6 +174,26 @@ void led_show_curr_colors() {
     Event_post(led_event_h, LED_EVENT_FLUSH);
 }
 
+void do_twinkle() {
+    for (uint8_t i=0; i<6; i++) {
+        if (led_tail_twinkle_bits & (0x01 << i))
+            continue;
+        if (led_tail_anim_current.modifier == LED_TAIL_ANIM_MOD_TWINKLE) {
+            led_tail_curr[i].r = led_tail_curr[i].r >> 2;
+            led_tail_curr[i].g = led_tail_curr[i].g >> 2;
+            led_tail_curr[i].b = led_tail_curr[i].b >> 2;
+        } else if (led_tail_anim_current.modifier == LED_TAIL_ANIM_MOD_FIRE) {
+            led_tail_curr[i].r = 63;
+            led_tail_curr[i].g = led_tail_curr[i].g >> 2;
+            led_tail_curr[i].b = led_tail_curr[i].b >> 2;
+        } else if (led_tail_anim_current.modifier == LED_TAIL_ANIM_MOD_ICE) {
+            led_tail_curr[i].r = led_tail_curr[i].r >> 2;
+            led_tail_curr[i].g = led_tail_curr[i].g >> 2;
+            led_tail_curr[i].b = 63;
+        }
+    }
+}
+
 /// Start the current frame of the LED animation.
 void led_tail_frame_setup() {
     led_tail_frame_next = (led_tail_frame_curr+1)%led_tail_frames_this_anim;
@@ -249,6 +269,8 @@ void led_tail_frame_setup() {
 
     memcpy(led_tail_curr, led_tail_src, sizeof(rgbcolor_t)*6);
 
+    do_twinkle();
+
     ht16d_put_colors(0, 6, led_tail_curr);
     Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
 }
@@ -269,15 +291,12 @@ void led_tail_timestep() {
         // This will only be encountered for an animation that fades
         //  (that is, an animation with more than one step per frame)
         for (uint8_t i=0; i<6; i++) {
-            led_tail_step[i].r = ((int32_t)led_tail_dest[i].r - led_tail_src[i].r) / led_tail_steps_per_frame;
-            led_tail_step[i].g = ((int32_t)led_tail_dest[i].g - led_tail_src[i].g) / led_tail_steps_per_frame;
-            led_tail_step[i].b = ((int32_t)led_tail_dest[i].b - led_tail_src[i].b) / led_tail_steps_per_frame;
-
             led_tail_curr[i].r = led_tail_src[i].r + (led_tail_step_curr * ((int32_t)led_tail_dest[i].r - led_tail_src[i].r)) / led_tail_steps_per_frame;
             led_tail_curr[i].g = led_tail_src[i].g + (led_tail_step_curr * ((int32_t)led_tail_dest[i].g - led_tail_src[i].g)) / led_tail_steps_per_frame;
             led_tail_curr[i].b = led_tail_src[i].b + (led_tail_step_curr * ((int32_t)led_tail_dest[i].b - led_tail_src[i].b)) / led_tail_steps_per_frame;
         }
 
+        do_twinkle();
         ht16d_put_colors(0, 6, led_tail_curr);
         Event_post(led_event_h, LED_EVENT_FLUSH); // ready to show.
     }
@@ -302,7 +321,6 @@ void led_tail_start_anim() {
     memset(led_tail_src, 0x00, sizeof(rgbcolor_t)*6);
     memset(led_tail_dest, 0x00, sizeof(rgbcolor_t)*6);
     memset(led_tail_src, 0x00, sizeof(rgbcolor_t)*6);
-    memset(led_tail_step, 0x00, sizeof(rgbdelta_t)*6);
     led_tail_frame_curr = 0;
     led_tail_step_curr = 0;
     led_tail_frame_duration_ms = 100; // default to 1sec
@@ -357,10 +375,13 @@ void led_tail_start_anim() {
         led_tail_frame_duration_ms *= 4;
         led_tail_steps_per_frame *= 4;
         break;
+    case LED_TAIL_ANIM_MOD_TWINKLE:
+    case LED_TAIL_ANIM_MOD_FIRE:
+    case LED_TAIL_ANIM_MOD_ICE:
     case LED_TAIL_ANIM_MOD_FLAG:
+    case LED_TAIL_ANIM_MOD_FLAG_MOV:
         break;
     default:
-        // TODO: The rest
         break;
     }
 
@@ -375,6 +396,15 @@ void led_tail_step_swi(UArg a0) {
         return;
     }
     Event_post(led_event_h, LED_EVENT_TAIL_STEP);
+}
+
+void led_tail_mod_swi(UArg a0) {
+    led_tail_twinkle_bits = 0xff & rand();
+
+    if (!led_tail_frames_this_anim && (led_tail_anim_current.modifier == LED_TAIL_ANIM_MOD_TWINKLE || led_tail_anim_current.modifier == LED_TAIL_ANIM_MOD_FIRE || led_tail_anim_current.modifier == LED_TAIL_ANIM_MOD_ICE)
+            && led_tail_anim_current.type != LED_TAIL_ANIM_TYPE_OFF) {
+        Event_post(led_event_h, LED_EVENT_TAIL_MOD);
+    }
 }
 
 void led_sidelight_set_color(rgbcolor_t *color) {
@@ -501,6 +531,10 @@ void led_task_fn(UArg a0, UArg a1) {
             led_sidelight_activate();
         }
 
+        if (events & LED_EVENT_TAIL_MOD) {
+            led_tail_frame_setup();
+        }
+
         if (events & LED_EVENT_FLUSH) {
             led_flush();
         }
@@ -520,4 +554,9 @@ void led_init() {
     clockParams.period = 0; // one-shot clock.
     clockParams.startFlag = FALSE;
     led_tail_clock_h = Clock_create(led_tail_step_swi, 100, &clockParams, NULL);
+
+    Clock_Params_init(&clockParams);
+    clockParams.period = 10000; // Recurr 10x/sec.
+    clockParams.startFlag = TRUE;
+    led_mod_clock_h = Clock_create(led_tail_mod_swi, 10000, &clockParams, NULL);
 }

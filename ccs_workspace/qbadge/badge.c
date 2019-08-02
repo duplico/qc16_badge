@@ -162,20 +162,14 @@ void generate_config() {
     badge_conf.vhandler_present = 1;
     badge_conf.handler_allowed = 1;
 
-    // NB: These both will save the badge_conf:
     set_badge_seen(badge_conf.badge_id, BADGE_TYPE_NORMAL, 0000, "", 0);
     set_badge_connected(badge_conf.badge_id, BADGE_TYPE_NORMAL, 0000, "");
-    srand(badge_conf.badge_id);
 
     badge_conf.element_selected = ELEMENT_COUNT_NONE;
 
-//    badge_conf.color_mods_unlocked = 0b00000001;
-//    badge_conf.color_types_unlocked = 0b00000111;
-    // TODO:
-    badge_conf.color_mods_unlocked = 0xff;
-    badge_conf.color_types_unlocked = 0xff;
+    badge_conf.color_mods_unlocked =    0b00000011;
+    badge_conf.color_types_unlocked =   0b00000111;
 
-    // TODO: Confirm initialization coverage:
     badge_conf.stats.cbadge_handlers_in_system = CBADGE_HANDLER_COUNT_INITIAL;
     badge_conf.stats.cbadge_ubers_in_system = CBADGE_UBER_COUNT_INITIAL;
     badge_conf.stats.cbadges_in_system = CBADGE_COUNT_INITIAL;
@@ -234,5 +228,6 @@ void config_init() {
         post_errors++;
     }
 
+    srand(badge_conf.badge_id + (0xffff & Seconds_get()));
     radar_init();
 }

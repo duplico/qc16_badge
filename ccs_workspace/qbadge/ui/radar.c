@@ -211,7 +211,8 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
             }
 
             // If this is bigger than the actual, then plug it into the actual, too, and update scanner.
-            if (levels_expanded[element] >= badge_conf.element_level[element] && rssi > element_nearest_rssi[element]) {
+            if (element_nearest_id[element] == QBADGE_ID_MAX_UNASSIGNED
+                    || (levels_expanded[element] >= badge_conf.element_level[element] && rssi > element_nearest_rssi[element])) {
                 element_nearest_id[element] = id;
                 element_nearest_level[element] = levels_expanded[element];
                 element_nearest_rssi[element] = rssi;

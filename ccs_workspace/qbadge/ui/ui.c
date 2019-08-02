@@ -76,7 +76,27 @@ void ui_draw_info() {
     ui_draw_top_bar();
 
     uint16_t x = 4;
-    uint16_t y = TOPBAR_HEIGHT+8;
+    uint16_t y = TOPBAR_HEIGHT+6;
+
+    char amt[20] = {0,};
+    Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
+
+    Graphics_drawStringCentered(&ui_gr_context_landscape, badge_conf.handle, 64, x+84/2, y+6, 0);
+    Graphics_drawStringCentered(&ui_gr_context_landscape, "Name", 64, x+84/2, y+19, 0);
+    y += 32;
+
+    sprintf(amt, "%d", badge_conf.stats.missions_run);
+    Graphics_drawStringCentered(&ui_gr_context_landscape, amt, 64, x+84/2, y+6, 0);
+    Graphics_drawStringCentered(&ui_gr_context_landscape, "Missions run", 64, x+84/2, y+19, 0);
+    y += 32;
+
+    sprintf(amt, "%d", badge_conf.stats.element_qty_cumulative[0]+badge_conf.stats.element_qty_cumulative[1]+badge_conf.stats.element_qty_cumulative[2]);
+    Graphics_drawStringCentered(&ui_gr_context_landscape, amt, 64, x+84/2, y+6, 0);
+    Graphics_drawStringCentered(&ui_gr_context_landscape, "Elements earned", 64, x+84/2, y+19, 0);
+    y += 32;
+
+    y = TOPBAR_HEIGHT+6;
+    x+=96;
 
     ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "qbadges seen", badge_conf.stats.qbadges_seen_count, badge_conf.stats.qbadges_in_system, x, y);
     y += 32;
@@ -84,13 +104,13 @@ void ui_draw_info() {
     ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "qbadges paired", badge_conf.stats.qbadges_connected_count, badge_conf.stats.qbadges_in_system, x, y);
     y += 32;
 
-    ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "handlers paired", badge_conf.stats.qbadges_handler_connected_count, badge_conf.stats.qbadge_handlers_in_system, x, y);
+    ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "q handlers", badge_conf.stats.qbadges_handler_connected_count, badge_conf.stats.qbadge_handlers_in_system, x, y);
     y += 32;
 
-    y = TOPBAR_HEIGHT+8;
+    y = TOPBAR_HEIGHT+6;
     x+=96;
 
-    uint16_t qty;
+    uint16_t qty = badge_conf.stats.cbadges_connected_count;
     uint16_t outof;
 
     if (qty < CBADGE_QTY_PLUS1) {
@@ -111,14 +131,15 @@ void ui_draw_info() {
     }
     // otherwise, it's full!
 
-    ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "power-up progress", qty, outof, x, y);
+    ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "cbadge power-up", qty, outof, x, y);
     y += 32;
 
     ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "cbadges paired", badge_conf.stats.cbadges_connected_count, badge_conf.stats.cbadges_in_system, x, y);
     y += 32;
 
-    ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "handlers paired", badge_conf.stats.cbadges_handler_connected_count, badge_conf.stats.cbadge_handlers_in_system, x, y);
+    ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "c handlers", badge_conf.stats.cbadges_handler_connected_count, badge_conf.stats.cbadge_handlers_in_system, x, y);
     y += 32;
+
 
     Graphics_flushBuffer(&ui_gr_context_landscape);
 }

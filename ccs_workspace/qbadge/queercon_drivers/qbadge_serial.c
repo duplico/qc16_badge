@@ -463,7 +463,6 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         strncpy(fname, payload, header->payload_len);
 
         uint8_t append=1;
-        spiffs_stat stat;
         while (header->from_id != CONTROLLER_ID && storage_file_exists(fname) && append < 99) {
             sprintf(&fname[strlen(header->payload_len)], "%d", append++);
         }

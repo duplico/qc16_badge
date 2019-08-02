@@ -14,7 +14,9 @@
 
 #include <qbadge.h>
 #include <board.h>
+#include <badge.h>
 
+#include <ui/leds.h>
 #include "ui/ui.h"
 #include <queercon_drivers/epd.h>
 #include "keypad.h"
@@ -38,6 +40,21 @@ PIN_Config KB_row_scan[] = {
 uint8_t kb_active_key = KB_NONE;
 
 uint8_t kb_typematic_count = 0;
+
+uint8_t keypad_code_progress = 0;
+
+uint8_t keypad_code[10] = {
+    KB_BLU,
+    KB_BLU,
+    KB_ORG,
+    KB_RED,
+    KB_PUR,
+    KB_YEL,
+    KB_PUR,
+    KB_RED,
+    KB_RED,
+    KB_BLU
+};
 
 void kb_clock_swi(UArg a0) {
     static uint8_t button_press = KB_NONE;
@@ -112,13 +129,6 @@ void kb_clock_swi(UArg a0) {
     } else if (!(kb_active_key & KB_PRESSED) && button_press && button_press == button_press_prev) {
         // A button is pressed.
 
-        // Is it the same as the most recently pressed key?
-        if (kb_active_key_masked == button_press) {
-            kb_typematic_count++;
-        } else {
-            kb_typematic_count = 1;
-        }
-
         kb_active_key = button_press;
         if (!ui_is_landscape()) {
             switch(button_press) {
@@ -155,6 +165,31 @@ void kb_clock_swi(UArg a0) {
             // We COULD adjust so that "left" is "up"
 
         }
+
+        if (badge_conf.initialized == 0x0F && keypad_code_progress < 10) {
+            if (kb_active_key == keypad_code[keypad_code_progress]) {
+                keypad_code_progress++;
+                led_element_rainbow_countdown = 5;
+            } else {
+                keypad_code_progress = 0;
+            }
+        } else if (badge_conf.initialized == 0x0F && keypad_code_progress == 10) {
+            if (kb_active_key == KB_ROT) {
+                badge_conf.initialized = 0xFF;
+                led_element_rainbow_countdown = 100;
+                badge_conf.element_qty[0] += 5000;
+                badge_conf.stats.element_qty_cumulative[0] += 5000;
+                badge_conf.element_qty[1] += 5000;
+                badge_conf.stats.element_qty_cumulative[1] += 5000;
+                badge_conf.element_qty[2] += 5000;
+                badge_conf.stats.element_qty_cumulative[2] += 5000;
+                Event_post(ui_event_h, UI_EVENT_DO_SAVE);
+                Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
+            } else {
+                keypad_code_progress = 0;
+            }
+        }
+
         kb_active_key |= KB_PRESSED;
         Event_post(ui_event_h, UI_EVENT_KB_PRESS);
     }

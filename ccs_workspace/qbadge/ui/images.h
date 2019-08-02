@@ -32,6 +32,8 @@ extern const Graphics_Image img_uber_plate;
 
 extern const Graphics_Image img_remote_icon_separator;
 
+extern const Graphics_Image img_qbadge;
+
 extern const tImage *image_color_type[];
 extern const tImage *image_color_mod[];
 extern const tImage *image_mainmenu_icons[];

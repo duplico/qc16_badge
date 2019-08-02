@@ -44,6 +44,8 @@ extern uint8_t dcfurs_nearby_curr;
 extern uint8_t mission_accepted[3];
 extern mission_t missions[3];
 
+extern const uint8_t exp_required_per_level[6];
+
 extern uint8_t badge_paired;
 extern pair_payload_t paired_badge;
 extern char handler_name_missionpicking[QC16_BADGE_NAME_LEN+1];

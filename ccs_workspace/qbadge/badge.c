@@ -151,6 +151,10 @@ void generate_config() {
     badge_conf.element_level_max[1] = 1;
     badge_conf.element_level_max[2] = 1;
 
+    badge_conf.element_level[0] = 0;
+    badge_conf.element_level[1] = 0;
+    badge_conf.element_level[2] = 0;
+
     badge_conf.element_qty[0] = 0;
     badge_conf.element_qty[1] = 0;
     badge_conf.element_qty[2] = 0;
@@ -172,8 +176,6 @@ void generate_config() {
     badge_conf.color_types_unlocked = 0xff;
 
     // TODO: Confirm initialization coverage:
-    // TODO: Extract constants
-    // TODO: Finalize these numbers:
     badge_conf.stats.cbadge_handlers_in_system = CBADGE_HANDLER_COUNT_INITIAL;
     badge_conf.stats.cbadge_ubers_in_system = CBADGE_UBER_COUNT_INITIAL;
     badge_conf.stats.cbadges_in_system = CBADGE_COUNT_INITIAL;
@@ -215,7 +217,7 @@ uint8_t config_is_valid() {
 
 /// Validate, load, and/or generate this badge's configuration as appropriate.
 void config_init() {
-    if (!conf_file_exists()) {
+    if (!conf_file_exists()) { // TODO
         // If no config exists, generate it.
         generate_config();
 

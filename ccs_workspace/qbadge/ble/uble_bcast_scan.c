@@ -331,7 +331,10 @@ static void UBLEBcastScan_bcast_advPrepareCB(void) {
     strncpy(name, badge_conf.handle, QC16_BADGE_NAME_LEN);
     badge_frame->badge_id = badge_conf.badge_id;
     badge_frame->badge_type = badge_conf.badge_type;
-    badge_frame->badge_levels = 0;
+
+    badge_frame->badge_levels = badge_conf.element_level[0];
+    badge_frame->badge_levels += badge_conf.element_level[1]*6;
+    badge_frame->badge_levels += badge_conf.element_level[2]*36;
 
     uble_setParameter(UBLE_PARAM_ADVDATA, sizeof(advertData), advertData);
 }

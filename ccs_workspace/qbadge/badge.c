@@ -45,6 +45,7 @@ uint8_t color_type_unlocked(led_tail_anim_type color_type) {
 void unlock_color_mod(led_tail_anim_mod mod) {
     if (color_mod_unlocked(mod))
         return;
+    led_element_rainbow_countdown = 40;
     badge_conf.color_mods_unlocked |= (0x01 << (uint8_t) mod);
     led_tail_anim_current.modifier = mod;
     led_tail_start_anim();
@@ -53,6 +54,7 @@ void unlock_color_mod(led_tail_anim_mod mod) {
 void unlock_color_type(led_tail_anim_type color_type) {
     if (color_type_unlocked(color_type))
         return;
+    led_element_rainbow_countdown = 40;
     badge_conf.color_types_unlocked |= (0x01 << (uint8_t) color_type);
     led_tail_anim_current.type = color_type;
     led_tail_start_anim();

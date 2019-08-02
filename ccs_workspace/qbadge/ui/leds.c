@@ -73,6 +73,7 @@ uint8_t led_sidelight_state = 0;
 uint8_t led_tail_twinkle_bits = 0b000000;
 
 uint8_t led_element_pulse_progress = 0;
+uint8_t led_element_rainbow_countdown = 0;
 
 rgbcolor_t led_button_color_sequence[6][4] = {
     {{63, 0, 0}, {40, 8, 24}, {63, 62, 62}, {0, 0, 0}}, //red, ultramaroon, white, off
@@ -408,7 +409,20 @@ void led_tail_mod_swi(UArg a0) {
         Event_post(led_event_h, LED_EVENT_TAIL_MOD);
     }
 
-    if (!badge_conf.agent_present && badge_conf.element_selected != ELEMENT_COUNT_NONE) {
+    if (led_element_rainbow_countdown) {
+        led_element_rainbow_countdown--;
+
+        if (led_element_rainbow_countdown == 0) {
+            ht16d_put_color(24, 3, &led_off);
+        } else {
+            for (uint8_t i=0; i<3; i++) {
+                ht16d_put_color(24+i, 1, &led_button_color_sequence[(led_element_rainbow_countdown+i)%6][0]);
+            }
+        }
+
+        Event_post(led_event_h, LED_EVENT_FLUSH);
+
+    } else if (!badge_conf.agent_present && badge_conf.element_selected != ELEMENT_COUNT_NONE) {
         // Running a mission, need to pulse the light.
         led_element_pulse_progress++;
         if (led_element_pulse_progress == 8) {

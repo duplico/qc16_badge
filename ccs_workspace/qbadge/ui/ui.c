@@ -308,6 +308,7 @@ void ui_story_do(UInt events) {
         badge_conf.handle[QC16_BADGE_NAME_LEN] = 0x00;
         Event_post(ui_event_h, UI_EVENT_DO_SAVE);
         ui_transition(UI_SCREEN_MAINMENU);
+        led_element_rainbow_countdown = 40;
     }
 }
 

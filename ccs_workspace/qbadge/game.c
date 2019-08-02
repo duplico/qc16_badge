@@ -507,6 +507,7 @@ void complete_mission(mission_t *mission) {
         if (badge_conf.element_level_progress[element] >= exp_required_per_level[badge_conf.element_level[element]]) {
             // We already guarded against being over 5, so let's just add:
             badge_conf.element_level[element]++;
+            led_element_rainbow_countdown = 60;
         }
     }
 

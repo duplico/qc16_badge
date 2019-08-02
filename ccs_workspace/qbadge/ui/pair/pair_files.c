@@ -148,7 +148,10 @@ void ui_pair_files_do(UInt events) {
                 }
                 Event_post(serial_event_h, SERIAL_EVENT_SENDFILE);
                 Event_pend(ui_event_h, UI_EVENT_SERIAL_DONE, UI_EVENT_SERIAL_DONE, BIOS_WAIT_FOREVER);
-                // TODO: what if this breaks?
+
+                // Transferred!
+                led_element_rainbow_countdown = 15;
+
                 ui_transition(UI_SCREEN_PAIR_MENU);
             }
             break;

@@ -119,6 +119,8 @@ mission_t generate_mission() {
             // Level 4 will be 75/25 pair vs solo
             // Level 5 will be 80/20 pair vs solo
 
+            new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
+
             // This is a pair mission. Decide which element.
             // By default, the second element will be the cbadge complement to
             //  the first element, but there's a chance it will be random
@@ -129,8 +131,12 @@ mission_t generate_mission() {
             } else {
                 // It's the cbadge complement to the first element:
                 new_mission.element_types[1] = (element_type) ((uint8_t)new_mission.element_types[0]+3);
+
+                // Make more level 0 missions for cbadges when we're level 1.
+                if (badge_conf.element_level[new_mission.element_types[0]] == 1) {
+                    new_mission.element_levels[1] = 0;
+                }
             }
-            new_mission.element_levels[1] = rand() % (new_mission.element_levels[0]+1);
         } else {
             // Solo mission.
             new_mission.element_types[1] = ELEMENT_COUNT_NONE;

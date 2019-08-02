@@ -412,8 +412,6 @@ void game_process_new_cbadge() {
         return;
     }
 
-    // TODO: Animation???
-
     for (uint8_t i=0; i<3; i++) {
         if (badge_conf.element_level_max[i] < 5) {
             badge_conf.element_level_max[i]++;

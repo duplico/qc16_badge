@@ -46,7 +46,7 @@ Graphics_Context ui_gr_context_portrait;
 Task_Struct ui_task;
 uint8_t ui_task_stack[UI_STACKSIZE];
 
-uint8_t ui_current = UI_SCREEN_STORY1;
+uint8_t ui_current = UI_SCREEN_STORY2; // a fake one...
 uint8_t ui_colorpicking = 0;
 uint8_t ui_textentry = 0;
 uint8_t ui_textbox = 0;
@@ -240,6 +240,73 @@ void ui_info_do(UInt events) {
     }
 }
 
+void ui_draw_story() {
+    Graphics_clearDisplay(&ui_gr_context_portrait);
+
+    qc16gr_drawImage(&ui_gr_context_landscape, &img_qbadge, 68, 4);
+
+    Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
+    Graphics_drawStringCentered(&ui_gr_context_landscape, "Select a starting element.", 27, 148, 72, 0);
+    for (uint16_t i=0; i<3; i++) {
+        qc16gr_drawImage(&ui_gr_context_landscape, image_element_icons[i], 82 + i*44, 90);
+    }
+
+    Graphics_flushBuffer(&ui_gr_context_portrait);
+}
+
+void ui_story_do(UInt events) {
+    if (pop_events(&events, UI_EVENT_BACK)) {
+        return;
+    }
+
+    if (pop_events(&events, UI_EVENT_REFRESH)) {
+        ui_draw_story();
+    }
+
+    if (pop_events(&events, UI_EVENT_KB_PRESS)) {
+        element_type starting_element;
+        switch(kb_active_key_masked) {
+        case KB_F1_LOCK:
+            starting_element = ELEMENT_LOCKS;
+            break;
+        case KB_F2_COIN:
+            starting_element = ELEMENT_COINS;
+            break;
+        case KB_F3_CAMERA:
+            starting_element = ELEMENT_CAMERAS;
+            break;
+        default:
+            return;
+        }
+
+        if (!badge_conf.element_level[0] && !badge_conf.element_level[1] && !badge_conf.element_level[2]) {
+            // Ok, we have a starting element. Give it a BOOST!
+            badge_conf.element_level[starting_element]++;
+            badge_conf.element_level_progress[starting_element] = exp_required_per_level[0];
+            badge_conf.element_qty[starting_element]+=10;
+        }
+
+        ui_textbox_load("Great! Now press OK, and enter a name.");
+    }
+
+    if (pop_events(&events, UI_EVENT_TEXTBOX_OK) || pop_events(&events, UI_EVENT_TEXTBOX_NO)) {
+        // Now, we need a handle.
+        ui_textentry_load(badge_conf.handle, QC16_BADGE_NAME_LEN);
+    }
+
+    if (pop_events(&events, UI_EVENT_TEXT_CANCELED)) {
+        // not allowed to cancel. must do it again.
+        ui_textentry_load(badge_conf.handle, QC16_BADGE_NAME_LEN);
+    }
+
+    if (pop_events(&events, UI_EVENT_TEXT_READY)) {
+        // Guarantee null term:
+        badge_conf.handle[QC16_BADGE_NAME_LEN] = 0x00;
+        Event_post(ui_event_h, UI_EVENT_DO_SAVE);
+        ui_transition(UI_SCREEN_MAINMENU);
+    }
+}
+
 void ui_task_fn(UArg a0, UArg a1) {
     UInt events;
 
@@ -361,12 +428,11 @@ void ui_task_fn(UArg a0, UArg a1) {
         badge_conf.initialized = 1;
         write_conf();
         // We're all saved.
-        // TODO: Write an initial image to the EPD, and then...
 
         // FREEZE!
         Graphics_clearDisplay(&ui_gr_context_landscape);
-        Graphics_setFont(&ui_gr_context_landscape, &UI_FIXED_FONT);
-        Graphics_drawString(&ui_gr_context_landscape, "ok done", 25, 5, 25, 1); // TODO
+
+        qc16gr_drawImage(&ui_gr_context_landscape, &img_qbadge, 68, 4);
 
         Graphics_flushBuffer(&ui_gr_context_landscape);
         while (1) {
@@ -375,13 +441,18 @@ void ui_task_fn(UArg a0, UArg a1) {
     }
 
     // If we're here, we're well and truly initialized.
+    // But, we may not have chosen a starting element.
+    if (badge_conf.handle[0] && (badge_conf.element_level[0] || badge_conf.element_level[1] || badge_conf.element_level[2])) {
+        // We DO have a starting element
+        ui_transition(UI_SCREEN_MAINMENU);
+    } else {
+        ui_transition(UI_SCREEN_STORY1);
+    }
 
     // Create and start the BLE task:
     UBLEBcastScan_createTask();
 
     load_anim(".current");
-
-    ui_transition(UI_SCREEN_MAINMENU);
 
     while (1) {
         events = Event_pend(ui_event_h, Event_Id_NONE, ~Event_Id_NONE,  UI_AUTOREFRESH_TIMEOUT);
@@ -429,7 +500,7 @@ void ui_task_fn(UArg a0, UArg a1) {
             }
         }
 
-        if (events & UI_EVENT_PAIRED) {
+        if (events & UI_EVENT_PAIRED && ui_current < UI_SCREEN_STORY1) {
             Event_post(led_event_h, LED_EVENT_SIDELIGHT_EN);
             uint8_t remote_levels = 0;
             uint8_t starting_element = 0;
@@ -464,7 +535,7 @@ void ui_task_fn(UArg a0, UArg a1) {
             continue;
         }
 
-        if (events & UI_EVENT_UNPAIRED) {
+        if (events & UI_EVENT_UNPAIRED && ui_current < UI_SCREEN_STORY1) {
             // Unload everything, go to main menu.
             if (ui_colorpicking) {
                 ui_colorpicking_unload();
@@ -478,7 +549,7 @@ void ui_task_fn(UArg a0, UArg a1) {
 
         // NB: This order is very important:
         //     (colorpicking is not allowed during textentry)
-        if (!ui_textentry && kb_active_key_masked == KB_F4_PICKER
+        if (ui_current != UI_SCREEN_STORY1 && !ui_textentry && kb_active_key_masked == KB_F4_PICKER
                 && pop_events(&events, UI_EVENT_KB_PRESS)) {
             if (ui_colorpicking) {
                 ui_colorpicking_unload();
@@ -559,7 +630,7 @@ void ui_task_fn(UArg a0, UArg a1) {
                     ui_transition(UI_SCREEN_MAINMENU);
                 }
                 ui_screensaver_do(events);
-            } else if (ui_current >= UI_SCREEN_MAINMENU && ui_current <= UI_SCREEN_MENUSYSTEM_END) {
+            } else if (ui_current >= UI_SCREEN_MAINMENU) {
                 if (ui_menusystem_do(events)) {
                     continue;
                 }
@@ -585,6 +656,10 @@ void ui_task_fn(UArg a0, UArg a1) {
                     break;
                 case UI_SCREEN_PAIR_FILE:
                     ui_pair_files_do(events);
+                    break;
+
+                case UI_SCREEN_STORY1:
+                    ui_story_do(events);
                     break;
                 }
             }

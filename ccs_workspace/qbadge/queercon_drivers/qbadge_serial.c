@@ -101,11 +101,6 @@ void serial_send_ack() {
     serial_send(SERIAL_OPCODE_ACK, NULL, 0);
 }
 
-// TODO: what is this supposed to be?
-void serial_clock_swi(UArg a0) {
-
-}
-
 // The UART may NOT be open when this is called.
 void serial_enter_ptx() {
     serial_phy_mode_ptx = 1;
@@ -386,7 +381,6 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         }
         break;
     case SERIAL_LL_STATE_C_PAIRED:
-        // TODO: we DO care about color-picking buttons
         // Check whether the "go on a mission!" button is pressed.
         if (header->opcode == SERIAL_OPCODE_GOMISSION) {
             // Remote badge has chosen a mission to do.
@@ -456,6 +450,11 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             // ignore it. no ack.
         }
 
+        if (strncmp("/photos/.ChipCode", payload, 18)) {
+            badge_conf.initialized = 0x0F;
+            Event_post(ui_event_h, UI_EVENT_DO_SAVE);
+        }
+
         // Check to see if we would be clobbering a file, and if so,
         //   append numbers to it until we won't be.
         // (we give up once we get to 99)
@@ -464,7 +463,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
 
         uint8_t append=1;
         while (header->from_id != CONTROLLER_ID && storage_file_exists(fname) && append < 99) {
-            sprintf(&fname[strlen(header->payload_len)], "%d", append++);
+            sprintf(&fname[strlen(payload)], "%d", append++);
         }
 
         serial_fd = SPIFFS_open(&fs, fname, SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);

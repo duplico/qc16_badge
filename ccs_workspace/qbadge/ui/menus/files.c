@@ -74,7 +74,7 @@ void put_all_filenames(char *curr_fname) {
     } else {
         put_filename(&ui_gr_context_landscape, "/conf/handle", y);
         y+=UI_FIXED_FONT_HEIGHT;
-        if (first_file + ui_y_cursor == file_num) {
+        if (ui_y_cursor == file_num) {
             // This is the selected file.
             strncpy(curr_fname, "/conf/handle", 14);
         }
@@ -86,7 +86,7 @@ void put_all_filenames(char *curr_fname) {
         } else {
             put_filename(&ui_gr_context_landscape, (int8_t *) dirs[i], y);
             y+=UI_FIXED_FONT_HEIGHT;
-            if (first_file + ui_y_cursor == file_num) {
+            if (ui_y_cursor == file_num) {
                 // This is the selected file.
                 strncpy(curr_fname, dirs[i], SPIFFS_OBJ_NAME_LEN);
             }

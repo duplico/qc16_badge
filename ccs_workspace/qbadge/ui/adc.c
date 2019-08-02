@@ -15,6 +15,7 @@
 #include <board.h>
 #include <post.h>
 #include <qbadge.h>
+#include <badge.h>
 
 #include <ui/leds.h>
 #include <ui/ui.h>
@@ -62,6 +63,10 @@ void adc_cb(ADCBuf_Handle handle, ADCBuf_Conversion *conversion,
         if (brightness != target_brightness_level) {
             brightness = target_brightness_level;
             Event_post(led_event_h, LED_EVENT_BRIGHTNESS);
+        }
+
+        if (brightness > 3000) {
+            unlock_color_mod(LED_TAIL_ANIM_MOD_TWINKLE);
         }
 
         break;

@@ -483,14 +483,14 @@ void complete_mission(mission_t *mission) {
     if (mission->element_types[element_position_other] < 3) {
         // It's also a qbadge element, so we get its rewards too.
         badge_conf.element_qty[mission->element_types[element_position_other]] += mission->element_rewards[element_position_other];
-        badge_conf.stats.element_qty_cumulative[starting_element]+=10;
+        badge_conf.stats.element_qty_cumulative[mission->element_types[element_position_other]]+=10;
     }
 
     element = mission->element_types[element_position];
 
     // Ok! WE DID IT.
     badge_conf.element_qty[element] += mission->element_rewards[element_position];
-    badge_conf.stats.element_qty_cumulative[starting_element]+=10;
+    badge_conf.stats.element_qty_cumulative[element]+=10;
 
     // Now, let's look at progress.
     // First, we'll add the level-up amount.

@@ -306,7 +306,7 @@ void ui_task_fn(UArg a0, UArg a1) {
     }
 
     // Now, let's look at the POST results.
-    if (post_errors) {
+    if (post_errors || !badge_conf.initialized) {
         Graphics_clearDisplay(&ui_gr_context_landscape);
         Graphics_setFont(&ui_gr_context_landscape, &UI_FIXED_FONT);
         uint8_t y = 10;
@@ -331,16 +331,53 @@ void ui_task_fn(UArg a0, UArg a1) {
             }
         }
 
-        Graphics_drawString(&ui_gr_context_landscape, "Press a key to continue.", 99, 5, y, 1);
+        if (post_errors)
+            Graphics_drawString(&ui_gr_context_landscape, "Press a key to continue.", 99, 5, y, 1);
 
         Graphics_flushBuffer(&ui_gr_context_landscape);
-        Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS, BIOS_WAIT_FOREVER);
+
+        if (post_errors) {
+            Event_pend(ui_event_h, Event_Id_NONE, UI_EVENT_KB_PRESS, BIOS_WAIT_FOREVER);
+        }
     }
+
+    // Create and start the serial task.
+    serial_init();
+
+    // Ok, so, if we're here, there's a chance that we're in the following
+    //  situation: The badge has been flashed, but not given an ID. If that's
+    //  the case, our ID is probably 999. The unassigned ID is acceptable for
+    //  a cbadge, but not for a qbadge. So we can't really start up until
+    //  we get a proper ID. Let's wait for one.
+
+    while (badge_conf.badge_id == QBADGE_ID_MAX_UNASSIGNED) {
+        Task_sleep(100000); // Sleep for a second.
+    }
+
+    // If we're here, we have a real ID.
+
+    if (!badge_conf.initialized) {
+        // It's the first time we've ever had an ID.
+        badge_conf.initialized = 1;
+        write_conf();
+        // We're all saved.
+        // TODO: Write an initial image to the EPD, and then...
+
+        // FREEZE!
+        Graphics_clearDisplay(&ui_gr_context_landscape);
+        Graphics_setFont(&ui_gr_context_landscape, &UI_FIXED_FONT);
+        Graphics_drawString(&ui_gr_context_landscape, "ok done", 25, 5, 25, 1); // TODO
+
+        Graphics_flushBuffer(&ui_gr_context_landscape);
+        while (1) {
+            Task_sleep(100000); // Sleep for a second.
+        }
+    }
+
+    // If we're here, we're well and truly initialized.
 
     // Create and start the BLE task:
     UBLEBcastScan_createTask();
-    // Create and start the serial task.
-    serial_init();
 
     load_anim(".current");
 

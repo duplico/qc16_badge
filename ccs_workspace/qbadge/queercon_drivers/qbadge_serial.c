@@ -464,8 +464,8 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
 
         uint8_t append=1;
         spiffs_stat stat;
-        while (header->from_id != CONTROLLER_ID && !SPIFFS_stat(&fs, fname, &stat) && append < 99) {
-            sprintf(&fname[header->payload_len]-1, "%d", append++);
+        while (header->from_id != CONTROLLER_ID && storage_file_exists(fname) && append < 99) {
+            sprintf(&fname[strlen(header->payload_len)], "%d", append++);
         }
 
         serial_fd = SPIFFS_open(&fs, fname, SPIFFS_O_CREAT | SPIFFS_O_WRONLY, 0);

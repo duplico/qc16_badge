@@ -65,10 +65,23 @@ void ui_draw_scan_entries() {
 
         if (element_nearest_id[i] != QBADGE_ID_MAX_UNASSIGNED) {
             // Draw this element and level:
-            sprintf(str_buf, "%d", element_nearest_level[i]);
-            Graphics_drawString(&ui_gr_context_landscape, (int8_t *) str_buf, 1, x, y+6, 0);
             qc16gr_drawImage(&ui_gr_context_landscape, image_element_icons[i], x+7, y);
+
             if (storage_read_badge_id(element_nearest_id[i], &badge_file)) {
+
+                for (uint8_t j=0; j<5; j++) {
+                    Graphics_Rectangle rect;
+                    rect.xMin = x+7+2 + 7*j;
+                    rect.xMax = rect.xMin + 5;
+                    rect.yMin = y+TOPBAR_ICON_HEIGHT+1;
+                    rect.yMax = rect.yMin + TOPBAR_PROGBAR_HEIGHT-1;
+                    if (j < badge_file.levels[i]) {
+                        fillRectangle(&ui_gr_context_landscape, &rect);
+                    } else {
+                        Graphics_drawRectangle(&ui_gr_context_landscape, &rect);
+                    }
+                }
+
                 // Draw the detected badge's name:
                 Graphics_drawString(&ui_gr_context_landscape, (int8_t *) badge_file.handle, QC16_BADGE_NAME_LEN, x+7+22+1, y+6, 0);
             }

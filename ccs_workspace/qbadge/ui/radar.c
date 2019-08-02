@@ -378,7 +378,7 @@ uint8_t set_badge_connected(uint16_t id, uint8_t type, uint8_t levels, char *nam
             }
 
             if (badge_conf.stats.qbadges_connected_count == 40) {
-                unlock_color_mod(LED_TAIL_ANIM_TYPE_SCROLL);
+                unlock_color_type(LED_TAIL_ANIM_TYPE_SCROLL);
             }
         }
         Event_post(ui_event_h, UI_EVENT_DO_SAVE);

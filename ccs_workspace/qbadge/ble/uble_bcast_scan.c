@@ -623,7 +623,6 @@ static void UBLEBcastScan_scan_indicationCB(bStatus_t status, uint8_t len,
                 break;
             case GAP_ADTYPE_MANUFACTURER_SPECIFIC:
                 if (advData[i+2] == 0xD3 && advData[i+3] == 0x04) {
-                    // TODO: Assert size
                     // this is the queercon ID.
                     badge_frame = (qc16_ble_t *) &advData[i+4];
                     seems_queercon |= 0x0f;

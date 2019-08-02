@@ -173,6 +173,9 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
     if (!is_qbadge(id) || id == QBADGE_ID_MAX_UNASSIGNED)
         return;
 
+    if (type & BADGE_TYPE_ELEMENT_MASK > 3)
+        return;
+
     // If we're here, it's a qbadge.
 
     if (type & BADGE_TYPE_HANDLER_MASK && rssi > handler_near_rssi_curr) {

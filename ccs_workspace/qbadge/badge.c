@@ -142,8 +142,6 @@ void generate_config() {
     // The struct is no good. Zero it out.
     memset(&badge_conf, 0x00, sizeof(qbadge_conf_t));
 
-    // TODO: Confirm initialization coverage.
-
     badge_conf.badge_id = startup_id;
 
     badge_conf.last_clock = 0;
@@ -213,7 +211,7 @@ uint8_t config_is_valid() {
 
 /// Validate, load, and/or generate this badge's configuration as appropriate.
 void config_init() {
-    if (!conf_file_exists()) { // TODO
+    if (!conf_file_exists()) {
         // If no config exists, generate it.
         generate_config();
 

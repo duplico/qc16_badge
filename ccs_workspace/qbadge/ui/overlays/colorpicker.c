@@ -84,7 +84,6 @@ void ui_colorpicking_wireframe() {
 
     if (ui_colorpicker_cursor_anim == 2) {
         // If we have the animation type selected, draw arrows to the left and right:
-        // TODO
         qc16gr_draw_larrow(&ui_gr_context_portrait, 48-4, UI_PICKER_TOP+6 + image_color_type[0]->ySize/2, 11);
         qc16gr_draw_rarrow(&ui_gr_context_portrait, 48+image_color_type[0]->xSize+3, UI_PICKER_TOP+6 + image_color_type[0]->ySize/2, 11);
     }
@@ -94,7 +93,6 @@ void ui_colorpicking_wireframe() {
 
     if (ui_colorpicker_cursor_anim == 1) {
         // If we have the animation type selected, draw arrows to the left and right:
-        // TODO
         qc16gr_draw_larrow(&ui_gr_context_portrait, 48-4, UI_PICKER_TOP+6+34 + image_color_mod[0]->ySize/2, 11);
         qc16gr_draw_rarrow(&ui_gr_context_portrait, 48+image_color_type[0]->xSize+4, UI_PICKER_TOP+6+34 + image_color_mod[0]->ySize/2, 11);
     }

@@ -34,7 +34,6 @@
 #include <board.h>
 #include <ui/layout.h>
 
-// TODO: better:
 extern char curr_file_name[SPIFFS_OBJ_NAME_LEN+1];
 void put_filecursor(Graphics_Context *gr, int8_t *text, uint16_t y);
 

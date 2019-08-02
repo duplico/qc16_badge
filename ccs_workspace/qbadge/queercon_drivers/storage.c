@@ -25,10 +25,10 @@ SPIFFSNVS_Data   spiffsnvs;
 
 void storage_bad_file(char *fname) {
     // TODO: delete it or something?
+    // Is it open?
 }
 
 uint8_t storage_file_exists(char *fname) {
-    // TODO: should this be volatile?
     volatile int32_t status;
     spiffs_stat stat;
     status = SPIFFS_stat(&fs, fname, &stat);

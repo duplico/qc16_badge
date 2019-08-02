@@ -44,6 +44,15 @@ char handler_near_handle_curr[QC16_BADGE_NAME_LEN+1] = {0,};
 uint8_t dcfurs_nearby = 0;
 uint8_t dcfurs_nearby_curr = 0;
 
+// elements nearby:
+uint16_t element_nearest_id[3] = {QBADGE_ID_MAX_UNASSIGNED, QBADGE_ID_MAX_UNASSIGNED, QBADGE_ID_MAX_UNASSIGNED};
+uint8_t element_nearest_level[3];
+uint8_t element_nearest_rssi[3];
+
+uint16_t element_nearest_id_curr[3] = {QBADGE_ID_MAX_UNASSIGNED, QBADGE_ID_MAX_UNASSIGNED, QBADGE_ID_MAX_UNASSIGNED};
+uint8_t element_nearest_level_curr[3];
+uint8_t element_nearest_rssi_curr[3];
+
 Clock_Handle radar_clock_h;
 
 uint8_t handler_human_nearby() {
@@ -86,6 +95,17 @@ void reset_scan_cycle(UArg a0) {
 
     dcfurs_nearby = dcfurs_nearby_curr;
     dcfurs_nearby_curr = 0;
+
+    for (uint8_t element=0; element<3; element++) {
+        element_nearest_id[element] = element_nearest_id_curr[element];
+        element_nearest_id_curr[element] = QBADGE_ID_MAX_UNASSIGNED;
+
+        element_nearest_level[element] = element_nearest_level_curr[element];
+        element_nearest_level_curr[element] = 0;
+
+        element_nearest_rssi[element] = element_nearest_rssi_curr[element];
+        element_nearest_rssi_curr[element] = 0;
+    }
 
     process_seconds();
     Event_post(ui_event_h, UI_EVENT_DO_SAVE);
@@ -137,6 +157,11 @@ uint8_t badge_near_curr(uint16_t id) {
 }
 
 void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8_t rssi) {
+    uint8_t levels_expanded[3];
+    levels_expanded[2] = levels / 36;
+    levels_expanded[1] = (levels % 36) / 6;
+    levels_expanded[0] = (levels % 6);
+
     if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_EXTPOWER) { // 50 mV
         // We're on external power.
     } else if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_CUTOFF) {
@@ -167,26 +192,46 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
         }
     }
 
-    // Protect our nearby buffers.
+    // For "scan" purposes, we record the nearest qbadge
+    //  of each element, that's at least our level in that element.
+    for (uint8_t element=0; element<3; element++) {
+        if (element_nearest_id_curr[element] == QBADGE_ID_MAX_UNASSIGNED
+                || (levels_expanded[element] >= badge_conf.element_level[element] && rssi > element_nearest_rssi_curr[element])) {
 
+            element_nearest_id_curr[element] = id;
+            element_nearest_level_curr[element] = levels_expanded[element];
+
+            if (levels_expanded[element] < badge_conf.element_level[element]) {
+                element_nearest_rssi_curr[element] = 0;
+            } else {
+                element_nearest_rssi_curr[element] = rssi;
+            }
+
+            // If this is bigger than the actual, then plug it into the actual, too, and update scanner.
+            if (levels_expanded[element] >= badge_conf.element_level[element] && rssi > element_nearest_rssi[element]) {
+                element_nearest_id[element] = id;
+                element_nearest_level[element] = levels_expanded[element];
+                element_nearest_rssi[element] = rssi;
+                if (ui_current == UI_SCREEN_SCAN) {
+                    Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
+                }
+            }
+        }
+    }
+
+    // Protect our nearby buffers.
     if (id < 653) {
-        if (badge_near_curr(id)) {
-            // Already marked this cycle.
+        if (badge_near_curr(id) || id == badge_conf.badge_id) {
+            // Already marked this cycle, or it's us.
             return;
         }
 
-        // If this badge is not currently recorded as nearby, and it's not ourself,
-        //  then go ahead and count it as nearby.
-        if (!badge_near_curr(id) && id != badge_conf.badge_id) {
-            set_id_buf(id, (uint8_t *) qbadges_near_curr);
-            qbadges_near_count_running++;
-            if (qbadges_near_count_running > qbadges_near_count) {
-                qbadges_near_count = qbadges_near_count_running;
-                Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
-            }
-        } else {
-            // Already marked. We can leave...
-            return;
+        //  Go ahead and count it as nearby.
+        set_id_buf(id, (uint8_t *) qbadges_near_curr);
+        qbadges_near_count_running++;
+        if (qbadges_near_count_running > qbadges_near_count) {
+            qbadges_near_count = qbadges_near_count_running;
+            Event_post(ui_event_h, UI_EVENT_HUD_UPDATE);
         }
     }
 
@@ -243,9 +288,14 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
     }
     // Check whether its levels have changed:
     badge_file.badge_id = id;
-    if (badge_file.levels != levels) {
+
+    if (memcmp(levels_expanded, badge_file.levels, 3)) {
+        // Levels are different.
         write_file = 1;
-        badge_file.levels = levels;
+
+        badge_file.levels[0] = levels_expanded[0];
+        badge_file.levels[1] = levels_expanded[1];
+        badge_file.levels[2] = levels_expanded[2];
     }
 
     // Check whether its handle has changed:
@@ -264,6 +314,11 @@ void set_badge_seen(uint16_t id, uint8_t type, uint8_t levels, char *name, uint8
 }
 
 uint8_t set_badge_connected(uint16_t id, uint8_t type, uint8_t levels, char *name) {
+    uint8_t levels_expanded[3];
+    levels_expanded[2] = levels / 36;
+    levels_expanded[1] = (levels % 36) / 6;
+    levels_expanded[0] = (levels % 6);
+
     if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_EXTPOWER) { // 50 mV
         // We're on external power.
     } else if (vbat_out_uvolts && vbat_out_uvolts < UVOLTS_CUTOFF) {
@@ -349,7 +404,9 @@ uint8_t set_badge_connected(uint16_t id, uint8_t type, uint8_t levels, char *nam
     }
 
     badge_file.badge_id = id;
-    badge_file.levels = levels;
+    badge_file.levels[0] = levels_expanded[0];
+    badge_file.levels[1] = levels_expanded[1];
+    badge_file.levels[2] = levels_expanded[2];
     strncpy(badge_file.handle, name, QC16_BADGE_NAME_LEN);
     badge_file.handle[QC16_BADGE_NAME_LEN] = 0x00;
 

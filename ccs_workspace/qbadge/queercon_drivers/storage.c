@@ -5,6 +5,7 @@
  *      Author: george
  */
 
+#include <stdio.h>
 
 #include <third_party/spiffs/SPIFFSNVS.h>
 #include <third_party/spiffs/spiffs.h>
@@ -37,12 +38,31 @@ uint8_t storage_file_exists(char *fname) {
     return 0;
 }
 
-void storage_read_file(char *fname, uint8_t *dest, uint16_t size) {
+uint8_t storage_read_file(char *fname, uint8_t *dest, uint16_t size) {
     spiffs_file fd;
-    fd = SPIFFS_open(&fs, fname, SPIFFS_O_RDONLY, 0);
     volatile int32_t stat;
+
+    fd = SPIFFS_open(&fs, fname, SPIFFS_O_RDONLY, 0);
+    if (fd < 0) {
+        return 0;
+    }
     stat = SPIFFS_read(&fs, fd, dest, size);
     SPIFFS_close(&fs, fd);
+    if (stat != size) {
+        return 0;
+    }
+    return 1;
+}
+
+uint8_t storage_read_badge_id(uint16_t badge_id, badge_file_t *file) {
+    char fname[14] = {0,};
+    sprintf(fname, "/badges/%d", badge_id);
+
+    if (!storage_file_exists(fname)) {
+        return 0;
+    }
+
+    return storage_read_file(fname, (uint8_t *) file, sizeof(badge_file_t));
 }
 
 void storage_overwrite_file(char *fname, uint8_t *src, uint16_t size) {

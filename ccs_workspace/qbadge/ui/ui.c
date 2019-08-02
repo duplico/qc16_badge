@@ -75,6 +75,51 @@ void ui_draw_info() {
 
     ui_draw_top_bar();
 
+    uint16_t x = 4;
+    uint16_t y = TOPBAR_HEIGHT+8;
+
+    ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "qbadges seen", badge_conf.stats.qbadges_seen_count, badge_conf.stats.qbadges_in_system, x, y);
+    y += 32;
+
+    ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "qbadges paired", badge_conf.stats.qbadges_connected_count, badge_conf.stats.qbadges_in_system, x, y);
+    y += 32;
+
+    ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "handlers paired", badge_conf.stats.qbadges_handler_connected_count, badge_conf.stats.qbadge_handlers_in_system, x, y);
+    y += 32;
+
+    y = TOPBAR_HEIGHT+8;
+    x+=96;
+
+    uint16_t qty;
+    uint16_t outof;
+
+    if (qty < CBADGE_QTY_PLUS1) {
+        qty = badge_conf.stats.cbadges_connected_count;
+        outof = CBADGE_QTY_PLUS1;
+    } else if (qty < CBADGE_QTY_PLUS2) {
+        qty = badge_conf.stats.cbadges_connected_count - CBADGE_QTY_PLUS1;
+        outof = CBADGE_QTY_PLUS2;
+    } else if (qty < CBADGE_QTY_PLUS3) {
+        qty = badge_conf.stats.cbadges_connected_count - CBADGE_QTY_PLUS2;
+        outof = CBADGE_QTY_PLUS3;
+    } else if (qty < CBADGE_QTY_PLUS4) {
+        qty = badge_conf.stats.cbadges_connected_count - CBADGE_QTY_PLUS3;
+        outof = CBADGE_QTY_PLUS4;
+    } else {
+        qty = 100;
+        outof = 100;
+    }
+    // otherwise, it's full!
+
+    ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "power-up progress", qty, outof, x, y);
+    y += 32;
+
+    ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "cbadges paired", badge_conf.stats.cbadges_connected_count, badge_conf.stats.cbadges_in_system, x, y);
+    y += 32;
+
+    ui_draw_labeled_progress_bar(&ui_gr_context_landscape, "handlers paired", badge_conf.stats.cbadges_handler_connected_count, badge_conf.stats.cbadge_handlers_in_system, x, y);
+    y += 32;
+
     Graphics_flushBuffer(&ui_gr_context_landscape);
 }
 
@@ -243,12 +288,12 @@ void ui_info_do(UInt events) {
 void ui_draw_story() {
     Graphics_clearDisplay(&ui_gr_context_portrait);
 
-    qc16gr_drawImage(&ui_gr_context_landscape, &img_qbadge, 68, 4);
+    qc16gr_drawImage(&ui_gr_context_portrait, &img_human_plate, 0, 0);
 
     Graphics_setFont(&ui_gr_context_landscape, &UI_TEXT_FONT);
-    Graphics_drawStringCentered(&ui_gr_context_landscape, "Select a starting element.", 27, 148, 72, 0);
+    Graphics_drawStringCentered(&ui_gr_context_landscape, "Select a starting element.", 27, 196, 72, 0);
     for (uint16_t i=0; i<3; i++) {
-        qc16gr_drawImage(&ui_gr_context_landscape, image_element_icons[i], 82 + i*44, 90);
+        qc16gr_drawImage(&ui_gr_context_landscape, image_element_icons[i], 96+47 + i*42, 90);
     }
 
     Graphics_flushBuffer(&ui_gr_context_portrait);
@@ -436,7 +481,7 @@ void ui_task_fn(UArg a0, UArg a1) {
         // FREEZE!
         Graphics_clearDisplay(&ui_gr_context_landscape);
 
-        qc16gr_drawImage(&ui_gr_context_landscape, &img_qbadge, 68, 4);
+        qc16gr_drawImage(&ui_gr_context_portrait, &img_human_plate, 0, 0);
 
         Graphics_flushBuffer(&ui_gr_context_landscape);
         while (1) {

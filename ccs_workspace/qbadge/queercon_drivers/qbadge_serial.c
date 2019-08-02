@@ -175,7 +175,7 @@ void serial_pair(uint16_t from_id) {
         badge_conf.element_selected = ELEMENT_COUNT_NONE;
     }
 
-    serial_new_cbadge = is_cbadge(from_id) && badge_connected(from_id);
+    serial_new_cbadge = is_cbadge(from_id) && !badge_connected(from_id);
 
     serial_send_pair_msg();
 }
@@ -252,6 +252,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         // We are expecting a HELO.
         if (header->opcode == SERIAL_OPCODE_HELO) {
             // Send an ACK, set connected.
+            serial_new_cbadge = is_cbadge(header->from_id) && !badge_connected(header->from_id);
             serial_send_ack();
 
             serial_enter_c_idle();

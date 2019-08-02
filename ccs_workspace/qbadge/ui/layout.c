@@ -333,3 +333,11 @@ void ui_draw_menu_icons(uint8_t selected_index, uint8_t icon_mask, uint8_t ghost
         rect.xMax = rect.xMin + icons[i]->xSize - 1;
     }
 }
+
+void ui_draw_labeled_progress_bar(Graphics_Context *gr_context, char *label, uint16_t qty, uint16_t max, uint16_t x, uint16_t y) {
+
+    qc16gr_drawProgressBar(gr_context, x, y, 84, 14, qty, max);
+
+    Graphics_setFont(gr_context, &UI_TEXT_FONT);
+    Graphics_drawStringCentered(gr_context, label, 64, x+84/2, y+19, 0);
+}

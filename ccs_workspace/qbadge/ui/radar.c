@@ -384,12 +384,6 @@ uint8_t set_badge_connected(uint16_t id, uint8_t type, uint8_t levels, char *nam
                 unlock_color_type(LED_TAIL_ANIM_TYPE_SCROLL);
             }
         }
-        Event_post(ui_event_h, UI_EVENT_DO_SAVE);
-    }
-    badge_file.times_connected++;
-
-    if (badge_file.badge_type != type) {
-        badge_file.badge_type = type;
 
         if (type & BADGE_TYPE_HANDLER_MASK) {
             if (is_cbadge(id)) {
@@ -399,8 +393,8 @@ uint8_t set_badge_connected(uint16_t id, uint8_t type, uint8_t levels, char *nam
                 }
             } else {
                 badge_conf.stats.cbadges_handler_connected_count++;
-                if (badge_conf.stats.cbadges_handler_connected_count > badge_conf.stats.cbadge_handlers_in_system) {
-                    badge_conf.stats.cbadge_handlers_in_system++;
+                if (badge_conf.stats.qbadges_handler_connected_count > badge_conf.stats.qbadge_handlers_in_system) {
+                    badge_conf.stats.qbadge_handlers_in_system++;
                 }
             }
         }
@@ -418,6 +412,13 @@ uint8_t set_badge_connected(uint16_t id, uint8_t type, uint8_t levels, char *nam
                 }
             }
         }
+
+        Event_post(ui_event_h, UI_EVENT_DO_SAVE);
+    }
+    badge_file.times_connected++;
+
+    if (badge_file.badge_type != type) {
+        badge_file.badge_type = type;
 
         Event_post(ui_event_h, UI_EVENT_DO_SAVE);
     }

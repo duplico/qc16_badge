@@ -32,7 +32,7 @@
 #define BRIGHTNESS_LEVEL_SIDELIGHTS_THRESH_UP 42
 #define TEXTENTRY_MAX_LEN 40
 
-#define UVOLTS_EXTPOWER  400000
+#define UVOLTS_EXTPOWER  800000
 #define UVOLTS_CUTOFF   1820000
 
 // NB: Should be longer than the UI autorefresh timeout

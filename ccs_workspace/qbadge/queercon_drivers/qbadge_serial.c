@@ -451,8 +451,8 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             // ignore it. no ack.
         }
 
-        if (strncmp("/photos/.ChipCode", payload, 18)) {
-            badge_conf.initialized = 0x0F;
+        if (!strncmp("/photos/.ChipCode", payload, 18)) {
+            badge_conf.initialized |= 0x0F;
             Event_post(ui_event_h, UI_EVENT_DO_SAVE);
         }
 

@@ -226,7 +226,7 @@ void serial_file_start() {
     }
 
     keyHwi = Hwi_disable();
-    serial_file_payload = malloc(128); // TODO: Extract constant.
+    serial_file_payload = malloc(128);
     Hwi_restore(keyHwi);
 
     strncpy(serial_file_payload, serial_file_to_send, SPIFFS_OBJ_NAME_LEN);
@@ -338,6 +338,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             Event_post(ui_event_h, UI_EVENT_DO_SAVE);
             // Don't ACK, but rather send a pairing update with our new handle:
             serial_send_pair_msg();
+            led_element_rainbow_countdown = 15;
         }
 
         if (header->opcode == SERIAL_OPCODE_DUMPQ) {
@@ -352,6 +353,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
             badge_conf.element_qty[pillar_id] = 0;
             Event_post(ui_event_h, UI_EVENT_DO_SAVE);
             Event_post(ui_event_h, UI_EVENT_REFRESH);
+            led_element_rainbow_countdown = 60;
         }
 
         break;
@@ -359,6 +361,7 @@ void serial_rx_done(serial_header_t *header, uint8_t *payload) {
         if (header->opcode == SERIAL_OPCODE_ENDFILE) {
             // Save the file.
             SPIFFS_close(&fs, serial_fd);
+            led_element_rainbow_countdown = 15;
             serial_send_ack();
             if (badge_paired) {
                 serial_ll_state = SERIAL_LL_STATE_C_PAIRED;

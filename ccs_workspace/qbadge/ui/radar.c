@@ -358,12 +358,28 @@ uint8_t set_badge_connected(uint16_t id, uint8_t type, uint8_t levels, char *nam
 
     if (!badge_file.times_connected) {
         // never connected before.
+        led_element_rainbow_countdown = 15;
         ret = 1;
         if (is_cbadge(id)) {
             badge_conf.stats.cbadges_connected_count++;
             game_process_new_cbadge();
+            if (badge_conf.stats.cbadges_connected_count == 10) {
+                unlock_color_mod(LED_TAIL_ANIM_MOD_FAST);
+            }
+
+            if (badge_conf.stats.cbadges_connected_count == 40) {
+                unlock_color_mod(LED_TAIL_ANIM_MOD_FLAG);
+            }
         } else {
             badge_conf.stats.qbadges_connected_count++;
+
+            if (badge_conf.stats.qbadges_connected_count == 10) {
+                unlock_color_type(LED_TAIL_ANIM_TYPE_CYCLE);
+            }
+
+            if (badge_conf.stats.qbadges_connected_count == 40) {
+                unlock_color_mod(LED_TAIL_ANIM_TYPE_SCROLL);
+            }
         }
         Event_post(ui_event_h, UI_EVENT_DO_SAVE);
     }

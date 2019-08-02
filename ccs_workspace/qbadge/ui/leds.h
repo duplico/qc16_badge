@@ -59,6 +59,7 @@ typedef struct {
 } rgbdelta_t;
 
 extern Event_Handle led_event_h;
+extern uint8_t led_element_rainbow_countdown;
 extern led_tail_anim_t led_tail_anim_current;
 extern rgbcolor_t led_button_color_sequence[6][4];
 extern rgbcolor_t led_off;

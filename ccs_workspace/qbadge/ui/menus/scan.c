@@ -78,7 +78,9 @@ void ui_draw_scan_entries() {
         y += 30;
     }
 
-    Graphics_drawStringCentered(&ui_gr_context_landscape, "Boop badge detected!", 20, 147, 119, 0);
+    if (dcfurs_nearby) {
+        Graphics_drawStringCentered(&ui_gr_context_landscape, "Boop badge detected!", 20, 147, 119, 0);
+    }
 }
 
 void ui_draw_scan() {

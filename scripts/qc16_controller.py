@@ -198,7 +198,9 @@ def main():
     id_parser = cmd_parsers.add_parser('setid')
     id_parser.add_argument('id', type=int)
 
-    id_parser = cmd_parsers.add_parser('autoid')
+    autoid_parser = cmd_parsers.add_parser('autoid')
+
+    qautoid_parser = cmd_parsers.add_parser('qautoid')
 
     #   Send image (qbadge only)
     image_parser = cmd_parsers.add_parser('image')
@@ -257,6 +259,15 @@ def main():
                 next_id = int(f.read().strip())
         else:
             next_id = CBADGE_ID_START
+    
+    if (args.command == 'qautoid'):
+        script_path = os.path.dirname(os.path.realpath(__file__))
+        qautoid_file = os.path.join(script_path, 'qautoid_next')
+        if os.path.isfile(qautoid_file):
+            with open(qautoid_file) as f:
+                next_id = int(f.read().strip())
+        else:
+            next_id = QBADGE_ID_START
 
     # pyserial object, with a 1 second timeout on reads.
     ser = serial.Serial(args.port, 230400, parity=serial.PARITY_NONE, timeout=args.timeout)
@@ -287,7 +298,21 @@ def main():
             if badge_id == next_id:
                 with open(autoid_file, 'w') as f:
                     f.write(str(next_id+1))
-                
+
+    
+    if args.command == 'qautoid':
+        if not is_qbadge(badge_id):
+            print("Can only do qautoid on qbadges.")
+        elif badge_id != QBADGE_ID_MAX_UNASSIGNED:
+            print("This badge already has id %d." % badge_id)
+        else:
+            # Ok to assign.
+            send_message(ser, SERIAL_OPCODE_SETID, payload=struct.pack(ID_FMT, next_id))
+            badge_id = await_ack(ser)
+            if badge_id == next_id:
+                with open(qautoid_file, 'w') as f:
+                    f.write(str(next_id+1))
+
     if args.command == 'getfile':
         file = bytes()
         send_message(ser, SERIAL_OPCODE_GETFILE, payload=args.spiffs_path.encode('utf-8'))

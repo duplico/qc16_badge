@@ -24,3 +24,5 @@ ccs_workspace/adcbufcontinuous_CC2640R2_LAUNCHXL_tirtos_ccs
 art/twotone/
 art/DefaultIcon
 *.pyc
+scripts/qautoid_next
+scripts/autoid_next
